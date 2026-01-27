@@ -2852,3 +2852,67 @@ body.season-active .highlight-value {
     box-sizing: border-box;
   }
 }
+
+
+
+/* --- Mobile: make Privacy Notice + Version (Release Notes) modals feel identical/full-screen --- */
+@media (max-width: 520px){
+  /* Both Privacy Notice and Release Notes use the same privacy modal/content classes */
+  .privacy-modal{
+    padding: 0 !important;
+  }
+  .privacy-content{
+    max-width: none !important;
+    width: calc(100vw - 32px) !important;
+    height: calc(100vh - 96px) !important;
+    max-height: none !important;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .privacy-content .close-btn{
+    margin-top: auto;
+    align-self: flex-start;
+  }
+}
+
+
+
+/* --- Mobile: full-screen modals but centered reliably (avoid vw/vh offset issues) --- */
+@media (max-width: 520px){
+  .privacy-modal{
+    /* keep JS open/close working: don't touch display */
+    padding: 16px !important;
+    box-sizing: border-box;
+    justify-content: center;
+    align-items: center;
+  }
+  .privacy-content{
+    width: 100% !important;
+    max-width: none !important;
+    height: 100% !important;
+    max-height: none !important;
+    margin: 0 auto !important;
+    overflow-y: auto;
+  }
+}
+
+
+
+/* --- Mobile: make Version/Release Notes modal full-screen like Privacy (low risk) --- */
+@media (max-width: 520px){
+  #releaseNotesModal .privacy-content{
+    width: calc(100vw - 32px) !important;
+    height: calc(100vh - 96px) !important;
+    max-width: none !important;
+    max-height: none !important;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+  }
+  #releaseNotesModal .close-btn{
+    margin-top: auto;
+    align-self: flex-start;
+  }
+}
