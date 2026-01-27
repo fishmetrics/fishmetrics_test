@@ -1,0 +1,2832 @@
+:root{
+  --font-sans: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  --font-display: 'Orbitron', system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+
+  /* richer variation across the red family for the Star Catches chart */
+  --red1: rgba(255, 170, 110, .88);
+  --red2: rgba(255, 120, 90, .88);
+  --red3: rgba(255, 70, 70, .88);
+  --red4: rgba(230, 30, 70, .88);
+  --red5: rgba(150, 0, 40, .92);
+
+  --bg:#0b1b3a;
+  --bg2:#0a2a5a;
+  --panel:#07193a;
+  --panel2:#08224d;
+  --ink:#e9f1ff;
+  --muted:#a9bddc;
+  --accent:#ffc400;
+
+  --common:#7dd3fc;
+  --rare:#60a5fa;
+  --epic:#a78bfa;
+  --legendary:#facc15;
+}
+
+*{box-sizing:border-box}
+html,body{height:100%; font-family: var(--font-sans);}
+
+body{
+  margin:0;
+  font-family: var(--font-sans);
+  color:var(--ink);
+  background-image: linear-gradient(180deg, var(--bg) 0%, #8ab6ff 100%);
+  /* force a single gradient "tile" (no repeating artifacts) */
+  background-repeat:no-repeat;
+  background-size:cover;
+  background-attachment:fixed;
+}
+
+.topbar{
+  /* single, smooth gradient (no 3-band look) */
+  background:linear-gradient(90deg, #001a66 0%, #000e3a 100%);
+  background-repeat:no-repeat;
+  border-bottom:1px solid rgba(255,255,255,.08);
+  overflow:visible;
+
+  padding: 4px 12px;}
+
+/* Top tabs (Dashboard / Record) */
+.top-tabs{
+  display:flex;
+  justify-content:center;
+  gap:10px;
+  padding: 10px 24px 0;
+}
+.tab-btn{
+  appearance:none;
+  border:1px solid rgba(255,255,255,.16);
+  background:linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.04));
+  color:rgba(255,255,255,.86);
+  border-radius:999px;
+  padding:10px 18px;
+  font-family: inherit;
+  font-size:12px;
+  letter-spacing:1.2px;
+  text-transform:uppercase;
+  cursor:pointer;
+  box-shadow:0 10px 24px rgba(0,0,0,.18);
+
+  font-weight: 700;
+}
+
+.tab-btn:hover{ background:linear-gradient(180deg, rgba(255,255,255,.14), rgba(255,255,255,.06)); }
+.tab-btn.active{
+  border-color:rgba(255,196,0,.55);
+  background:linear-gradient(180deg, rgba(255,196,0,.22), rgba(255,196,0,.10));
+  color:var(--accent);
+}
+
+.tab-view{ display:none; }
+.tab-view.active{ display:block; }
+.topbar-inner{
+  /* banner content ~40% thinner */
+  max-width: 100%;
+  margin:0 auto;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  position:relative;
+  /* thinner header */
+  /* extra right padding so title never collides with the logo */
+  padding: 12px 24px;
+  min-height: 64px;
+}
+.brand{ text-align:left; }
+.brand-title{
+  font-weight:900;
+  letter-spacing:2px;
+  font-size:44px;
+  color:var(--accent);
+  line-height:1;
+
+  font-family: var(--font-display);
+}
+
+.brand-sub{
+  font-size:11px;
+  letter-spacing:1.2px;
+  color:rgba(255,255,255,.75);
+  margin-top:0;
+
+  font-family: var(--font-display);
+}
+
+.brand-mark{
+  font-size:38px;
+  opacity:.9;
+  filter:drop-shadow(0 6px 10px rgba(0,0,0,.35));
+}
+
+.layout{
+  max-width: 100%;
+  margin:0 auto;
+  display:grid;
+  grid-template-columns: 230px 1fr;
+  gap:18px;
+  padding: 12px 24px;
+}
+
+.sidebar{
+  background:linear-gradient(180deg, rgba(4,12,34,.88), rgba(6,22,60,.88));
+  border:1px solid rgba(255,255,255,.08);
+  border-radius:18px;
+  padding: 12px 24px;
+  box-shadow:0 18px 40px rgba(0,0,0,.22);
+}
+.sidebar-section{margin-bottom:18px}
+.sidebar-title{
+  font-size:12px;
+  color:rgba(255,255,255,.8);
+  letter-spacing:1.1px;
+  text-transform:uppercase;
+  margin:6px 0 10px;
+}
+
+.btn-list{display:flex; flex-direction:column; gap:6px}
+.loc-btn{
+  width:100%;
+  border-radius:8px;
+  border:1px solid rgba(255,255,255,.14);
+  background:rgba(255,255,255,.08);
+  color:var(--ink);
+  padding: 12px 24px;
+  font-size:13px;
+  text-align:left;
+  cursor:pointer;
+}
+.loc-btn:hover{background:rgba(255,255,255,.12)}
+.loc-btn.active{
+  background:rgba(255,196,0,.18);
+  border-color:rgba(255,196,0,.4);
+}
+
+.rarity-legend{display:grid; grid-template-columns:1fr 1fr; gap:8px}
+.legend-item{display:flex; align-items:center; gap:8px; font-size:10px; color:rgba(255,255,255,.85)}
+
+/* Dashboard rarity slicer behavior */
+.legend-item.slicer{
+  cursor:pointer;
+  user-select:none;
+  padding:6px 8px;
+  border-radius:12px;
+  border:1px solid rgba(255,255,255,.10);
+  background:rgba(255,255,255,.04);
+}
+.legend-item.slicer:hover{background:rgba(255,255,255,.08)}
+.legend-item.slicer.active{
+  background:rgba(255,196,0,.14);
+  border-color:rgba(255,196,0,.35);
+}
+.swatch{width:14px; height:14px; border-radius:4px; display:inline-block}
+.swatch.common{background:var(--common)}
+.swatch.rare{background:var(--rare)}
+.swatch.epic{background:var(--epic)}
+.swatch.legendary{background:var(--legendary)}
+
+.progress{display:flex; flex-direction:column; align-items:center}
+.donut{
+  width:160px;
+  height:160px;
+  border-radius:50%;
+  background:conic-gradient(#9ad54d 0deg, #9ad54d 0deg, rgba(255,255,255,.14) 0deg);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  box-shadow: inset 0 0 0 18px rgba(4,12,34,.88);
+}
+.content{display:flex; flex-direction:column; gap:14px}
+
+.kpis{
+  display:grid;
+  grid-template-columns: 1.2fr 1fr 1fr 1fr 1fr;
+  gap:12px;
+}
+.kpi{
+  background:linear-gradient(180deg, rgba(4,12,34,.86), rgba(3,10,28,.86));
+  border:1px solid rgba(255,255,255,.09);
+  border-radius:16px;
+  padding: 12px 24px;
+  box-shadow:0 16px 36px rgba(0,0,0,.2);
+}
+.kpi-label{font-size:10px; color:rgba(255,255,255,.78); margin-bottom:6px}
+.kpi-value{font-size:26px; font-weight:900; letter-spacing:0.5px}
+.kpi-stars{font-size:26px; color:var(--accent); letter-spacing:2px}
+
+.grid{
+  margin-top:24px;
+  display:grid;
+  grid-template-columns: 1fr 1fr;
+  gap:12px;
+}
+.panel{
+  background:linear-gradient(180deg, rgba(4,12,34,.86), rgba(3,10,28,.86));
+  border:1px solid rgba(255,255,255,.09);
+  border-radius:28px;
+  padding: 12px 24px;
+  box-shadow:0 18px 40px rgba(0,0,0,.22);
+  display:flex;
+  flex-direction:column;
+}
+
+.panel.span-2{grid-column:1 / span 1}
+.panel-title{font-size:12px; color:rgba(255,255,255,.78); margin:2px 0 8px}
+
+/* === Career Targets (All-time) === */
+.career-targets-title{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+}
+
+
+.career-targets-controls{
+  margin-left:auto;
+  display:flex;
+  flex-direction:column;
+  align-items:flex-end;
+  gap:8px;
+}
+
+.career-targets-sort{
+  display:flex;
+  gap:8px;
+}
+
+
+/* Career Targets sort toggle */
+.career-targets-sort-toggle{
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+
+.ct-sort-label{
+  font-size:12px;
+  opacity:0.78;
+  cursor:pointer;
+  user-select:none;
+  white-space:nowrap;
+}
+
+.ct-sort-label.active{
+  opacity:1;
+  font-weight:600;
+}
+
+.ct-switch{
+  position:relative;
+  display:inline-block;
+  width:44px;
+  height:24px;
+}
+
+.ct-switch input{
+  opacity:0;
+  width:0;
+  height:0;
+}
+
+.ct-slider{
+  position:absolute;
+  top:0; left:0; right:0; bottom:0;
+  background: rgba(0,0,0,0.16);
+  border:1px solid rgba(255,255,255,0.22);
+  border-radius:999px;
+  cursor:pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.ct-slider:before{
+  content:"";
+  position:absolute;
+  width:18px;
+  height:18px;
+  left:3px;
+  top:50%;
+  transform: translateY(-50%);
+  background: rgba(255,255,255,0.86);
+  border-radius:999px;
+  transition: left 0.15s ease;
+}
+
+.ct-switch input:checked + .ct-slider:before{
+  left:23px;
+}
+
+.ct-switch input:focus + .ct-slider{
+  box-shadow: 0 0 0 3px rgba(255,255,255,0.14);
+}
+.career-targets-selector{
+  display:flex;
+  gap:8px;
+}
+
+.ct-target-btn{
+  border:1px solid rgba(255,255,255,0.22);
+  background: rgba(0,0,0,0.16);
+  color: inherit;
+  padding:6px 10px;
+  border-radius:999px;
+  font-size:12px;
+  cursor:pointer;
+  line-height:1;
+  transition: transform 0.06s ease, background 0.12s ease, border-color 0.12s ease;
+}
+
+.ct-target-btn:hover{ transform: translateY(-1px); background: rgba(255,255,255,0.06); }
+.ct-target-btn.active{ border-color: rgba(255,255,255,0.55); background: rgba(255,255,255,0.10); }
+
+
+.ct-sort-btn{
+  border:1px solid rgba(255,255,255,0.22);
+  background: rgba(0,0,0,0.16);
+  color: inherit;
+  padding:6px 10px;
+  border-radius:999px;
+  font-size:12px;
+  cursor:pointer;
+  line-height:1;
+  transition: transform 0.06s ease, background 0.12s ease, border-color 0.12s ease;
+}
+
+.ct-sort-btn:hover{ transform: translateY(-1px); background: rgba(255,255,255,0.06); }
+.ct-sort-btn.active{ border-color: rgba(255,255,255,0.55); background: rgba(255,255,255,0.10); }
+
+/* Mobile: Career Targets controls should wrap instead of overflowing */
+@media (max-width: 520px){
+  .career-targets-title{
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .career-targets-controls{
+    margin-left: 0;
+    width: 100%;
+    align-items: flex-start;
+  }
+
+  .career-targets-sort{
+    flex-wrap: wrap;
+  }
+
+  .career-targets-selector{
+    width: 100%;
+    flex-wrap: wrap;
+    row-gap: 8px;
+  }
+
+  .ct-target-btn,
+  .ct-sort-btn{
+    padding: 6px 9px;
+    font-size: 11px;
+  }
+
+  .ct-sort-label{
+    font-size: 11px;
+  }
+}
+
+.career-targets-sub{
+  font-size:12px;
+  color: rgba(255,255,255,0.68);
+  margin: 2px 0 14px;
+}
+
+.career-targets-panels{
+  display:grid;
+  grid-template-columns: repeat(2, minmax(280px, 1fr));
+  gap:16px;
+  width:100%;
+}
+
+@media (max-width: 820px){
+  .career-targets-panels{ grid-template-columns: 1fr; }
+}
+
+.ct-rarity-panel{
+  border:1px solid rgba(255,255,255,.10);
+  background: rgba(255,255,255,.03);
+  border-radius:22px;
+  padding:12px 14px;
+}
+
+.ct-rarity-header{
+  display:flex;
+  align-items:baseline;
+  justify-content:space-between;
+  gap:10px;
+  margin-bottom:10px;
+}
+
+.ct-rarity-name{
+  font-size:12px;
+  letter-spacing:.8px;
+  text-transform:uppercase;
+  color: rgba(255,255,255,.82);
+  font-weight:800;
+}
+
+.ct-rarity-count{
+  font-size:12px;
+  color: rgba(255,255,255,.70);
+}
+
+.ct-list{ display:flex; flex-direction:column; gap:8px; }
+
+.ct-row{
+  display:grid;
+  grid-template-columns: 1.35fr 1fr 0.75fr;
+  gap:10px;
+  align-items:center;
+  padding:8px 10px;
+  border-radius:16px;
+  border:1px solid rgba(255,255,255,.08);
+  background: rgba(0,0,0,0.10);
+}
+
+.ct-row .ct-fish{ font-weight:700; }
+.ct-row .ct-map{ color: rgba(255,255,255,0.75); font-size:12px; }
+.ct-row .ct-stars{ text-align:right; font-size:12px; letter-spacing:.2px; }
+.ct-empty{ color: rgba(255,255,255,0.60); font-size:12px; padding:6px 2px; }
+
+/* Personal Bests (Fish Insights) */
+.bests-grid{
+  display:grid;
+  grid-template-columns: repeat(2, minmax(320px, 1fr));
+  gap:16px;
+  width:100%;
+  margin:0 auto;
+  justify-content:center;
+  grid-template-columns: 1fr 1fr;
+  gap:10px;
+  padding-bottom: 8px;
+}
+.best-tile{
+  justify-content:center;
+  border:1px solid rgba(255,255,255,.10);
+  border-radius:18px;
+  padding:10px 12px;
+  background:rgba(255,255,255,.04);
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+  min-height: 96px;
+}
+.best-top{display:flex; justify-content:space-between; align-items:baseline; gap:10px;}
+.best-rarity{font-size:12px; letter-spacing:.6px; text-transform:uppercase; color:rgba(255,255,255,.82)}
+.best-points{font-size:20px; font-weight:800; color:var(--accent)}
+.best-fish{font-size:13px; color:rgba(255,255,255,.92)}
+.best-meta{display:flex; flex-wrap:wrap; gap:10px; font-size:12px; color:rgba(255,255,255,.78)}
+.best-meta .pill{padding:2px 8px; border-radius:999px; border:1px solid rgba(255,255,255,.10); background:rgba(255,255,255,.03)}
+
+@media (max-width: 540px){
+  .bests-grid{ grid-template-columns: 1fr; }
+}
+
+canvas{width:100% !important; height:300px !important;}
+.panel canvas{height:300px !important}
+.table-wrap{
+  background:linear-gradient(180deg, rgba(4,12,34,.86), rgba(3,10,28,.86));
+  border:1px solid rgba(255,255,255,.09);
+  border-radius:22px;
+  /* Keep rounded corners but allow the inner horizontal scrollbar to be usable on mobile */
+  overflow: hidden;
+  box-shadow:0 18px 40px rgba(0,0,0,.22);
+}
+
+/* allow inner scroller to show on iOS */
+.table-wrap .table-scroll{ border-radius:0 0 22px 22px; }
+.table-head{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-end;
+  padding: 12px 24px;
+  border-bottom:1px solid rgba(255,255,255,.08);
+}
+.table-title{font-size:14px; letter-spacing:1px; text-transform:uppercase; color:rgba(255,255,255,.9)}
+.location-select{font-size:12px; color:rgba(255,255,255,.78); display:flex; gap:10px; align-items:center; flex-wrap:wrap}
+select{
+  background:rgba(255,255,255,.08);
+  color:var(--ink);
+  border:1px solid rgba(255,255,255,.16);
+  padding: 12px 24px;
+  border-radius:10px;
+}
+.total-fish{font-size:12px; color:rgba(255,255,255,.82)}
+.total-fish strong{color:var(--accent)}
+
+.table-scroll{
+  max-height:380px;
+  overflow:auto;
+  width:100%;
+  max-width:100%;
+  padding-bottom: 8px; /* room for scrollbar */
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-x pan-y;
+}
+/* Let the table size to its content so we don't create empty space after the last column */
+.table-scroll table{
+  display: inline-table;
+  width: max-content;
+  min-width: 100%;
+  border-collapse:collapse;
+  font-size:13px;
+}
+table{border-collapse:collapse; font-size:13px}
+thead th{
+  position:sticky;
+  top:0;
+  background:rgba(5,16,44,.98);
+  color:rgba(255,255,255,.9);
+  padding: 12px 24px;
+  text-align:left;
+  border-bottom:1px solid rgba(255,255,255,.12);
+}
+tbody td{padding: 12px 24px; border-bottom:1px solid rgba(255,255,255,.06)}
+tbody tr:hover{background:rgba(255,255,255,.05)}
+
+.fish-name{cursor:help; border-bottom:1px dotted rgba(255,255,255,.35)}
+
+/* Highlight fish name while entering a record */
+tbody tr.editing .fish-name{
+  border-bottom-color: transparent;
+  background: rgba(255,255,255,.10);
+  padding: 2px 8px;
+  border-radius: 999px;
+  box-shadow: 0 0 0 2px rgba(255,196,0,.16);
+}
+
+.input-cell{min-width:160px}
+input{
+  width:120px;
+  padding: 12px 24px;
+  border-radius:10px;
+  border:1px solid rgba(255,255,255,.16);
+  background:rgba(255,255,255,.08);
+  color:var(--ink);
+}
+input:focus{outline:none; border-color:rgba(255,196,0,.55); box-shadow:0 0 0 3px rgba(255,196,0,.12)}
+input.outofrange{border-color:rgba(255,90,90,.75)}
+
+.inline-error{
+  display:none;
+  font-size:11px;
+  color:#ffd1d1;
+  margin-top:4px;
+}
+.inline-error.show{display:block}
+.inline-error.success{color:#b7f5b0}
+
+tbody tr.common .category-cell{color:var(--common)}
+tbody tr.rare .category-cell{color:var(--rare)}
+tbody tr.epic .category-cell{color:var(--epic)}
+tbody tr.legendary .category-cell{color:var(--legendary)}
+
+@media (max-width: 100%){
+  .layout{grid-template-columns:1fr}
+  .sidebar{order:2}
+  .kpis{grid-template-columns:1fr 1fr}
+  .grid{grid-template-columns: 1fr 1fr;
+  width:auto;
+  filter:drop-shadow(0 6px 10px rgba(0,0,0,.35));
+  /* keep logo pinned right while allowing a thinner header bar */
+  position:absolute;
+  right:22px;
+  top:50%;
+  transform:translateY(-50%);
+}
+@media (max-width: 100%){
+  .topbar-inner{ padding: 12px 24px; 
+  min-height: 64px;}
+  .brand-logo{ height:128px; right:16px; }
+}
+
+to{transform:translateY(-120px)}}
+@keyframes puff{
+0%{transform:translate(0,0);opacity:0;}
+20%{opacity:1;}
+100%{transform:translate(60px,-40px);opacity:0;}
+}
+
+
+15%{opacity:1;}
+  60%{opacity:0.85;}
+  100%{transform:translate(28px,-26px) scale(1.15); opacity:0;}
+}
+
+
+/* Mobile scaling + full-width header banner */
+html, body { width: 100%; overflow-x: hidden; }
+
+.topbar{
+  width: 100vw;
+  margin-left: calc(50% - 50vw);
+  margin-right: calc(50% - 50vw);
+}
+
+.topbar-inner{
+  width: 100%;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding-left: 16px;
+  padding-right: 16px;
+}
+
+/* Make layout adapt on small screens */
+@media (max-width: 820px){
+  .grid{ grid-template-columns: 1fr !important; }
+  .kpis{ grid-template-columns: 1fr 1fr !important; }
+  .top-tabs{ flex-wrap: wrap; gap: 8px; }
+  .tab-btn{ flex: 1 1 auto; }
+  .brand-title{ font-size: 34px; }
+  .brand-logo{ transform: none !important; max-width: 120px; height: auto; }
+}
+
+@media (max-width: 520px){
+  .kpis{ grid-template-columns: 1fr !important; }
+  .content{ padding-left: 12px; padding-right: 12px; }
+  .panel{ padding: 12px 14px; }
+}
+
+/* Center header brand */
+.topbar-inner{
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  gap:24px;
+}
+.brand{
+  text-align:center;
+}
+
+
+/* Responsive overhaul */
+*{ box-sizing:border-box; }
+img{ max-width:100%; height:auto; }
+
+:root{
+  --page-max: 1100px;
+}
+
+html, body{ width:100%; overflow-x:hidden; }
+
+/* Main content fluid */
+.content{
+  width: 100%;
+  max-width: var(--page-max);
+  margin: 0 auto;
+  padding-left: 16px;
+  padding-right: 16px;
+}
+
+/* Panels & charts */
+.panel{ min-width: 0; }
+.panel canvas{
+  width:100% !important;
+  height:260px !important;
+}
+
+/* Tabs wrap */
+.top-tabs{
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+  justify-content:center;
+}
+.tab-btn{
+  flex: 1 1 auto;
+  min-width: 140px;
+}
+
+/* Header: stacked centered on mobile */
+.topbar{
+  width: 100vw;
+  margin-left: calc(50% - 50vw);
+  margin-right: calc(50% - 50vw);
+}
+.topbar-inner{
+  max-width: var(--page-max);
+  margin: 0 auto;
+  padding: 10px 16px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:12px;
+}
+.brand{ text-align:center; }
+.brand-logo{
+  transform: none !important;
+  max-width: 160px;
+}
+
+/* Break grids earlier */
+@media (max-width: 900px){
+  .kpis{ grid-template-columns: 1fr 1fr !important; }
+  .grid{ grid-template-columns: 1fr !important; }
+  .panel.span-2{ grid-column: auto !important; }
+  /* Records table: ensure the inner scroller is usable on mobile widths */
+  .table-scroll{ overflow-x:auto !important; -webkit-overflow-scrolling:touch; }
+  thead th, tbody td{ padding-left: 14px !important; padding-right: 14px !important; }
+
+}
+
+@media (max-width: 520px){
+  .kpis{ grid-template-columns: 1fr !important; }
+  .tab-btn{ min-width: 120px; padding: 10px 12px; }
+  .brand-title{ font-size: 32px; letter-spacing: 1.5px; }
+  .brand-sub{ font-size: 10px; }
+  .panel canvas{ height: 240px !important; }
+  /* Keep inner table scroll usable */
+}
+
+@media (max-width: 740px) and (orientation: landscape){
+  .panel canvas{ height: 220px !important; }
+}
+
+
+/* Mobile: collapse left panel and stack charts */
+@media (max-width: 900px) {
+  .dashboard-grid,
+  .grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .left-panel,
+  .kpis,
+  .panel.kpi-panel {
+    height: auto !important;
+    max-height: none !important;
+  }
+
+  .panel,
+  .panel.span-2 {
+    grid-column: auto !important;
+    width: 100%;
+  }
+
+  .kpis {
+    gap: 10px;
+  }
+
+  .panel canvas {
+    height: 240px !important;
+  }
+}
+
+
+/* Mobile: stack sidebar above content (fix "left panel" on phones) */
+@media (max-width: 900px){
+  .layout{
+    grid-template-columns: 1fr !important;
+    padding: 12px 12px !important;
+  }
+  .sidebar{
+    padding: 12px 14px !important;
+  }
+  /* Make location buttons wrap nicely instead of making the sidebar tall */
+  .btn-list{
+    display:flex !important;
+    flex-wrap:wrap !important;
+    gap:8px !important;
+  }
+  .btn-list .loc-btn{
+    flex: 0 0 auto;
+  }
+}
+
+/* Extra small phones */
+@media (max-width: 520px){
+  .sidebar-section{ margin-bottom: 12px; }
+  .sidebar-title{ margin-bottom: 8px; }
+}
+
+
+/* Hide sidebar on Records + Instructions tabs */
+body.no-sidebar .layout{
+  grid-template-columns: 1fr !important;
+}
+body.no-sidebar .sidebar{
+  display:none !important;
+}
+
+/* (Records table scrolling is handled by the main .table-scroll rules above.) */
+
+
+
+/* --- Header brand/logo alignment (v8 logo update) --- */
+.topbar-inner{
+  display:flex;
+  justify-content:center; /* center the group within header */
+  align-items:center;
+  width:100%;
+}
+
+.brand-group{
+  display:flex;
+  align-items:center;
+  gap:14px; /* space between text and logo */
+  text-align:left;
+}
+
+/* Keep text block compact so the group centers nicely */
+.brand{
+  display:flex;
+  flex-direction:column;
+  align-items:flex-start;
+  line-height:1;
+}
+
+/* New logo sizing: adjust as needed, but keep responsive */
+.brand-logo{
+  height:40px;
+  width:auto;
+  display:block;
+}
+
+/* On small screens, scale logo down a bit */
+@media (max-width: 480px){
+  .brand-logo{ height:31px; }
+  .brand-group{ gap:10px; }
+}
+
+
+/* --- Responsive Records table (stacked rows on mobile) --- */
+@media (max-width: 640px){
+  #recordsView .table-scroll{
+    overflow: visible;
+    max-height: none;
+    padding-bottom: 0;
+  }
+  #recordsView .table-scroll table{
+    width: 100%;
+    min-width: 0;
+    display: block;
+  }
+  #recordsView .table-scroll thead{ display:none; }
+  #recordsView .table-scroll tbody{ display:block; }
+  #recordsView .table-scroll tr{
+    display:block;
+    margin: 10px 0;
+    border:1px solid rgba(255,255,255,.10);
+    border-radius: 16px;
+    overflow: hidden;
+    background: rgba(0,0,0,.10);
+  }
+  #recordsView .table-scroll td{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    width:100%;
+    padding: 12px 14px;
+    border: none;
+    border-top:1px solid rgba(255,255,255,.08);
+  }
+  #recordsView .table-scroll td:first-child{ border-top:none; }
+  #recordsView .table-scroll td::before{
+    content: attr(data-label);
+    font-weight: 700;
+    color: rgba(255,255,255,.78);
+    flex: 0 0 auto;
+    max-width: 48%;
+  }
+  #recordsView .table-scroll td.input-cell{
+    align-items:flex-start;
+  }
+  #recordsView .table-scroll td.input-cell input{
+    width: 100%;
+    max-width: 160px;
+  }
+  #recordsView .table-scroll .inline-error{
+    margin-top: 6px;
+  }
+}
+
+
+/* --- Records responsive sizing fix (prevent off-screen width) --- */
+@media (max-width: 640px){
+  #recordsView, #recordsView *{ box-sizing: border-box; }
+  #recordsView .table-wrap{ width:100%; max-width:100%; }
+  #recordsView .table-scroll{ width:100%; max-width:100%; overflow:hidden !important; }
+  #recordsView .table-scroll table{
+    display:block !important;
+    width:100% !important;
+    max-width:100% !important;
+    min-width:0 !important;
+  }
+  #recordsView .table-scroll tr{
+    width:100%;
+    max-width:100%;
+  }
+  #recordsView .table-scroll td{
+    width:100%;
+    max-width:100%;
+    overflow-wrap:anywhere;
+  }
+  #recordsView .table-scroll .fish-name{ display:inline-block; max-width:100%; }
+  #recordsView .table-scroll td::before{ max-width: 52%; }
+}
+
+
+/* --- Records mobile overflow + header wrap fix --- */
+@media (max-width: 640px){
+  /* Allow the Records view itself to scroll if anything still overflows */
+  #recordsView{
+    width: 100%;
+    max-width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Prevent padding from making the card exceed viewport */
+  #recordsView .table-wrap{
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+  }
+
+  /* Stack the Records header controls to avoid horizontal overflow */
+  #recordsView .table-head{
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+  #recordsView .location-select{
+    display:flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+    width: 100%;
+    max-width: 100%;
+  }
+  #recordsView .location-select select{
+    width: 100%;
+    max-width: 100%;
+  }
+  #recordsView .total-fish{
+    display:block;
+    width: 100%;
+    max-width: 100%;
+    white-space: normal;
+  }
+}
+
+
+/* --- Mobile header scale tweak --- */
+@media (max-width: 640px){
+  .brand-title{ font-size: 0.85em; }
+  .brand-sub{ font-size: 0.8em; }
+  .brand-logo{ height: 32px; }
+}
+
+
+/* --- Mobile header proportional scaling --- */
+@media (max-width: 640px){
+  .brand-group{
+    transform: scale(0.85);
+    transform-origin: center;
+  }
+}
+
+
+/* --- Header layout hard override (fix mobile/logo separation) --- */
+.topbar-inner{
+  display:flex !important;
+  justify-content:center !important;
+  align-items:center !important;
+  gap:0 !important;
+}
+
+.brand-group{
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  gap:12px !important;
+}
+
+.brand-logo{
+  position:static !important;
+  right:auto !important;
+  top:auto !important;
+  margin:0 !important;
+  transform:none !important;
+}
+
+/* Proportional downscale on mobile without changing title/sub ratios */
+@media (max-width: 640px){
+  .brand-title{ font-size:32px !important; letter-spacing:1.5px !important; }
+  .brand-sub{ font-size:11px !important; letter-spacing:1.2px !important; }
+  .brand-logo{ height:31px !important; width:auto !important; }
+  .brand-group{
+    transform: scale(0.85) !important;
+    transform-origin: center !important;
+  }
+}
+
+
+.app-footer{
+  position:fixed;
+  bottom:0;
+  left:0;
+  width:100%;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:8px 14px;
+  background:rgba(0,0,0,.35);
+  backdrop-filter: blur(6px);
+  z-index:10;
+}
+
+/* Footer icon/label helpers (icons shown on mobile only) */
+.footer-icon{
+  display:none;
+  font-size:16px;
+  line-height:1;
+}
+.footer-label{ display:inline; }
+
+/* Screen-reader only text helper */
+.sr-only{
+  position:absolute !important;
+  width:1px !important;
+  height:1px !important;
+  padding:0 !important;
+  margin:-1px !important;
+  overflow:hidden !important;
+  clip:rect(0,0,0,0) !important;
+  white-space:nowrap !important;
+  border:0 !important;
+}
+
+.footer-left,
+.footer-center,
+.footer-right{
+  display:flex;
+  align-items:center;
+}
+
+.footer-left{ flex:1; justify-content:flex-start; }
+.footer-center{ flex:0; justify-content:center; }
+.footer-right{ flex:1; justify-content:flex-end; }
+.contact-btn{
+  background:#ff4d4d;
+  color:#fff;
+  padding:6px 16px;
+  border-radius:16px;
+  font-weight:700;
+  text-decoration:none;
+}
+.contact-btn:hover{ opacity:.85; }
+
+/* Footer buttons: smaller + consistent */
+.contact-btn{ font-size:12px; }
+
+.footer-meta-btn{
+  font-size:12px !important;
+  padding:5px 10px !important;
+  border-radius:14px !important;
+}
+
+@media (max-width: 640px){
+  /* Thinner footer on mobile */
+  .app-footer{ padding:4px 8px; }
+
+  /* Icon-only footer controls on mobile */
+  .footer-icon{ display:inline; }
+  .footer-label{ display:none; }
+
+  .contact-btn{
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.55);
+    padding:4px 10px;
+    border-radius:14px;
+    font-size:14px;
+    font-weight:600;
+  }
+  .footer-meta-btn{ padding:4px 10px !important; border-radius:14px !important; }
+}
+
+/* More space below header for Records + Instructions */
+#recordsView{ margin-top: 14px; }
+#instructionsView{ margin-top: 14px; }
+@media (max-width: 640px){
+  #recordsView{ margin-top: 18px; }
+  #instructionsView{ margin-top: 18px; }
+}
+
+/* Snapshot spacing: push KPI cards and left panel down */
+#dashboardView .kpi-grid{ margin-top: 16px; }
+#dashboardView .left-panel{ margin-top: 16px; }
+@media (max-width: 640px){
+  #dashboardView .kpi-grid{ margin-top: 20px; }
+  #dashboardView .left-panel{ margin-top: 20px; }
+}
+
+/* Uniform spacing below header for all views */
+.tab-view{
+  margin-top: 16px;
+}
+@media (max-width: 640px){
+  .tab-view{
+    margin-top: 20px;
+  }
+}
+
+/* Snapshot alignment */
+#dashboardView .left-panel{ margin-top: 0 !important; }
+#dashboardView .kpi-grid{ margin-top: 0 !important; }
+#dashboardView .grid{ margin-top: 8px; }
+
+/* Match Analytics spacing to Instructions */
+#fishView, #mapView{
+  margin-top: 16px !important;
+}
+
+/* Force Snapshot left panel and KPI grid to align at top */
+#dashboardView .kpi-grid,
+#dashboardView .left-panel{
+  margin-top: 0 !important;
+  align-self: flex-start !important;
+}
+/* Nudge charts grid up slightly */
+#dashboardView .grid{
+  margin-top: 6px !important;
+}
+
+/* Snapshot: align sidebar top with KPI row (same gap below header/tabs) */
+body:not(.no-sidebar) .sidebar{
+  margin-top: 16px;
+}
+@media (max-width: 640px){
+  body:not(.no-sidebar) .sidebar{
+    margin-top: 20px;
+  }
+}
+
+/* Snapshot: nudge the 4 charts down slightly */
+#dashboardView .grid{
+  margin-top: 12px !important;
+}
+@media (max-width: 640px){
+  #dashboardView .grid{
+    margin-top: 16px !important;
+  }
+}
+
+/* Analytics: nudge charts up to match other tabs */
+#fishView .grid, #mapView .grid{
+  margin-top: 0 !important;
+}
+@media (max-width: 640px){
+  #fishView .grid, #mapView .grid{
+    margin-top: 4px !important;
+  }
+}
+
+/* Ensure footer sits after content */
+.app-footer{position:fixed; bottom:0; left:0; width:100%; display:flex; align-items:center; justify-content:space-between; padding:8px 14px; background:rgba(0,0,0,.35); backdrop-filter: blur(6px); z-index:10;}
+
+body{ padding-bottom: 70px; }
+@media (max-width: 640px){
+  body{ padding-bottom: 44px; }
+}
+
+/* Snapshot: nudge all containers to the right */
+#dashboardView .shell{
+  padding-left: 12px;
+}
+@media (max-width: 640px){
+  #dashboardView .shell{
+    padding-left: 6px;
+  }
+}
+
+/* Instructions: center left panel under heading */
+#instructionsView .sidebar{
+  margin-left: auto;
+  margin-right: auto;
+}
+
+#mapView .panel-title { margin-bottom: 26px; }
+
+#scoreRangesLocation{ text-align:center; margin: 2px 0 18px; font-size:13px; color: rgba(255,255,255,.85); }
+/* Weight unit toggle */
+.unit-toggle-row{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:12px;
+  margin: 6px 0 14px 0;
+}
+.unit-toggle-label{
+  color: rgba(255,255,255,.75);
+  font-size: 14px;
+  letter-spacing: .4px;
+}
+.unit-toggle{
+  display:flex;
+  gap:8px;
+  padding:6px;
+  border-radius: 999px;
+  background: rgba(255,255,255,.06);
+  border: 1px solid rgba(255,255,255,.10);
+}
+.unit-btn{
+  border:none;
+  cursor:pointer;
+  padding:8px 14px;
+  border-radius: 999px;
+  background: transparent;
+  color: rgba(255,255,255,.75);
+  font-weight: 700;
+  letter-spacing: .6px;
+  text-transform: lowercase;
+}
+.unit-btn.active{
+  background: rgba(255,255,255,.12);
+  color: rgba(255,255,255,.92);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.12);
+}
+.unit-btn:focus{ outline: 2px solid rgba(255,255,255,.18); outline-offset: 2px; }
+
+
+/* Stable width for Stars column (prevents table shifting as stars appear) */
+td.stars, th.stars {
+  width: 8ch;
+  min-width: 8ch;
+  text-align: center;
+  white-space: nowrap;
+}
+td.stars {
+  font-variant-ligatures: none;
+}
+
+
+/* Share button in header */
+.topbar-inner{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:16px;
+}
+.header-share{
+  flex: 0 0 auto;
+  margin-left: auto;
+}
+.share-btn{
+  cursor:pointer;
+  padding:10px 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,.14);
+  background: rgba(255,255,255,.08);
+  color: rgba(255,255,255,.92);
+  font-weight: 800;
+  letter-spacing: .4px;
+}
+.share-btn:hover{ background: rgba(255,255,255,.12); }
+
+/* Header share icon button */
+.header-share{
+  padding:8px;
+  width:36px;
+  height:36px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  border-radius: 999px;
+}
+.header-share svg{
+  display:block;
+}
+
+/* Inline title + share icon */
+.dashboard-title-row{
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+.dashboard-title{
+  font-size:22px;
+  font-weight:800;
+  color: rgba(255,255,255,.92);
+}
+
+/* Share icon inline with brand title */
+.brand-title-row{
+  display:inline-flex;
+  align-items:center;
+  gap:10px;
+}
+.header-share-inline{
+  padding:8px;
+  width:34px;
+  height:34px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,.14);
+  background: rgba(255,255,255,.08);
+  color: rgba(255,255,255,.92);
+}
+.header-share-inline:hover{ background: rgba(255,255,255,.12); }
+
+/* Ensure header content stays centered */
+.topbar-inner{
+  justify-content:center;
+}
+
+/* Share icon positioned after logo */
+.header-share-inline{
+  margin-left: 10px;
+}
+
+/* Stars content should not change cell display */
+td.stars { white-space: nowrap; }
+
+/* Records table: keep Stars column stable (1–5 stars) */
+table.records-table{
+  table-layout: fixed;
+}
+table.records-table th.stars,
+table.records-table td.stars{
+  width: 9ch;
+  min-width: 9ch;
+  max-width: 9ch;
+  text-align: center;
+  white-space: nowrap;
+}
+
+/* Header pulldown menu (top-right corner) */
+header{ position: relative; }
+.header-menu-wrap{
+  position: absolute;
+  right: 12px;
+  top: 10px;
+  z-index: 50;
+}
+.menu-btn{
+  cursor:pointer;
+  width:36px;
+  height:36px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,.14);
+  background: rgba(255,255,255,.08);
+  color: rgba(255,255,255,.92);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+.menu-btn:hover{ background: rgba(255,255,255,.12); }
+.menu-dropdown{
+  margin-top: 8px;
+  min-width: 160px;
+  padding: 8px;
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,.12);
+  background: rgba(10,16,28,.96);
+  box-shadow: 0 10px 30px rgba(0,0,0,.35);
+  display:none;
+}
+.menu-dropdown.open{ display:block; }
+.menu-item{
+  width:100%;
+  cursor:pointer;
+  border:none;
+  background: transparent;
+  color: rgba(255,255,255,.92);
+  padding: 10px 10px;
+  border-radius: 10px;
+  display:flex;
+  align-items:center;
+  gap:10px;
+  font-weight: 750;
+}
+.menu-item:hover{ background: rgba(255,255,255,.08); }
+.mi-icon{ display:inline-flex; }
+
+/* Sharecards dropdown: text list + section header */
+.menu-dropdown.share-dropdown{
+  min-width: 220px;
+  padding: 8px;
+}
+.menu-dropdown.share-dropdown .menu-item{
+  justify-content: flex-start;
+  padding: 10px 10px;
+  font-weight: 750;
+}
+.menu-dropdown.share-dropdown .menu-section{
+  padding: 6px 10px 4px 10px;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: .10em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,.55);
+}
+.menu-dropdown.share-dropdown .menu-divider{
+  height: 1px;
+  background: rgba(255,255,255,.10);
+  margin: 6px 6px;
+  border-radius: 1px;
+}
+
+@media (max-width: 768px){
+  .header-menu-wrap{ right: 10px; top: 8px; }
+}
+
+/* Prevent layout shift when dropdown opens */
+html{ overflow-y: scroll; }
+
+/* Menu: icon-only item compact */
+.menu-dropdown{
+  min-width: 56px;
+  padding: 6px;
+}
+.menu-item{
+  justify-content:center;
+  padding: 10px;
+}
+.menu-item .mi-icon{
+  margin: 0;
+}
+
+/* Mobile: move menu further right/top so it doesn't overlap logo */
+@media (max-width: 768px){
+  .header-menu-wrap{
+    right: 6px;
+    top: 6px;
+  }
+  .menu-btn{
+    width: 34px;
+    height: 34px;
+  }
+}
+
+/* Prevent menu jump by fixing wrapper size */
+.header-menu-wrap{
+  width: 36px;
+  height: 36px;
+}
+.menu-dropdown{
+  position: absolute;
+  right: 0;
+  top: 42px;
+}
+
+/* Stronger mobile positioning */
+@media (max-width: 768px){
+  .header-menu-wrap{
+    right: 2px;
+    top: 2px;
+  }
+  .menu-dropdown{
+    top: 40px;
+  }
+}
+
+/* Records table: lock Stars column width (1–5 stars) */
+#recordsView table{
+  table-layout: fixed;
+}
+#recordsView th:nth-child(5),
+#recordsView td:nth-child(5){
+  width: 9ch;
+  min-width: 9ch;
+  max-width: 9ch;
+  text-align: center;
+  white-space: nowrap;
+}
+
+/* Records table: widen table and give Stars column generous fixed space */
+#recordsView .records-card{
+  max-width: 1400px; /* slightly wider container */
+}
+
+#recordsView table{
+  table-layout: fixed;
+  width: 100%;
+}
+
+#recordsView th:nth-child(5),
+#recordsView td:nth-child(5){
+  width: 140px;      /* hard pixel width for stars */
+  min-width: 140px;
+  max-width: 140px;
+  text-align: center;
+  white-space: nowrap;
+}
+
+
+/* True vertical centering for Personal Bests panel */
+@media (min-width: 900px) {
+  .personal-bests-panel {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+}
+
+
+/* Vertically center Personal Bests grouping within its panel (desktop only) */
+@media (min-width: 900px) {
+  .personal-bests-panel{
+    display:flex;
+    flex-direction:column;
+  }
+  .personal-bests-panel .bests-grid{
+    margin-top:auto;
+    margin-bottom:auto;
+  }
+}
+
+
+/* Instructions text styling to match other tabs */
+.instructions-text {
+  line-height: 1.6;
+}
+.instructions-text p {
+  font-size: 15px;
+  color: rgba(255,255,255,.85);
+}
+
+/* Data & Backups (Instructions tab) */
+.backup-actions{
+  margin-top: 10px;
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+}
+
+.backup-btn{
+  align-self:flex-start;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,.14);
+  background: rgba(255,255,255,.08);
+  color: rgba(255,255,255,.92);
+  padding: 10px 14px;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+}
+.backup-btn:hover{ background: rgba(255,255,255,.12); }
+.backup-btn:focus{ outline: 2px solid rgba(255,255,255,.18); outline-offset: 2px; }
+
+.restore-wrap{ display:flex; flex-direction:column; gap:8px; }
+.restore-label{ font-size: 12px; color: rgba(255,255,255,.78); letter-spacing: 1px; text-transform: uppercase; }
+
+.restore-drop{
+  border: 1px dashed rgba(255,255,255,.24);
+  background: rgba(255,255,255,.05);
+  border-radius: 14px;
+  padding: 14px;
+  font-size: 13px;
+  color: rgba(255,255,255,.82);
+  cursor: pointer;
+  user-select:none;
+}
+.restore-drop:hover{ background: rgba(255,255,255,.07); }
+.restore-drop.dragover{
+  border-color: rgba(255,196,0,.55);
+  background: rgba(255,196,0,.10);
+}
+
+.backup-msg{
+  min-height: 18px;
+  font-size: 13px;
+  color: rgba(255,255,255,.80);
+}
+
+
+.muted{ color: var(--muted); font-size: 16px; }
+
+
+/* === Share card: stabilize highest scoring fish list === */
+.share-card .rarity-entry {
+  margin-bottom: 14px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.share-card .rarity-entry .left {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.share-card .rarity-entry .fish-name {
+  font-size: 1.05rem;
+  line-height: 1.25;
+  font-weight: 600;
+}
+
+.share-card .rarity-entry .fish-meta {
+  margin-top: 4px;
+  font-size: 0.8rem;
+  line-height: 1.2;
+  opacity: 0.8;
+}
+
+.share-card .rarity-entry .fish-points {
+  font-size: 0.95rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+
+/* === Share Card layout rebalance === */
+
+/* Shrink KPI cards slightly */
+.share-card .kpi-grid {
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+.share-card .kpi {
+  padding: 14px 16px;
+}
+
+.share-card .kpi .label {
+  font-size: 0.85rem;
+}
+
+.share-card .kpi .value {
+  font-size: 1.6rem;
+  line-height: 1.1;
+}
+
+/* Give more vertical room to highest scoring fish section */
+.share-card .highest-by-rarity {
+  margin-top: 18px;
+  padding-top: 6px;
+}
+
+/* Ensure rarity list can grow */
+.share-card .highest-by-rarity .rarity-entry {
+  margin-bottom: 18px;
+}
+
+/* Slightly smaller points text to avoid collisions */
+.share-card .highest-by-rarity .fish-points {
+  font-size: 0.9rem;
+}
+
+/* Acknowledgements text styling */
+.ack-text {
+  font-weight: 400;
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+.ack-logo {
+  height: 16px;
+  width: auto;
+  vertical-align: middle;
+  margin-right: 4px;
+}
+
+/* Acknowledgements spacing & tone */
+.instr-divider{
+  border: none;
+  border-top: 1px solid rgba(255,255,255,0.14);
+  margin: 18px 0 10px;
+}
+.ack-heading{
+  color: #9aa0a6;
+  font-weight: 700;
+}
+
+.ack-wrapper {
+  margin-top: 20px;
+}
+.instr-text{
+  color: var(--text);
+}
+.ack-text {
+  color: #9aa0a6; /* slightly dimmed gray */
+}
+
+/* Donut center label (fixed) */
+.donut { position: relative; }
+.donut canvas { position: relative; z-index: 1; }
+.donut-value{
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 2;
+  font-size: 14px;
+  font-weight: 800;
+  color: #6b7280;
+  background: transparent;
+  padding: 0;
+  border-radius: 0;
+  line-height: 1;
+  pointer-events: none;
+}
+
+
+/* === Golden_v12e: Visual-only fish highlight, FORCE single-line, brighter yellow === */
+.fish-name,
+.is-editing .fish-name {
+  display: inline-flex !important;   /* overrides flex/text wrapping sources */
+  flex-wrap: nowrap !important;
+  align-items: center;
+  max-width: 100%;
+  white-space: nowrap !important;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.fish-name.is-editing,
+.is-editing .fish-name {
+  background: rgba(255, 240, 90, 0.45); /* much brighter yellow fill */
+  box-shadow:
+    0 0 0 3px rgba(255, 240, 90, 1),
+    0 0 18px rgba(255, 240, 90, 0.95);
+  border-radius: 8px;
+}
+/* === End Golden_v12e === */
+
+
+/* === Golden_v12f: EXTRA-bright yellow highlight (visual-only) === */
+.fish-name.is-editing,
+.is-editing .fish-name {
+  background: rgba(255, 255, 120, 0.65); /* very bright yellow */
+  box-shadow:
+    0 0 0 3px rgba(255, 230, 0, 1),
+    0 0 22px rgba(255, 230, 0, 1);
+}
+/* === End Golden_v12f === */
+
+
+/* === Golden_v12g: Allow wrap when idle, single-line only when selected === */
+
+/* Default (NOT selected): allow wrapping */
+.fish-name {
+  display: inline;
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+}
+
+/* Selected / editing: force single line */
+.fish-name.is-editing,
+.is-editing .fish-name {
+  display: inline-flex;
+  flex-wrap: nowrap;
+  white-space: nowrap !important;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* === End Golden_v12g === */
+
+
+/* === Golden_v12h: Slightly widen Log Records table container === */
+/* Desktop only – mobile remains viewport-bound */
+@media (min-width: 1200px) {
+  .log-records-container,
+  .records-container,
+  .log-records,
+  .records-table-wrapper {
+    max-width: 1280px;
+  }
+}
+/* === End Golden_v12h === */
+
+
+/* Remove number input spinners */
+input[type=number]::-webkit-inner-spin-button,
+input[type=number]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+input[type=number] {
+  -moz-appearance: textfield;
+}
+
+
+/* Highlight referenced tab names in instructions */
+
+
+/* Highlight referenced tab names in instructions (muted) */
+.tab-ref{
+  color: rgba(255, 216, 77, 0.75);
+  font-weight: 600;
+}
+
+
+
+/* Carp Diem discord link in acknowledgements */
+.ack-discord{
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  text-decoration: none;
+  color: inherit;
+  cursor: pointer;
+}
+.ack-discord:hover{
+  text-decoration: underline;
+}
+
+
+
+.ack-discord img{vertical-align:middle;}
+
+.ack-discord {
+  display: inline-flex;
+  align-items: center;
+  vertical-align: middle;
+}
+
+.ack-discord img {
+  vertical-align: middle;
+}
+
+
+/* Privacy Notice */
+.privacy-btn {
+  background: none;
+  border: 1px solid rgba(255,255,255,0.4);
+  color: #fff;
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.85em;
+}
+
+
+.meta-buttons{
+  display:flex;
+  gap:10px;
+  align-items:center;
+}
+
+.version-btn{
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.55);
+  color:#fff;
+  padding: 7px 14px;
+  border-radius: 8px;
+  cursor:pointer;
+  font-size: 0.9em;
+  font-weight: 600;
+}
+
+.version-btn:hover{
+  background: rgba(255,255,255,0.14);
+}
+
+.release-notes{
+  margin: 10px 0 0 18px;
+  padding: 0;
+}
+
+.release-notes li{
+  margin: 6px 0;
+}
+
+.privacy-modal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+}
+
+.privacy-content {
+  background: #0b1e2d;
+  color: #fff;
+  padding: 20px;
+  max-width: 420px;
+  width: 90%;
+  border-radius: 12px;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+}
+
+.privacy-footnote {
+  font-size: 0.75em;
+  opacity: 0.7;
+  margin-top: 12px;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  color: #ccc;
+  margin-top: 10px;
+  cursor: pointer;
+}
+
+
+/* Dashboard: Include Legendary toggle */
+.dash-controls{
+  display:flex;
+  justify-content:flex-end;
+  margin: 6px 0 10px 0;
+}
+.toggle{ display:flex; align-items:center; gap:10px; cursor:pointer; user-select:none; }
+.toggle input{ display:none; }
+.toggle .slider{
+  width:42px; height:22px; border-radius:22px;
+  background: rgba(255,255,255,0.22);
+  position: relative;
+}
+.toggle .slider:before{
+  content:""; position:absolute; top:3px; left:3px;
+  width:16px; height:16px; border-radius:50%;
+  background:#fff; transition: all 0.2s ease;
+}
+.toggle input:checked + .slider:before{ transform: translateX(20px); }
+.toggle-label{ font-size:0.9em; opacity:0.9; }
+
+
+/* Muted divider above Privacy Notice */
+.privacy-divider {
+  border: none;
+  height: 1px;
+  background: rgba(255,255,255,0.18);
+  margin: 16px 0 10px 0;
+}
+
+
+/* === Season Mode UI === */
+.hidden{ display:none !important; }
+
+.topbar-controls{
+  display:flex;
+  align-items:center;
+  gap:12px;
+}
+
+.mode-toggle{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  padding:4px;
+  margin-top:10px;
+  border-radius:999px;
+  border:1px solid rgba(255,255,255,.16);
+  background:linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.03));
+  box-shadow:0 10px 24px rgba(0,0,0,.18);
+}
+
+.mode-btn{
+  appearance:none;
+  border:0;
+  background:transparent;
+  color:rgba(255,255,255,.82);
+  padding:6px 14px;
+  border-radius:999px;
+  font-family:inherit;
+  font-size:11px;
+  letter-spacing:1.2px;
+  text-transform:uppercase;
+  cursor:pointer;
+  font-weight:800;
+}
+
+/* Season-mode weight field is derived from points */
+input.disabled{
+  opacity:0.85;
+  cursor:not-allowed;
+}
+
+.mode-btn:hover{
+  background:rgba(255,255,255,.08);
+}
+
+.mode-btn.active{
+  border:1px solid rgba(255,196,0,.55);
+  background:linear-gradient(180deg, rgba(255,196,0,.20), rgba(255,196,0,.08));
+  color:var(--accent);
+}
+
+body.season-active .mode-btn.active{
+  border-color:rgba(120,200,255,.55);
+  background:linear-gradient(180deg, rgba(120,200,255,.20), rgba(120,200,255,.08));
+  color:rgba(255,255,255,.92);
+}
+
+.season-banner{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:14px;
+  padding:14px 16px;
+  border-radius:18px;
+  border:1px solid rgba(255,255,255,.10);
+  background:linear-gradient(180deg, rgba(120,200,255,.12), rgba(255,255,255,.04));
+  box-shadow:0 18px 40px rgba(0,0,0,.18);
+  margin: 6px 0 12px;
+}
+
+.season-banner-left{
+  display:flex;
+  flex-direction:column;
+  gap:2px;
+}
+
+.season-banner-title{
+  font-family:var(--font-display);
+  font-weight:900;
+  letter-spacing:1px;
+  font-size:16px;
+  color:rgba(255,255,255,.92);
+}
+
+.season-banner-sub{
+  font-size:12px;
+  color:rgba(255,255,255,.72);
+}
+
+.season-banner-actions{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  flex-wrap:wrap;
+  justify-content:flex-end;
+}
+
+.season-action-btn{
+  appearance:none;
+  border:1px solid rgba(255,255,255,.18);
+  background:linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.04));
+  color:rgba(255,255,255,.90);
+  border-radius:999px;
+  padding:8px 12px;
+  font-family:inherit;
+  font-size:12px;
+  letter-spacing:.6px;
+  cursor:pointer;
+  font-weight:700;
+}
+
+.season-action-btn:hover{
+  background:linear-gradient(180deg, rgba(255,255,255,.14), rgba(255,255,255,.06));
+}
+
+@media (max-width: 720px){
+  .topbar-controls{ gap:10px; }
+  .mode-btn{ padding:7px 10px; font-size:11px; }
+  .season-banner{
+    flex-direction:column;
+    align-items:flex-start;
+  }
+  .season-banner-actions{ width:100%; justify-content:flex-start; }
+}
+
+
+/* Season OOS input hint */
+input.outofseason{
+  outline: 2px solid rgba(255, 173, 58, .9);
+  box-shadow: 0 0 0 3px rgba(255, 173, 58, .18);
+}
+
+/* JS tooltip (Season mode) */
+.fm-tooltip{
+  position: absolute;
+  z-index: 99999;
+  background: rgba(0,0,0,0.88);
+  color: #ffffff;
+  padding: 6px 10px;
+  border-radius: 10px;
+  font-size: 12px;
+  line-height: 1.2;
+  pointer-events: none;
+  max-width: 260px;
+  white-space: nowrap;
+  box-shadow: 0 8px 22px rgba(0,0,0,0.35);
+}
+
+body.season-active .oos-note{
+  display: block;
+}
+
+/* Season mode inline subheader */
+.oos-sub{
+  font-size: 12px;
+  opacity: 0.7;
+  font-weight: normal;
+  margin-left: 6px;
+}
+body:not(.season-active) .oos-sub{
+  display: none;
+}
+
+/* Season mode: flatten weight input (remove container look) */
+body.season-active .weight-container,
+body.season-active .weight-wrapper{
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+}
+
+/* Season mode: weight field in log records should not look like an input container */
+body.season-active td.weight-plain{
+  background: transparent !important;
+  box-shadow: none !important;
+  /* Keep table column alignment with other cells (headers/cells use 12px 24px) */
+  padding-left: 24px !important;
+  padding-right: 24px !important;
+  /* keep row divider */
+  border-bottom: 1px solid rgba(255,255,255,.06) !important;
+}
+body.season-active td.weight-plain input.weight-input{
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+}
+
+/* Season mode: hide Include Legendary toggle on Dashboard */
+body.season-active .legendary-toggle,
+body.season-active .include-legendary,
+body.season-active .legendary-switch{
+  display: none !important;
+}
+
+/* Season mode: hide Include Legendary control explicitly */
+body.season-active .dash-controls{
+  display: none !important;
+}
+
+/* Season banner uncaught counter */
+.season-uncaught{
+  font-size: 13px;
+  opacity: 0.85;
+  margin-left: 10px;
+}
+
+/* Season banner progress */
+.season-progress{
+  margin-top: 8px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.season-progress-label{
+  font-size: 12px;
+  opacity: 0.9;
+  min-width: 56px;
+}
+.season-progress-track{
+  height: 8px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.18);
+  overflow: hidden;
+  flex: 1;
+  max-width: 220px;
+}
+.season-progress-fill{
+  height: 100%;
+  width: 0%;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.75);
+}
+
+/* Modal (PB confirm) */
+.modal-backdrop{
+  position: fixed;
+  inset: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0,0,0,0.55);
+  z-index: 9999;
+  padding: 18px;
+}
+.modal-backdrop.show{ display: flex; }
+.modal{
+  width: min(520px, 100%);
+  background: rgba(20,26,34,0.98);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 14px;
+  padding: 16px 16px 14px;
+  box-shadow: 0 18px 60px rgba(0,0,0,0.45);
+}
+.modal-title{ font-size: 16px; font-weight: 700; margin-bottom: 8px; }
+.modal-body{ font-size: 13px; opacity: 0.9; line-height: 1.4; }
+.modal-check{ display: flex; gap: 8px; align-items: center; margin-top: 10px; font-size: 12px; opacity: 0.9; }
+.modal-actions{ display: flex; gap: 10px; justify-content: flex-end; margin-top: 12px; }
+.btn-primary, .btn-secondary{
+  border-radius: 10px;
+  padding: 8px 12px;
+  font-size: 13px;
+  cursor: pointer;
+  border: 1px solid rgba(255,255,255,0.14);
+  background: rgba(255,255,255,0.10);
+  color: rgba(255,255,255,0.92);
+}
+.btn-primary{
+  background: rgba(255,255,255,0.20);
+}
+
+
+/* --- Season mode: Out-of-season fish styling --- */
+tr.oos-row td { opacity: 0.75; }
+tr.oos-row td input { opacity: 1; } /* keep inputs readable */
+.fish-name.oos { opacity: 0.6; }
+
+
+.oos-badge{
+  display:inline-block;
+  width:7px;
+  height:7px;
+  margin-left:8px;
+  border-radius:50%;
+  background: radial-gradient(circle at 30% 30%, #ffd1d1, #ff4d4d);
+  box-shadow: 0 0 0 2px rgba(255,77,77,.18);
+  vertical-align: middle;
+  transform: translateY(-1px);
+}
+
+
+
+/* Force opaque sticky headers (Season table) */
+thead th{background-color:#0b1630;opacity:1;}
+
+/* --- HARD FIX: force opaque sticky headers (Season table) --- */
+thead,
+thead tr,
+thead th {
+  background-color: #0b1630 !important;
+  opacity: 1 !important;
+  backdrop-filter: none !important;
+}
+
+thead {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  isolation: isolate;
+}
+
+
+/* =========================
+   Season Mode – Purple Theme
+   ========================= */
+body.season-active {
+  background:
+    radial-gradient(1100px 700px at 50% 10%, #332c66 0%, rgba(51,44,102,0.35) 40%, transparent 65%),
+    radial-gradient(900px 600px at 15% -10%, #2a245a 0%, rgba(42,36,90,0.35) 45%, transparent 70%),
+    radial-gradient(900px 600px at 90% 0%, #2b255f 0%, rgba(43,37,95,0.35) 45%, transparent 70%),
+    linear-gradient(180deg, #1a1636 0%, #110e26 100%);
+}
+
+body.season-active .panel {
+  background: linear-gradient(180deg, #201a3a 0%, #17122f 100%);
+}
+
+body.season-active .panel-title {
+  color: #c6b8ff;
+}
+
+body.season-active .progress-bar-fill {
+  background: linear-gradient(90deg, #8b7cff, #6f63e6);
+}
+
+body.season-active .highlight-value,
+body.season-active .kpi-value {
+  color: #ffffff;
+}
+
+
+/* =========================
+   Season Mode – Taller Improvement Charts
+   ========================= */
+body.season-active #eliteEpicsChart,
+body.season-active #shortLivedEpicsChart {
+  height: 620px !important;
+}
+
+
+/* Season mode: make Epics Improvement Targets fill its panel */
+body.season-active #invisiblesChart{
+  height: 520px !important;
+}
+
+
+/* Season mode: chart headers same tone as axis labels (not purple) */
+body.season-active .panel-title,
+body.season-active .chart-title,
+body.season-active .chart-header,
+body.season-active .panel h3,
+body.season-active .panel h4{
+  color: rgba(255,255,255,0.78) !important;
+}
+
+/* Season mode: lighter, higher-variation purple gradient background */
+body.season-active {
+  background:
+    radial-gradient(1200px 600px at 50% 40%, rgba(110,90,180,0.45), rgba(60,45,120,0.55) 45%, rgba(35,25,80,0.85) 80%),
+    linear-gradient(180deg, rgba(95,80,165,0.55) 0%, rgba(70,55,135,0.6) 35%, rgba(45,35,95,0.85) 100%);
+}
+
+/* Season mode: inverted purple gradient (darker top, lighter middle) */
+body.season-active {
+  background:
+    radial-gradient(1200px 650px at 50% 55%,
+      rgba(125,105,195,0.55) 0%,
+      rgba(95,80,165,0.45) 35%,
+      rgba(55,40,110,0.85) 75%),
+    linear-gradient(180deg,
+      rgba(35,25,80,0.95) 0%,
+      rgba(70,55,135,0.75) 40%,
+      rgba(90,75,165,0.65) 65%,
+      rgba(45,35,95,0.85) 100%);
+}
+
+/* Season mode: darker inverted purple gradient (overall dimmer) */
+body.season-active {
+  background:
+    radial-gradient(1200px 650px at 50% 55%,
+      rgba(105,90,170,0.35) 0%,
+      rgba(80,65,140,0.30) 35%,
+      rgba(40,30,90,0.80) 75%),
+    linear-gradient(180deg,
+      rgba(25,18,60,0.95) 0%,
+      rgba(55,45,110,0.80) 40%,
+      rgba(70,60,135,0.70) 65%,
+      rgba(30,22,70,0.90) 100%);
+}
+
+/* Season mode: overall darker inverted purple gradient (top significantly darker) */
+body.season-active {
+  background:
+    radial-gradient(1200px 650px at 50% 55%,
+      rgba(85,70,150,0.25) 0%,
+      rgba(65,50,120,0.25) 35%,
+      rgba(30,22,75,0.85) 75%),
+    linear-gradient(180deg,
+      rgba(18,12,45,0.98) 0%,
+      rgba(40,32,95,0.88) 35%,
+      rgba(55,45,115,0.78) 60%,
+      rgba(22,15,55,0.95) 100%);
+}
+
+
+/* Hide Career Targets tab in Season mode */
+.season-active .career-only {
+  display: none !important;
+}
+
+
+
+.ct-rarity-header{
+  position: relative;
+  padding-left: 14px; /* room for accent bar */
+}
+.ct-rarity-header.ct-common{ border-left: 4px solid #9aa4b2; }
+.ct-rarity-header.ct-rare{ border-left: 4px solid #4fa3ff; }
+.ct-rarity-header.ct-epic{ border-left: 4px solid #b56bff; }
+.ct-rarity-header.ct-legendary{ border-left: 4px solid #ffcc4d; }
+
+
+/* Career Targets: rarity name pill accents */
+.ct-rarity-header{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.ct-rarity-name{
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 10px;
+  border-radius: 10px;
+  font-weight: 800;
+  letter-spacing: .06em;
+  line-height: 1;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.10);
+}
+
+/* Per-rarity pill color (matches chart palette variables) */
+.ct-rarity-header.ct-common .ct-rarity-name{
+  background: color-mix(in srgb, var(--common) 28%, rgba(0,0,0,0));
+  border-color: color-mix(in srgb, var(--common) 45%, rgba(255,255,255,0.10));
+  color: color-mix(in srgb, var(--common) 85%, #ffffff);
+}
+
+.ct-rarity-header.ct-rare .ct-rarity-name{
+  background: color-mix(in srgb, var(--rare) 28%, rgba(0,0,0,0));
+  border-color: color-mix(in srgb, var(--rare) 45%, rgba(255,255,255,0.10));
+  color: color-mix(in srgb, var(--rare) 85%, #ffffff);
+}
+
+.ct-rarity-header.ct-epic .ct-rarity-name{
+  background: color-mix(in srgb, var(--epic) 28%, rgba(0,0,0,0));
+  border-color: color-mix(in srgb, var(--epic) 45%, rgba(255,255,255,0.10));
+  color: color-mix(in srgb, var(--epic) 85%, #ffffff);
+}
+
+.ct-rarity-header.ct-legendary .ct-rarity-name{
+  background: color-mix(in srgb, var(--legendary) 28%, rgba(0,0,0,0));
+  border-color: color-mix(in srgb, var(--legendary) 45%, rgba(255,255,255,0.10));
+  color: color-mix(in srgb, var(--legendary) 85%, #ffffff);
+}
+
+
+
+/* Career Targets: remove legacy left accent bar (pill replaces it) */
+.ct-rarity-header{
+  padding-left: 0 !important;
+  border-left: none !important;
+}
+
+
+/* Restore confirm modal uses existing .modal-backdrop/.modal styles */
+
+
+
+.career-targets-season{
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+}
+.ct-season-btn{
+  appearance: none;
+  border: 1px solid rgba(255,255,255,0.16);
+  background: rgba(255,255,255,0.06);
+  color: rgba(255,255,255,0.82);
+  padding: 8px 12px;
+  border-radius: 999px;
+  font-weight: 800;
+  letter-spacing: .02em;
+  cursor: pointer;
+}
+.ct-season-btn:hover{
+  background: rgba(255,255,255,0.09);
+}
+.ct-season-btn.active{
+  border-color: rgba(255,211,84,0.55);
+  box-shadow: 0 0 0 2px rgba(255,211,84,0.14) inset;
+  color: rgba(255,255,255,0.95);
+}
+
+
+/* Career Targets: wider target buttons for urgency targets */
+.ct-target-btn.ct-target-wide{
+  padding-left: 14px;
+  padding-right: 14px;
+}
+
+
+/* Restore confirm modal (white) */
+#restoreConfirmBackdrop .modal{
+  background: #ffffff;
+  color: #111827;
+  border: 1px solid rgba(0,0,0,0.10);
+  box-shadow: 0 20px 60px rgba(0,0,0,0.35);
+}
+#restoreConfirmBackdrop .modal-title{
+  color: #111827;
+}
+#restoreConfirmBackdrop .modal-body{
+  color: rgba(17,24,39,0.90);
+}
+#restoreConfirmBackdrop .btn-secondary{
+  background: rgba(17,24,39,0.06);
+  border: 1px solid rgba(17,24,39,0.14);
+  color: #111827;
+}
+#restoreConfirmBackdrop .btn-secondary:hover{
+  background: rgba(17,24,39,0.10);
+}
+#restoreConfirmBackdrop .btn-primary{
+  background: #2563eb;
+  border: 1px solid rgba(37,99,235,0.65);
+  color: #ffffff;
+}
+#restoreConfirmBackdrop .btn-primary:hover{
+  background: #1d4ed8;
+}
+
+
+/* Global white modal override (Restore + Privacy + others) */
+.modal{
+  background: #ffffff;
+  color: #111827;
+  border: 1px solid rgba(0,0,0,0.10);
+  box-shadow: 0 20px 60px rgba(0,0,0,0.35);
+}
+.modal-title{
+  color: #111827;
+}
+.modal-body{
+  color: rgba(17,24,39,0.90);
+}
+.modal .btn-secondary{
+  background: rgba(17,24,39,0.06);
+  border: 1px solid rgba(17,24,39,0.14);
+  color: #111827;
+}
+.modal .btn-secondary:hover{
+  background: rgba(17,24,39,0.10);
+}
+.modal .btn-primary{
+  background: #2563eb;
+  border: 1px solid rgba(37,99,235,0.65);
+  color: #ffffff;
+}
+.modal .btn-primary:hover{
+  background: #1d4ed8;
+}
+
+
+/* GOLDEN OVERRIDE: force white modals everywhere */
+.modal,
+.modal-card,
+.modal-content{
+  background: #ffffff !important;
+  color: #111827 !important;
+}
+
+.modal-title{
+  color: #111827 !important;
+}
+
+.modal-body{
+  color: rgba(17,24,39,0.9) !important;
+}
+
+
+
+/* FINAL: force Privacy + Release Notes popups to white */
+#privacyModal .privacy-content,
+#releaseNotesModal .privacy-content{
+  background: #ffffff !important;
+  color: #111827 !important;
+  border: 1px solid rgba(0,0,0,0.10) !important;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.35) !important;
+}
+#privacyModal .privacy-content h3,
+#releaseNotesModal .privacy-content h3{
+  color: #111827 !important;
+}
+#privacyModal .privacy-content p,
+#releaseNotesModal .privacy-content p,
+#releaseNotesModal .privacy-content li{
+  color: rgba(17,24,39,0.90) !important;
+}
+#privacyModal .close-btn,
+#releaseNotesModal .close-btn{
+  color: rgba(17,24,39,0.70) !important;
+}
+
+/* FINAL: harden restore confirm modal to white */
+#restoreConfirmBackdrop .modal{
+  background: #ffffff !important;
+  color: #111827 !important;
+}
+#restoreConfirmBackdrop .modal-title,
+#restoreConfirmBackdrop .modal-body{
+  color: #111827 !important;
+}
+
+
+/* === FIX: Share menu should overlay sticky table headers (Records / Season Records) === */
+.header-menu-wrap{ z-index: 9999 !important; }
+.menu-dropdown{ position: relative; z-index: 10000 !important; }
+/* Ensure tables don't create an unexpected stacking context above menus */
+.table-scroll{ position: relative; z-index: 1; }
+/* === END FIX === */
+
+
+
+.privacy-clear-confirmation {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  font-size: 12px;
+  color: #ddd;
+  background: rgba(0,0,0,0.6);
+  padding: 6px 10px;
+  border-radius: 6px;
+  z-index: 9999;
+}
+
+
+/* === Focus tab controls === */
+.focus-controls{
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  align-items: end;
+}
+.focus-field{
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.focus-label{
+  font-size: 12px;
+  color: rgba(255,255,255,0.75);
+}
+.focus-select{
+  width: 100%;
+  padding: 10px 10px;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.18);
+  background: rgba(0,0,0,0.25);
+  color: #fff;
+  outline: none;
+}
+.focus-select:disabled{
+  opacity: 0.55;
+}
+@media (max-width: 680px){
+  .focus-controls{ grid-template-columns: 1fr; }
+}
+/* === End Focus tab controls === */
+
+
+
+/* === Focus Tab: Add-to-list UI === */
+.focus-add-btn{
+  padding:10px 14px;
+  border-radius:10px;
+  border:1px solid rgba(255,196,0,.35);
+  background:rgba(255,196,0,.18);
+  color:var(--ink);
+  cursor:pointer;
+  font-size:13px;
+  font-weight:700;
+}
+.focus-add-btn:hover{ background:rgba(255,196,0,.24); }
+.focus-add-btn:disabled{ opacity:.45; cursor:not-allowed; }
+
+.focus-list{ display:flex; flex-wrap:wrap; gap:8px; }
+.focus-chip{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  padding:6px 10px;
+  border-radius:999px;
+  border:1px solid rgba(255,255,255,.14);
+  background:rgba(0,0,0,.18);
+  font-size:12px;
+}
+.focus-chip .x{
+  border:0;
+  background:transparent;
+  color:rgba(255,255,255,.7);
+  cursor:pointer;
+  font-size:14px;
+  line-height:1;
+  padding:0 2px;
+}
+.focus-chip .x:hover{ color:rgba(255,255,255,.95); }
+
+
+/* === Focus: Points Gap panel === */
+.focus-gap-wrap{
+  margin-top: 6px;
+  padding: 10px 12px;
+  border: 1px solid rgba(255,255,255,0.10);
+  border-radius: 12px;
+  background: rgba(0,0,0,0.12);
+}
+.focus-gap-title{
+  font-weight: 650;
+  margin-bottom: 8px;
+}
+.focus-gap-row{
+  display: grid;
+  grid-template-columns: 1.6fr 0.55fr 0.55fr 0.9fr 0.55fr;
+  gap: 10px;
+  align-items: center;
+  padding: 6px 0;
+  border-top: 1px solid rgba(255,255,255,0.07);
+  font-size: 13px;
+}
+.focus-gap-head{
+  border-top: none;
+  padding-top: 0;
+  opacity: 0.85;
+  font-weight: 600;
+}
+.focus-gap-fish{
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: baseline;
+}
+.focus-gap-sub{
+  opacity: 0.7;
+  font-size: 12px;
+}
+.focus-gap-gap{
+  font-weight: 700;
+}
+@media (max-width: 520px){
+  .focus-gap-row{
+    grid-template-columns: 1.6fr 0.6fr 0.6fr 0.9fr 0.6fr;
+    font-size: 12px;
+  }
+}
+
+
+
+/* Focus / helper text (match other tab helper copy) */
+.fm-helptext{
+  font-size: 13px;
+  color: rgba(255,255,255,.78);
+  line-height: 1.35;
+}
+
+
+/* Focus progress bars (lightweight, no chart.js) */
+.focus-progress{
+  width: 100%;
+  height: 8px;
+  border-radius: 999px;
+  background: rgba(255,255,255,.10);
+  overflow: hidden;
+  margin-top: 6px;
+}
+.focus-progress .fill{
+  height: 100%;
+  width: 0%;
+  background: rgba(255,216,77,.85);
+  border-radius: 999px;
+}
+.focus-progress-meta{
+  display:flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: rgba(255,255,255,.70);
+  margin-top: 4px;
+}
+
+
+/* FINAL FIX: Force Season Dashboard KPI text to white */
+body.season-active .kpi-value,
+body.season-active .kpi-label,
+body.season-active .highlight-value {
+  color: #ffffff !important;
+}
+
+
+
+@media (max-width: 520px) {
+
+  .career-controls {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 10px;
+  }
+
+  .career-filters {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+  }
+
+  .career-sort {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+  }
+
+  .career-sort label {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+  }
+}
+
+
+
+/* --- Mobile fix: prevent input overlapping label in Season Log Records card rows --- */
+@media (max-width: 640px){
+  #recordsView .table-scroll td.input-cell{
+    flex-direction: column;
+    align-items: stretch;
+  }
+  #recordsView .table-scroll td.input-cell::before{
+    max-width: 100%;
+  }
+  #recordsView .table-scroll td.input-cell input{
+    width: 100%;
+    max-width: none;
+  }
+}
