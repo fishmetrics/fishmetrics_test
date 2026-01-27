@@ -2830,3 +2830,25 @@ body.season-active .highlight-value {
     max-width: none;
   }
 }
+
+
+
+/* --- Mobile fix: keep Share dropdown inside viewport --- */
+@media (max-width: 520px){
+  /* share menu / dropdown panel */
+  .share-menu, .share-dropdown, .sharecard-menu, #shareMenu, #shareDropdown{
+    right: 8px !important;
+    left: auto !important;
+    max-width: calc(100vw - 16px) !important;
+    box-sizing: border-box;
+  }
+}
+
+
+/* --- Mobile safety net: constrain floating menus to viewport width --- */
+@media (max-width: 520px){
+  [id*="share" i], [class*="share" i], [class*="dropdown" i], [class*="menu" i], [role="menu"]{
+    max-width: calc(100vw - 16px);
+    box-sizing: border-box;
+  }
+}

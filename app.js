@@ -5492,3 +5492,71 @@ function _addMonths(date, months){
     });
   }
 })();
+
+
+/*__MOBILE_CLAMP_SHARE_DROPDOWN_STRONG__*/
+(function () {
+  const PAD = 8;
+
+  function isVisible(el) {
+    const cs = getComputedStyle(el);
+    if (!cs) return false;
+    if (cs.display === 'none' || cs.visibility === 'hidden' || cs.opacity === '0') return false;
+    const r = el.getBoundingClientRect();
+    return r.width > 40 && r.height > 40;
+  }
+
+  function clampMenu(el) {
+    try {
+      const vw = Math.max(document.documentElement.clientWidth || 0, window.innerWidth || 0);
+      const vh = Math.max(document.documentElement.clientHeight || 0, window.innerHeight || 0);
+      if (vw > 520) return; // mobile only
+      if (!isVisible(el)) return;
+
+      const r = el.getBoundingClientRect();
+      if (r.right <= vw - PAD && r.left >= PAD) return; // already in bounds
+
+      // Force fixed positioning so it can't overflow off-screen
+      const top = Math.min(Math.max(PAD, r.top), vh - PAD - Math.min(r.height, vh - PAD*2));
+      el.style.position = 'fixed';
+      el.style.top = top + 'px';
+      el.style.right = PAD + 'px';
+      el.style.left = 'auto';
+      el.style.transform = 'none';
+      el.style.maxWidth = 'calc(100vw - ' + (PAD*2) + 'px)';
+      el.style.boxSizing = 'border-box';
+      el.style.overflowX = 'hidden';
+      el.style.zIndex = '9999';
+    } catch (e) {}
+  }
+
+  function findAndClamp() {
+    const vw = Math.max(document.documentElement.clientWidth || 0, window.innerWidth || 0);
+    if (vw > 520) return;
+
+    // Heuristics: likely floating panels
+    const nodes = [];
+    document.querySelectorAll('[id*="share" i], [class*="share" i], [class*="dropdown" i], [class*="menu" i], [role="menu"], [aria-haspopup="menu"]').forEach(el => nodes.push(el));
+
+    // Also clamp any element that is currently overflowing right edge and looks like a panel
+    document.querySelectorAll('body *').forEach(el => {
+      try {
+        const cs = getComputedStyle(el);
+        if (!cs) return;
+        if (cs.position !== 'absolute' && cs.position !== 'fixed') return;
+        if (cs.zIndex === 'auto') return;
+        const r = el.getBoundingClientRect();
+        if (r.width < 140 || r.height < 120) return;
+        if (r.right > vw - PAD) nodes.push(el);
+      } catch (e) {}
+    });
+
+    const uniq = Array.from(new Set(nodes));
+    uniq.forEach(clampMenu);
+  }
+
+  document.addEventListener('click', () => setTimeout(findAndClamp, 0), true);
+  document.addEventListener('touchend', () => setTimeout(findAndClamp, 0), true);
+  window.addEventListener('resize', () => setTimeout(findAndClamp, 0));
+  window.addEventListener('orientationchange', () => setTimeout(findAndClamp, 50));
+})();
