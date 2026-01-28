@@ -5095,7 +5095,38 @@ function _addMonths(date, months){
 
 
   const focusItems = []; // { key, loc, name }
-  const MAX_FOCUS_ITEMS = 5;
+  const MAX_FOCUS_ITEMS = 10;
+
+  const FOCUS_LS_KEY = "focusItemsAlltime";
+  function saveFocusItems(){
+    try{
+      const payload = focusItems.map(x => ({ loc: x.loc, name: x.name }));
+      localStorage.setItem(FOCUS_LS_KEY, JSON.stringify(payload));
+    }catch(_){}
+  }
+  function loadFocusItems(){
+    try{
+      const raw = localStorage.getItem(FOCUS_LS_KEY) ?? "[]";
+      const arr = JSON.parse(raw);
+      if(!Array.isArray(arr)) return;
+      const seen = new Set();
+      for(const it of arr){
+        if(!it || typeof it.loc !== "string" || typeof it.name !== "string") continue;
+        const loc = it.loc;
+        const name = it.name;
+        if(typeof isFishInSeason === "function" && !isFishInSeason(name)) continue; // keep list "in-season" only
+        const key = `${loc}||${name}`;
+        if(seen.has(key)) continue;
+        if(focusItems.length >= MAX_FOCUS_ITEMS) break;
+        focusItems.push({ key, loc, name });
+        seen.add(key);
+      }
+    }catch(_){}
+  }
+
+  // Restore last selection on load (All-time only).
+  loadFocusItems();
+
 
   // Point limits (hard caps) by category. Used for the 5★ soft-cap target.
   const HARD_LIMIT_BY_CATEGORY = { Common: 600, Rare: 800, Epic: 1000, Legendary: 10000 };
@@ -5276,7 +5307,7 @@ function _addMonths(date, months){
         locSel.disabled = true;
         catSel.disabled = true;
         fishSel.disabled = true;
-        setHint(`You have reached a maximum of 5 selectable fish. Remove one to add another.`);
+        setHint(`You have reached a maximum of 10 selectable fish. Remove one to add another.`);
       }else{
         locSel.disabled = false;
         // restore normal cascading enable/disable
@@ -5293,7 +5324,7 @@ function _addMonths(date, months){
     setAddVisible(hasFish);
     setAddEnabled(hasFish && underLimit);
     if(addBtn){
-      addBtn.title = underLimit ? '' : `You have reached a maximum of 5 selectable fish.`;
+      addBtn.title = underLimit ? '' : `You have reached a maximum of 10 selectable fish.`;
     }
   }
 
@@ -5320,6 +5351,7 @@ function _addMonths(date, months){
       x.addEventListener('click', ()=>{
         const idx = focusItems.findIndex(f => f.key === item.key);
         if(idx >= 0) focusItems.splice(idx, 1);
+        saveFocusItems();
         renderList();
         updateAddState();
       });
@@ -5468,7 +5500,7 @@ function _addMonths(date, months){
       const key = `${loc}||${fishName}`;
 
       if(focusItems.length >= MAX_FOCUS_ITEMS){
-        setHint(`You have reached a maximum of 5 selectable fish. Remove one to add another.`);
+        setHint(`You have reached a maximum of 10 selectable fish. Remove one to add another.`);
         updateAddState();
         return;
       }
@@ -5481,6 +5513,7 @@ function _addMonths(date, months){
       }
 
       focusItems.push({ key, loc, name: fishName });
+      saveFocusItems();
       renderList();
 
       // After adding, reset fish select to encourage picking another
