@@ -514,15 +514,6 @@ select{
   padding: 12px 24px;
   border-radius:10px;
 }
-
-
-/* Windows/Chrome select dropdown readability:
-   Native option list often renders with a white background; ensure text is dark enough. */
-select option,
-select optgroup{
-  color:#111 !important;
-  background:#fff !important;
-}
 .total-fish{font-size:12px; color:rgba(255,255,255,.82)}
 .total-fish strong{color:var(--accent)}
 
@@ -2925,3 +2916,65 @@ body.season-active .highlight-value {
     align-self: flex-start;
   }
 }
+
+/* ==============================
+   Patch: Windows dropdown readability + Records table fish column
+   - Fix native <select> dropdown option contrast on Windows
+   - Keep Fish name + OOS badge on one line by giving Fish column more room
+   ============================== */
+
+/* Windows/Chrome select dropdown readability:
+   Native option list often renders with a white background; ensure text is dark enough. */
+select option,
+select optgroup{
+  color:#111 !important;
+  background:#fff !important;
+}
+
+/* Log Records table: keep Fish name + OOS badge on one line by giving Fish column more room.
+   IMPORTANT: table has no special class/id; it lives inside .table-scroll. */
+@media (min-width: 900px){
+  .table-scroll > table{ table-layout: fixed; width: 100%; }
+
+  /* Location column (1st) */
+  .table-scroll > table th:nth-child(1),
+  .table-scroll > table td:nth-child(1){
+    width: 115px;
+    max-width: 115px;
+    white-space: nowrap;
+  }
+
+  /* Category column (2nd) */
+  .table-scroll > table th:nth-child(2),
+  .table-scroll > table td:nth-child(2){
+    width: 105px;
+    max-width: 105px;
+    white-space: nowrap;
+  }
+
+  /* Fish column (3rd): prevent wrap so OOS badge stays inline */
+  .table-scroll > table th:nth-child(3),
+  .table-scroll > table td:nth-child(3){
+    white-space: nowrap;
+  }
+
+  .table-scroll .fish-name,
+  .table-scroll .oos-badge{
+    display: inline-flex;
+    align-items: center;
+    white-space: nowrap;
+    vertical-align: middle;
+  }
+
+  /* Editing highlight: ensure the pill wraps the full fish name (avoid max-width/ellipsis clipping). */
+  tbody tr.editing .fish-name{
+    display: inline-block !important;
+    max-width: none !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
+    white-space: nowrap !important;
+  }
+}
+
+
+.panel-subtitle{display:block;font-size:0.80em;opacity:0.85;margin-top:2px;}

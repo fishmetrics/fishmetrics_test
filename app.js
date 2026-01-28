@@ -3316,9 +3316,9 @@ function setupSeasonMode(){
       const shortT = document.getElementById('shortLivedTitle');
       const invT = document.getElementById('invisiblesTitle');
       if(m === "season"){
-        if(eliteT) eliteT.textContent = "Commons – Key Targets";
-        if(shortT) shortT.textContent = "Rares – Key Targets";
-        if(invT) invT.textContent = "Epics – Key Targets";
+        if(eliteT) eliteT.innerHTML = 'Commons – Key Targets<span class="panel-subtitle">Lowest-scoring in-season commons</span>';
+        if(shortT) shortT.innerHTML = 'Rares – Key Targets<span class="panel-subtitle">Lowest-scoring in-season rares</span>';
+        if(invT) invT.innerHTML = 'Epics – Key Targets<span class="panel-subtitle">Lowest-scoring in-season epics</span>';
       }else{
         if(eliteT) eliteT.textContent = "The Elite Epics";
         if(shortT) shortT.textContent = "The Short-Lived Specials";
