@@ -514,6 +514,15 @@ select{
   padding: 12px 24px;
   border-radius:10px;
 }
+
+
+/* Windows/Chrome select dropdown readability:
+   Native option list often renders with a white background; ensure text is dark enough. */
+select option,
+select optgroup{
+  color:#111 !important;
+  background:#fff !important;
+}
 .total-fish{font-size:12px; color:rgba(255,255,255,.82)}
 .total-fish strong{color:var(--accent)}
 
