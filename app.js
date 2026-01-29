@@ -2166,7 +2166,7 @@ brokenXAxisBreak);
     options: {layout:{ padding:{ bottom: 0 } },
       
       ...baseOpts,
-      plugins: { ...baseOpts.plugins, legend: { position: 'right', labels: baseOpts.plugins.legend.labels } },
+      plugins: { ...baseOpts.plugins, legend: { position: 'right', labels: { ...baseOpts.plugins.legend.labels, boxWidth: 8, boxHeight: 8, padding: 6 } } },
       // Star Catches should be a regular (grouped) column chart, not stacked.
       scales: { ...baseOpts.scales, x: { ...baseOpts.scales.x, stacked: false }, y: { ...baseOpts.scales.y, stacked: false } }
     }
