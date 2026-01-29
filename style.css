@@ -912,6 +912,12 @@ body.no-sidebar .sidebar{
     min-width: 4ch;
     text-align: right;
   }
+
+  /* Mobile override: Season weight-plain padding is forced to 24px on desktop; reset for stacked cards */
+  body.season-active #recordsView .table-scroll td.weight-plain{
+    padding: 12px 14px !important;
+  }
+
   #recordsView .table-scroll .inline-error{
     margin-top: 6px;
   }
