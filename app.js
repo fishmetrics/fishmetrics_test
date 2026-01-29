@@ -3651,7 +3651,7 @@ function _buildSeasonArchiveSnapshot(){
   return {
     schemaVersion: "season-archive-v1",
     exportedAt: now.toISOString(),
-    app: { name: "FishMetrics", version: "v1.4.3" },
+    app: { name: "FishMetrics", version: "v1.4.4" },
     season: { seasonId, startedAt, month },
     rules: {
       oosCaps: { Common: 357, Rare: 476, Epic: 595 },
@@ -4639,7 +4639,7 @@ function forceLegendaryIncludedSeason(){
 }
 document.addEventListener('DOMContentLoaded', forceLegendaryIncludedSeason);
 
-// --- Alias-safe restore helpers (v1.4.3+) ---
+// --- Alias-safe restore helpers (v1.4.4+) ---
 // Restore-time aliases: map legacy/misspelled fish names to the current canonical display name.
 // Keep keys lowercased.
 const RESTORE_FISH_ALIASES = {

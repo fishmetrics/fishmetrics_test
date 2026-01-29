@@ -900,6 +900,18 @@ body.no-sidebar .sidebar{
     width: 100%;
     max-width: 160px;
   }
+
+  /* Mobile: right-align derived Weight (auto) value in Season mode */
+  #recordsView .table-scroll td.weight-plain{
+    justify-content: space-between; /* keep label left, value right */
+  }
+  #recordsView .table-scroll td.weight-plain input.weight-input.disabled{
+    margin-left: auto;
+    width: auto;
+    max-width: 160px;
+    min-width: 4ch;
+    text-align: right;
+  }
   #recordsView .table-scroll .inline-error{
     margin-top: 6px;
   }
@@ -1286,8 +1298,18 @@ td.stars {
   font-weight: 800;
   letter-spacing: .4px;
 }
+.backup-btn{
+  cursor:pointer;
+  padding:10px 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,.14);
+  background: rgba(255,255,255,.08);
+  color: rgba(255,255,255,.92);
+  font-weight: 800;
+  letter-spacing: .4px;
+}
 .share-btn:hover{ background: rgba(255,255,255,.12); }
-
+.backup-btn:hover{ background: rgba(255,255,255,.12); }
 /* Header share icon button */
 .header-share{
   padding:8px;
@@ -1487,82 +1509,24 @@ html{ overflow-y: scroll; }
   }
 }
 
-/* Records table: lock Stars column width (1–5 stars) */
-#recordsView table{
-  table-layout: fixed;
-}
-#recordsView th:nth-child(5),
-#recordsView td:nth-child(5){
-  width: 9ch;
-  min-width: 9ch;
-  max-width: 9ch;
-  text-align: center;
-  white-space: nowrap;
-}
-
-/* Records table: widen table and give Stars column generous fixed space */
-#recordsView .records-card{
-  max-width: 1400px; /* slightly wider container */
-}
-
-#recordsView table{
-  table-layout: fixed;
-  width: 100%;
-}
-
-#recordsView th:nth-child(5),
-#recordsView td:nth-child(5){
-  width: 140px;      /* hard pixel width for stars */
-  min-width: 140px;
-  max-width: 140px;
-  text-align: center;
-  white-space: nowrap;
-}
-
-
-/* True vertical centering for Personal Bests panel */
-@media (min-width: 900px) {
-  .personal-bests-panel {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
+/* Records table: Stars column sizing (desktop only) */
+@media (min-width: 641px){
+  #recordsView .records-card{
+    max-width: 1400px; /* slightly wider container */
+  }
+  #recordsView table{
+    table-layout: fixed;
+    width: 100%;
+  }
+  #recordsView th:nth-child(6),
+  #recordsView td:nth-child(6){
+    width: 140px;      /* hard pixel width for stars */
+    min-width: 140px;
+    max-width: 140px;
+    text-align: center;
+    white-space: nowrap;
   }
 }
-
-
-/* Vertically center Personal Bests grouping within its panel (desktop only) */
-@media (min-width: 900px) {
-  .personal-bests-panel{
-    display:flex;
-    flex-direction:column;
-  }
-  .personal-bests-panel .bests-grid{
-    margin-top:auto;
-    margin-bottom:auto;
-  }
-}
-
-
-/* Instructions text styling to match other tabs */
-.instructions-text {
-  line-height: 1.6;
-}
-.instructions-text p {
-  font-size: 15px;
-  color: rgba(255,255,255,.85);
-}
-
-/* Data & Backups (Instructions tab) */
-.backup-actions{
-  margin-top: 10px;
-  display:flex;
-  flex-direction:column;
-  gap:14px;
-}
-
-.backup-btn{
-  align-self:flex-start;
-  border-radius: 10px;
   border: 1px solid rgba(255,255,255,.14);
   background: rgba(255,255,255,.08);
   color: rgba(255,255,255,.92);
@@ -2984,4 +2948,28 @@ select optgroup{
   font-size: 0.7em;
   opacity: 0.65;
   text-align: center;
+}
+
+
+
+/* Muted utility style for Export Fish Tank button */
+#exportTankBtn {
+  background: rgba(255, 255, 255, 0.08);
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+}
+#exportTankBtn:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+/* Muted utility style for Export Fish Tank button (explicit targets) */
+#backupExportBtn,
+button.menu-item[data-share="backup"]{
+  background: rgba(255,255,255,.08);
+  color: rgba(255,255,255,.92);
+  border: 1px solid rgba(255,255,255,.14);
+}
+#backupExportBtn:hover,
+button.menu-item[data-share="backup"]:hover{
+  background: rgba(255,255,255,.12);
 }
