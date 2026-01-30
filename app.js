@@ -4201,10 +4201,59 @@ function _buildFullSeasonRecordsTemplate(){
       for(const f of fishArr){
         const n = canonicalizeFishName(f && f.name ? f.name : "");
         if(!n) continue;
-        // season template exports empty strings
+        // Season backups store POINTS (truth) rather than derived weight.
+        // Template exports empty strings for every fish key.
         if(merged[n] == null) merged[n] = "";
       }
       out[loc] = merged;
+    }
+  }catch(_){ }
+  return out;
+}
+
+function _seasonPointsByLocationFromStoredWeights(){
+  // Convert the in-app season storage (derived weight strings) into exported points strings.
+  const tmpl = _buildFullSeasonRecordsTemplate();
+  const cur = seasonRecordsByLocation || {};
+  try{
+    for(const loc of Object.keys(cur)){
+      const recs = cur[loc] || {};
+      const fishLookup = new Map((LOCATIONS?.[loc] || []).map(f=>[String(f.name).toLowerCase(), f]));
+      for(const fishName of Object.keys(recs)){
+        const f = fishLookup.get(String(fishName).toLowerCase());
+        if(!f) continue;
+        const rawW = recs[fishName];
+        const wLbs = parseUserWeightToLbs(String(rawW||""));
+        if(!Number.isFinite(wLbs) || wLbs <= 0) continue;
+        const pts = calculatePoints(wLbs, f);
+        if(!pts) continue;
+        if(!tmpl[loc]) tmpl[loc] = {};
+        tmpl[loc][canonicalizeFishName(f.name)] = String(pts);
+      }
+    }
+  }catch(_){ }
+  return tmpl;
+}
+
+function _seasonStoredWeightsFromPointsBackup(pointsByLoc){
+  // Convert a season backup payload (points strings) into in-app stored weight strings.
+  const out = {};
+  try{
+    for(const loc of Object.keys(pointsByLoc || {})){
+      const recs = pointsByLoc[loc] || {};
+      const fishLookup = new Map((LOCATIONS?.[loc] || []).map(f=>[String(f.name).toLowerCase(), f]));
+      for(const fishName of Object.keys(recs)){
+        const rawPts = String(recs[fishName] ?? '').trim();
+        if(!rawPts) continue;
+        const f = fishLookup.get(String(canonicalizeFishName(fishName)).toLowerCase()) || fishLookup.get(String(fishName).toLowerCase());
+        if(!f) continue;
+        const pts = _parsePointsInt(rawPts);
+        if(Number.isNaN(pts) || pts <= 0) continue;
+        const wStr = storedWeightStringForPoints(pts, f);
+        if(!wStr) continue;
+        if(!out[loc]) out[loc] = {};
+        out[loc][canonicalizeFishName(f.name)] = String(wStr);
+      }
     }
   }catch(_){ }
   return out;
@@ -4227,15 +4276,8 @@ function buildBackupPayload(){
       weightUnit: (weightUnit === 'kgs') ? 'kgs' : 'lbs'
     },
     recordsByLocation: _buildFullAllTimeRecordsTemplate(),
-    seasonRecordsByLocation: (function(){
-      const tmpl = _buildFullSeasonRecordsTemplate();
-      const cur = seasonRecordsByLocation || {};
-      // overlay current season weights (keep empties in template)
-      for(const loc of Object.keys(cur)){
-        tmpl[loc] = Object.assign(tmpl[loc] || {}, cur[loc] || {});
-      }
-      return tmpl;
-    })()
+    // Season backups should store POINTS (user input truth). Weight is derived.
+    seasonRecordsByLocation: _seasonPointsByLocationFromStoredWeights()
   };
 
   // Only include season records if they exist (flag presence => season restore)
@@ -4340,7 +4382,8 @@ function applyRestoredState(restored){
   recordsByLocation = canonicalizeRecordsByLocation(restored.recordsByLocation || {});
   // Only restore season records if the backup explicitly includes them
   if(restored && restored.seasonRecordsByLocation && typeof restored.seasonRecordsByLocation === 'object'){
-    seasonRecordsByLocation = canonicalizeRecordsByLocation(restored.seasonRecordsByLocation || {});
+    // Backups store season as points; convert to stored derived weights for in-app use.
+    seasonRecordsByLocation = canonicalizeRecordsByLocation(_seasonStoredWeightsFromPointsBackup(restored.seasonRecordsByLocation || {}));
     try{ if(typeof saveSeasonRecords === 'function') saveSeasonRecords(seasonRecordsByLocation || {}); }catch(_){ }
     try{ localStorage.setItem('fishmetrics_season_records_v1', JSON.stringify(seasonRecordsByLocation || {})); }catch(_){ }
   }
