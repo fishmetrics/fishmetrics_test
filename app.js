@@ -4267,11 +4267,6 @@ function _seasonStoredWeightsFromPointsBackup(pointsByLoc){
 function buildBackupPayload(){
   const now = new Date();
   const payload = {
-  seasonMeta: {
-    seasonId: getCurrentSeasonId(),
-    exportedAt: new Date().toISOString()
-  },
-
     meta: {
       app: 'FishMetrics',
       version: 'Season_v1',
@@ -4285,13 +4280,13 @@ function buildBackupPayload(){
     seasonRecordsByLocation: _seasonPointsByLocationFromStoredWeights()
   };
 
-  // Only include season records if they exist (flag presence => season restore)
+  // Always include seasonMeta so even empty exports are self-describing.
   try{
-    const hasSeason = _countBackupRecords(seasonRecordsByLocation || {}) > 0;
-    if(hasSeason){
-      payload.seasonMeta = { seasonId: getCurrentSeasonId() };
-    }
-  }catch(_){}
+    payload.seasonMeta = {
+      seasonId: getCurrentSeasonId(),
+      exportedAt: now.toISOString()
+    };
+  }catch(_){ }
 
   return payload;
 }

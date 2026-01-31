@@ -463,6 +463,14 @@ body{
   gap:10px;
   padding-bottom: 8px;
 }
+
+/* Keep Personal Bests / Season Highlights tiles vertically centered within the panel.
+   (These panels can end up taller than the tile grid depending on screen size.) */
+.personal-bests-panel .bests-grid{
+  flex: 1;
+  align-content: center;
+}
+
 .best-tile{
   justify-content:center;
   border:1px solid rgba(255,255,255,.10);
