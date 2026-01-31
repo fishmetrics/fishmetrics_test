@@ -4374,14 +4374,19 @@ function _normalizeBackupObject(parsed){
   const exportedAt = parsed?.meta?.exportedAt || parsed?.exportedAt || null;
   const version = parsed?.meta?.version || parsed?.version || null;
   const season = parsed.seasonRecordsByLocation || parsed.seasonRecords || null;
-  return { recordsByLocation: records, seasonRecordsByLocation: (season && typeof season === 'object') ? season : null, weightUnit: unit, exportedAt, version };
+  const seasonMeta = (parsed && typeof parsed.seasonMeta === 'object') ? parsed.seasonMeta : null;
+  return { recordsByLocation: records, seasonRecordsByLocation: (season && typeof season === 'object') ? season : null, seasonMeta, weightUnit: unit, exportedAt, version };
 }
 
 function applyRestoredState(restored){
   // Canonicalize + merge alias fish keys so old backups don't wipe data
   recordsByLocation = canonicalizeRecordsByLocation(restored.recordsByLocation || {});
-  // Only restore season records if the backup explicitly includes them
-  if(restored && restored.seasonRecordsByLocation && typeof restored.seasonRecordsByLocation === 'object'){
+  // Only restore season records if the backup explicitly includes them AND the season matches.
+  // This prevents importing an old month (e.g., January) into the current season (e.g., February).
+  const curSeasonId = (typeof getCurrentSeasonId === 'function') ? getCurrentSeasonId() : null;
+  const backupSeasonId = (restored && restored.seasonMeta && restored.seasonMeta.seasonId) ? String(restored.seasonMeta.seasonId) : null;
+  const seasonMatches = (!!curSeasonId && !!backupSeasonId && curSeasonId === backupSeasonId);
+  if(restored && seasonMatches && restored.seasonRecordsByLocation && typeof restored.seasonRecordsByLocation === 'object'){
     // Backups store season as points; convert to stored derived weights for in-app use.
     seasonRecordsByLocation = canonicalizeRecordsByLocation(_seasonStoredWeightsFromPointsBackup(restored.seasonRecordsByLocation || {}));
     try{ if(typeof saveSeasonRecords === 'function') saveSeasonRecords(seasonRecordsByLocation || {}); }catch(_){ }
@@ -4431,6 +4436,37 @@ async function restoreFromFile(file){
         return;
       }
 
+      // Safety gate: only apply season data if the backup season matches the active season.
+      // If seasonMeta is missing or mismatched, we ignore seasonRecordsByLocation entirely.
+      let seasonMsg = '';
+      let seasonApplied = false;
+      // If we skip season restore, keep a reason so we can show a clear message after restore.
+      let seasonNotAppliedReason = '';
+      let _curSeasonIdForMsg = '';
+      let _backupSeasonIdForMsg = '';
+      try{
+        const curSeasonId = (typeof getCurrentSeasonId === 'function') ? getCurrentSeasonId() : null;
+        const backupSeasonId = (norm && norm.seasonMeta && norm.seasonMeta.seasonId) ? String(norm.seasonMeta.seasonId) : null;
+        _curSeasonIdForMsg = curSeasonId ? String(curSeasonId) : '';
+        _backupSeasonIdForMsg = backupSeasonId ? String(backupSeasonId) : '';
+        const hasSeasonPayload = !!(norm && norm.seasonRecordsByLocation && typeof norm.seasonRecordsByLocation === 'object');
+        if(hasSeasonPayload){
+          if(curSeasonId && backupSeasonId && curSeasonId === backupSeasonId){
+            seasonMsg = `• Season data: ${backupSeasonId}<br>`;
+            seasonApplied = true;
+          }else{
+            // Ignore season restore (fail closed)
+            norm.seasonRecordsByLocation = null;
+            seasonMsg = (backupSeasonId && curSeasonId)
+              ? `• Season data: ${backupSeasonId} (not applied to current ${curSeasonId})<br>`
+              : '• Season data: not applied<br>';
+            seasonNotAppliedReason = (backupSeasonId && curSeasonId)
+              ? `Season data from ${backupSeasonId} was not applied to the current season (${curSeasonId}).`
+              : 'Season data was not applied.';
+          }
+        }
+      }catch(_){ }
+
       const locCount = Object.keys(norm.recordsByLocation || {}).length;
       const recCount = _countBackupUniqueCanonicalFish(norm.recordsByLocation || {});
       const unit = (norm.weightUnit === 'kgs') ? 'kgs' : 'lbs';
@@ -4441,7 +4477,9 @@ const confirmHtml =
   `• ${recCount} fish<br>` +
   `• ${locCount} locations<br>` +
   `• Units: ${unit}<br>` +
-  `• Exported: ${when}<br><br>` +
+  `• Exported: ${when}<br>` +
+  `${seasonMsg}` +
+  `<br>` +
   `Restoring will replace your current Fish Tank. Continue?`;
 
 const ok = await showRestoreConfirmModal(confirmHtml);
@@ -4451,7 +4489,19 @@ if(!ok){
 }
 
       applyRestoredState(norm);
-      setBackupMsg('🎉 Fish Tank successfully restored.');
+      if(seasonApplied){
+        setBackupMsg('🎉 Fish Tank successfully restored (including Season data).');
+      }else if(parsed && parsed.seasonRecordsByLocation){
+        const bid = (parsed && parsed.seasonMeta && parsed.seasonMeta.seasonId) ? String(parsed.seasonMeta.seasonId) : 'an earlier season';
+        setBackupMsg(`🎉 Fish Tank successfully restored. Season data from ${bid} was not applied.`);
+        // Make this hard to miss: some users restore from the Share menu and may not be looking at the
+        // Instructions tab where the backup message lives.
+        if(seasonNotAppliedReason){
+          try{ alert(`Imported all-time data. ${seasonNotAppliedReason}`); }catch(_){ }
+        }
+      }else{
+        setBackupMsg('🎉 Fish Tank successfully restored.');
+      }
     }catch(err){
       console.error('Restore failed', err);
       setBackupMsg('❌ That file could not be restored (invalid JSON).');
