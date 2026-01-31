@@ -4267,6 +4267,11 @@ function _seasonStoredWeightsFromPointsBackup(pointsByLoc){
 function buildBackupPayload(){
   const now = new Date();
   const payload = {
+  seasonMeta: {
+    seasonId: getCurrentSeasonId(),
+    exportedAt: new Date().toISOString()
+  },
+
     meta: {
       app: 'FishMetrics',
       version: 'Season_v1',
@@ -4305,7 +4310,7 @@ async function downloadBackupJSON(){
     const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
-    const date = (payload?.meta?.exportedAt || '').slice(0,10) || (new Date()).toISOString().slice(0,10);
+    const date = (function(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');})();
     a.href = url;
     a.download = `fishmetrics_backup_${date}.json`;
     document.body.appendChild(a);
