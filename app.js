@@ -102,8 +102,67 @@ const FISH_SEASONALITY_ALIASES = {
   "alligator gar": "aligator gar"
 };
 
+// Canonical fish-name aliases (used for stored log records + backup restore).
+// Keys are normalized (lowercase, single-spaced). Values MUST match the canonical *stored key*
+// format used in LOCATIONS (lowercase fish names). UI display uses toTitleCase separately.
+// This prevents legacy/misspelled production records from being dropped after a release.
+const FISH_CANONICAL_NAME_ALIASES = {
+  "arctic grayling": "arctic greyling",
+  "spanish mackarel": "spanish mackerel",
+  // Production used title-case "Alligator Gar"; LOCATIONS uses lowercase "alligator gar".
+  "alligator gar": "alligator gar"
+};
+
+function canonicalizeFishName(name){
+  const key = _normFishName(name);
+  // Return canonical stored key (lowercase), not display name.
+  return (FISH_CANONICAL_NAME_ALIASES && FISH_CANONICAL_NAME_ALIASES[key]) ? FISH_CANONICAL_NAME_ALIASES[key] : key;
+}
+
+// Merge two stored weight values (strings). Prefer an existing non-empty value; otherwise take incoming.
+function mergeStoredWeight(existing, incoming){
+  const a = (existing == null) ? "" : String(existing).trim();
+  const b = (incoming == null) ? "" : String(incoming).trim();
+  if(a) return a;
+  if(b) return b;
+  return "";
+}
+
+// Canonicalize + merge duplicate/alias fish keys inside a recordsByLocation object.
+function canonicalizeRecordsByLocation(obj){
+  const out = {};
+  try{
+    for(const loc of Object.keys(obj || {})){
+      const rec = obj[loc] || {};
+      const merged = {};
+      for(const fishName of Object.keys(rec)){
+        const val = rec[fishName];
+        const canonName = canonicalizeFishName(fishName);
+        const prev = merged[canonName];
+        const next = mergeStoredWeight(prev, val);
+        if(next !== ""){
+          merged[canonName] = next;
+        }else{
+          // keep empty only if there isn't any non-empty (usually we drop empties)
+          if(prev == null && (val === "" || val == null)) {
+            // ignore
+          }
+        }
+      }
+      out[loc] = merged;
+    }
+  }catch(_){ }
+  return out;
+}
+
 function _normFishName(name){
   return String(name||'').trim().toLowerCase().replace(/\s+/g,' ');
+}
+
+// Internal helper used in a few backup/validation paths.
+// Kept for backward compatibility with earlier builds that used _canonKey().
+function _canonKey(name){
+  return _normFishName(name);
 }
 
 function isFishInSeason(fishName, d=new Date()){
@@ -235,7 +294,7 @@ const LOCATIONS = {
   { name:"capelin", category:"Common", min:0.02, max:0.22 },
   { name:"burbot", category:"Common", min:11.02, max:74.96 },
   { name:"bigmouth sculpin", category:"Common", min:1.1, max:6.61 },
-  { name:"Arctic Greyling", category:"Common", min:4.41, max:8.82 },
+  { name:"arctic greyling", category:"Common", min:4.41, max:8.82 },
   { name:"humpback salmon", category:"Common", min:4.41, max:15.43 },
   { name:"halibut", category:"Rare", min:44.09, max:800.28 },
   { name:"blue lingcod", category:"Rare", min:11.02, max:130.07 },
@@ -1269,16 +1328,30 @@ async function loadRecords(){
   let existing = {};
   try { existing = await idbLoadAllRecords(); } catch { existing = {}; }
 
-  if (existing && Object.keys(existing).length) return existing;
+  if (existing && Object.keys(existing).length){
+    // Seamless alias migration: canonicalize legacy fish keys before any validation/totals run.
+    try{
+      const canon = canonicalizeRecordsByLocation(existing);
+      // Persist only if something actually changed (avoid unnecessary IDB writes).
+      if(JSON.stringify(canon) !== JSON.stringify(existing)){
+        try { await idbSaveAllRecords(canon); } catch {}
+        return canon;
+      }
+    }catch(_){ }
+    return existing;
+  }
 
   // If IDB is empty, try migrating legacy localStorage data (if present)
   let legacy = {};
   try { legacy = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}"); } catch { legacy = {}; }
 
   if (legacy && Object.keys(legacy).length){
-    try { await idbSaveAllRecords(legacy); } catch {}
+    // Canonicalize before migrating so legacy misspellings don't get "lost".
+    let canonLegacy = legacy;
+    try{ canonLegacy = canonicalizeRecordsByLocation(legacy); }catch(_){ canonLegacy = legacy; }
+    try { await idbSaveAllRecords(canonLegacy); } catch {}
     // keep localStorage as a fallback backup, but IndexedDB becomes source of truth
-    return legacy;
+    return canonLegacy;
   }
   return {};
 }
@@ -1288,14 +1361,25 @@ async function loadRecords(){
 async function loadSeasonRecords(){
   let existing = {};
   try { existing = await idbLoadAllSeasonRecords(); } catch { existing = {}; }
-  if (existing && Object.keys(existing).length) return existing;
+  if (existing && Object.keys(existing).length){
+    try{
+      const canon = canonicalizeRecordsByLocation(existing);
+      if(JSON.stringify(canon) !== JSON.stringify(existing)){
+        try { await idbSaveAllSeasonRecords(canon); } catch {}
+        return canon;
+      }
+    }catch(_){ }
+    return existing;
+  }
 
   // legacy fallback (if any)
   let legacy = {};
   try { legacy = JSON.parse(localStorage.getItem('fishmetrics_season_records_v1') || "{}"); } catch { legacy = {}; }
   if (legacy && Object.keys(legacy).length){
-    try { await idbSaveAllSeasonRecords(legacy); } catch {}
-    return legacy;
+    let canonLegacy = legacy;
+    try{ canonLegacy = canonicalizeRecordsByLocation(legacy); }catch(_){ canonLegacy = legacy; }
+    try { await idbSaveAllSeasonRecords(canonLegacy); } catch {}
+    return canonLegacy;
   }
   return {};
 }
@@ -4357,7 +4441,7 @@ function _countBackupUniqueCanonicalFish(obj){
       for(const fishName of Object.keys(rec)){
         // canonicalize legacy/misspelled names
         const canonName = (typeof canonicalizeFishName === 'function') ? canonicalizeFishName(fishName) : fishName;
-        const key = _canonKey(canonName).replace(/grayling/g, 'greyling');
+        const key = _canonKey(canonName).replace(/\bgrayling\b/g, 'greyling');
         if(valid.size && !valid.has(key)) continue; // ignore unknown fish
         seen.add(key);
       }
@@ -4732,61 +4816,9 @@ function forceLegendaryIncludedSeason(){
 }
 document.addEventListener('DOMContentLoaded', forceLegendaryIncludedSeason);
 
-// --- Alias-safe restore helpers (v1.4.4+) ---
-// Restore-time aliases: map legacy/misspelled fish names to the current canonical display name.
-// Keep keys lowercased.
-const RESTORE_FISH_ALIASES = {
-  "arctic grayling": "Arctic Greyling",
-  "spanish mackarel": "spanish mackerel"
-};
-
-function _canonKey(name){
-  return String(name || "")
-    .trim()
-    .toLowerCase()
-    .replace(/\s+/g, " ");
-}
-
-function canonicalizeFishName(name){
-  const key = _canonKey(name);
-  return RESTORE_FISH_ALIASES[key] || String(name || "").trim();
-}
-
-// Merge two stored weight values (strings). Prefer an existing non-empty value; otherwise take incoming.
-function mergeStoredWeight(existing, incoming){
-  const a = (existing == null) ? "" : String(existing).trim();
-  const b = (incoming == null) ? "" : String(incoming).trim();
-  if(a) return a;
-  if(b) return b;
-  return "";
-}
-
-// Canonicalize + merge duplicate/alias fish keys inside a recordsByLocation object.
-function canonicalizeRecordsByLocation(obj){
-  const out = {};
-  try{
-    for(const loc of Object.keys(obj || {})){
-      const rec = obj[loc] || {};
-      const merged = {};
-      for(const fishName of Object.keys(rec)){
-        const val = rec[fishName];
-        const canonName = canonicalizeFishName(fishName);
-        const prev = merged[canonName];
-        const next = mergeStoredWeight(prev, val);
-        if(next !== ""){
-          merged[canonName] = next;
-        }else{
-          // keep empty only if there isn't any non-empty (usually we drop empties)
-          if(prev == null && (val === "" || val == null)) {
-            // ignore
-          }
-        }
-      }
-      out[loc] = merged;
-    }
-  }catch(_){ }
-  return out;
-}
+// --- Alias-safe helpers ---
+// Note: canonicalizeFishName(...) and canonicalizeRecordsByLocation(...) are defined near the
+// seasonality alias tables so they are available during init/load migrations.
 // --- end helpers ---
 
 
