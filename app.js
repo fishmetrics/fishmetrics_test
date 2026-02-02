@@ -16,7 +16,7 @@ const FISH_SEASONALITY = {
   "arctic greyling": { inSeasonMonths: [3, 4, 5, 6, 7, 8, 9] },
   "arowana": { inSeasonMonths: [4, 5, 6, 7, 8, 9, 10] },
   "barramundi": { inSeasonMonths: [2, 3, 4, 5] },
-  "bass tucunare": { inSeasonMonths: [1, 8, 9, 10, 11, 12] },
+  "tucunare": { inSeasonMonths: [1, 8, 9, 10, 11, 12] },
   "bicuda": { inSeasonMonths: [3, 4, 5, 6, 7, 8, 9] },
   "black ear catfish": { inSeasonMonths: [2, 3, 4, 5, 6, 7, 8] },
   "black marlin": { inSeasonMonths: [7, 8, 9, 10] },
@@ -80,7 +80,7 @@ const FISH_SEASONALITY = {
   "spanish mackarel": { inSeasonMonths: [4, 5, 6, 7, 8, 9, 10, 11] },
   "speckled pavon": { inSeasonMonths: [1, 8, 9, 10, 11, 12] },
   "steelhead": { inSeasonMonths: [1, 2, 3, 4, 9, 10, 11, 12] },
-  "sunfish": { inSeasonMonths: [4, 5, 6, 7, 8, 9, 10, 11] },
+  "ocean sunfish": { inSeasonMonths: [4, 5, 6, 7, 8, 9, 10, 11] },
   "tailor": { inSeasonMonths: [2, 3, 4, 5, 6] },
   "tench": { inSeasonMonths: [4, 5, 6, 7, 8, 9] },
   "tripletail": { inSeasonMonths: [5, 6, 7, 8, 9] },
@@ -3652,6 +3652,8 @@ function _buildSeasonArchiveSnapshot(){
   // Build fishPoints ONLY for fish with a season entry (no 0 / null placeholders)
   const fishPoints = [];
   const seasonRecordsFiltered = {};
+  // Also store season entries with BOTH weight + points (for archive review)
+  const seasonEntriesFiltered = {};
   const counts = { Common:0, Rare:0, Epic:0, Legendary:0 };
   let totalSeasonPoints = 0;
   const bestByCategory = { Common:null, Rare:null, Epic:null, Legendary:null };
@@ -3689,6 +3691,10 @@ function _buildSeasonArchiveSnapshot(){
         // filtered records
         if(!seasonRecordsFiltered[loc]) seasonRecordsFiltered[loc] = {};
         seasonRecordsFiltered[loc][f.name] = String(rawStr);
+
+        // filtered entries (weight + points)
+        if(!seasonEntriesFiltered[loc]) seasonEntriesFiltered[loc] = {};
+        seasonEntriesFiltered[loc][f.name] = { weight: String(rawStr), points: pts, rawPoints: Number(rawPts), stars };
 
         // KPIs (only meaningful values; no 0/null placeholders in output later)
         totalSeasonPoints += pts;
@@ -3733,7 +3739,7 @@ function _buildSeasonArchiveSnapshot(){
   if(Object.keys(lowestOut).length) kpis.lowestByCategory = lowestOut;
 
   return {
-    schemaVersion: "season-archive-v1",
+    schemaVersion: "season-archive-v2",
     exportedAt: now.toISOString(),
     app: { name: "FishMetrics", version: "v1.4.4" },
     season: { seasonId, startedAt, month },
@@ -3746,7 +3752,10 @@ function _buildSeasonArchiveSnapshot(){
     },
     kpis,
     fishPoints,
-    seasonRecordsByLocation: seasonRecordsFiltered
+    // Back-compat: weights-only map (legacy)
+    seasonRecordsByLocation: seasonRecordsFiltered,
+    // Preferred: entries with weight + points
+    seasonEntriesByLocation: seasonEntriesFiltered
   };
 }
 
@@ -4420,29 +4429,31 @@ function _countBackupRecords(obj){
 }
 
 function _countBackupUniqueCanonicalFish(obj){
-  // Count unique canonical fish names present in the backup, ignoring aliases/duplicates
-  // and ignoring any unknown fish names not in this build's fish list.
+  // Count the number of unique fish that would actually be restored.
+  // This should match applyRestoredState(), which canonicalizes keys and drops empties,
+  // rather than relying on LOCATIONS membership (which can drift across releases).
   const seen = new Set();
-  const valid = new Set();
   try{
-    // Build a set of valid fish keys from the current LOCATIONS data.
-    for(const loc of Object.keys(LOCATIONS || {})){
-      const list = LOCATIONS[loc] || [];
-      for(const f of list){
-        if(!f || !f.name) continue;
-        valid.add(_canonKey(f.name));
-      }
-    }
-  }catch(_){}
-
-  try{
-    for(const loc of Object.keys(obj || {})){
-      const rec = obj[loc] || {};
-      for(const fishName of Object.keys(rec)){
-        // canonicalize legacy/misspelled names
-        const canonName = (typeof canonicalizeFishName === 'function') ? canonicalizeFishName(fishName) : fishName;
-        const key = _canonKey(canonName).replace(/\bgrayling\b/g, 'greyling');
-        if(valid.size && !valid.has(key)) continue; // ignore unknown fish
+    const canon = (typeof canonicalizeRecordsByLocation === 'function')
+      ? canonicalizeRecordsByLocation(obj || {})
+      : (obj || {});
+    for(const loc of Object.keys(canon || {})){
+      const rec = canon[loc] || {};
+      for(const fishName of Object.keys(rec || {})){
+        const v = rec[fishName];
+        if(v == null) continue;
+        const s = String(v).trim();
+        if(!s) continue; // don't count empty entries
+        const key0=_canonKey(fishName);
+        const COUNT_ONLY_ALIASES={
+          "sunfish":"ocean sunfish",
+          "bass tunacare":"tucunare",
+          "rock flatgal":"rock flagtail",
+          "saddled coral grouper":"black saddled coral grouper",
+          "whitetooth shark":"whitetip shark",
+          "arctic grayling":"arctic greyling"
+        };
+        const key=(COUNT_ONLY_ALIASES[key0])?COUNT_ONLY_ALIASES[key0]:key0;
         seen.add(key);
       }
     }
