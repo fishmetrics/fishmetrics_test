@@ -203,15 +203,35 @@ body{
   gap:12px;
 }
 .kpi{
+  position:relative;
   background:linear-gradient(180deg, rgba(4,12,34,.86), rgba(3,10,28,.86));
   border:1px solid rgba(255,255,255,.09);
   border-radius:16px;
-  padding: 12px 24px;
+  padding: 10px 18px;
   box-shadow:0 16px 36px rgba(0,0,0,.2);
 }
-.kpi-label{font-size:10px; color:rgba(255,255,255,.78); margin-bottom:6px}
+.kpi-label{font-size:10px; color:rgba(255,255,255,.78); margin-bottom:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+.kpi-subnote{font-size:10px; color:rgba(255,255,255,.55); margin-top:-4px; margin-bottom:6px}
 .kpi-value{font-size:26px; font-weight:900; letter-spacing:0.5px}
 .kpi-stars{font-size:26px; color:var(--accent); letter-spacing:2px}
+
+/* Best Map subtitle should not force card height */
+.kpi.best-map .kpi-subnote{
+  position:absolute;
+  top:10px;
+  right:12px;
+  margin:0;
+  font-size:9px;
+  opacity:.65;
+  white-space:nowrap;
+}
+.kpi.best-map .kpi-label{padding-right:90px;}
+.kpi.best-map .kpi-value{
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
 
 .grid{
   margin-top:24px;
@@ -3032,4 +3052,60 @@ button.menu-item[data-share="backup"]{
 #backupExportBtn:hover,
 button.menu-item[data-share="backup"]:hover{
   background: rgba(255,255,255,.12);
+}
+
+/* === Star Distribution Bar (Dashboard) === */
+.star-dist-wrap{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+  padding-top:6px;
+}
+.star-dist-bar{
+  width:100%;
+  height:18px;
+  border-radius:999px;
+  overflow:hidden;
+  display:flex;
+  border:1px solid rgba(255,255,255,0.18);
+  background: rgba(255,255,255,0.06);
+}
+.star-dist-bar .star-seg{
+  height:100%;
+  min-width:0;
+}
+.star-dist-bar .star-seg.with-sep{
+  border-left:1px solid rgba(255,255,255,0.28);
+}
+.star-dist-bar .star-2{ background: var(--red2); }
+.star-dist-bar .star-3{ background: var(--red3); }
+.star-dist-bar .star-4{ background: var(--red4); }
+.star-dist-bar .star-5{ background: var(--red5); }
+.star-dist-empty{
+  width:100%;
+  text-align:center;
+  font-size:12px;
+  opacity:0.8;
+  line-height:18px;
+}
+.star-dist-legend{
+  font-size:12px;
+  opacity:0.9;
+}
+
+
+/* === Star Distribution (compact row under KPIs) === */
+.star-dist-panel{
+  margin-top:12px;
+  padding: 10px 24px;
+}
+.star-dist-panel .panel-title{
+  margin:2px 0 8px;
+}
+.star-dist-panel .star-dist-wrap{
+  gap:8px;
+  padding-top:0;
+}
+.star-dist-panel .star-dist-bar{
+  height:14px;
 }

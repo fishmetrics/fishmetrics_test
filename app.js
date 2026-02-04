@@ -761,6 +761,50 @@ const bestMapEl = document.getElementById("bestMap");
 
 
 
+
+
+function renderStarDistributionBar(totalCaught, star2, star3, star4, star5){
+  const bar = document.getElementById('starDistributionBar');
+  const legend = document.getElementById('starDistributionLegend');
+  if(!bar) return;
+
+  const total25 = (star2||0) + (star3||0) + (star4||0) + (star5||0);
+  if(!total25){
+    bar.innerHTML = '';
+    if(legend) legend.textContent = '';
+    return;
+  }
+
+  // Use totalCaught (all caught fish) as denominator so segment %s align with KPI %s.
+  // If totalCaught is not provided, fall back to 2–5★ total.
+  const denom = (totalCaught && totalCaught > 0) ? totalCaught : total25;
+
+  const segs = [
+    { stars: 2, count: star2||0, cls: 'star-2' },
+    { stars: 3, count: star3||0, cls: 'star-3' },
+    { stars: 4, count: star4||0, cls: 'star-4' },
+    { stars: 5, count: star5||0, cls: 'star-5' },
+  ];
+
+  bar.innerHTML = '';
+  segs.forEach((s, i)=>{
+    if(!s.count) return; // don't render zero-width segments
+    const pct = (s.count / denom) * 100;
+    const el = document.createElement('div');
+    el.className = `star-seg ${s.cls}` + (i ? ' with-sep' : '');
+    el.style.width = `${pct}%`;
+    el.title = `${s.stars}★: ${pct.toFixed(1)}% (${s.count})`;
+    bar.appendChild(el);
+  });
+
+  if(legend){
+    const basis = (denom === total25) ? `Based on ${total25} fish (2–5★)` : `Based on ${denom} fish (all stars)`;
+    legend.textContent = `${basis} • ` + segs.map(s=>{
+      const pct = (s.count / denom) * 100;
+      return `${s.stars}★ ${pct.toFixed(1)}% (${s.count})`;
+    }).join(' • ');
+  }
+}
 function initIncludeLegendaryToggle(){
   const el = document.getElementById("includeLegendaryToggle");
   if(!el) return;
@@ -2903,6 +2947,8 @@ function updateDashboard(){
   const totalPoints = locs.reduce((s,l)=>s+(byLocKPI[l]?.totalPoints||0),0);
   const totalStars = locs.reduce((s,l)=>s+(byLocKPI[l]?.totalStars||0),0);
   const totalCaught = locs.reduce((s,l)=>s+(byLocKPI[l]?.caught||0),0);
+  const star2 = locs.reduce((s,l)=>s+((byLocKPI[l]?.starCounts||[0,0,0,0,0])[1]||0),0);
+  const star3 = locs.reduce((s,l)=>s+((byLocKPI[l]?.starCounts||[0,0,0,0,0])[2]||0),0);
   const star4 = locs.reduce((s,l)=>s+((byLocKPI[l]?.starCounts||[0,0,0,0,0])[3]||0),0);
   const star5 = locs.reduce((s,l)=>s+((byLocKPI[l]?.starCounts||[0,0,0,0,0])[4]||0),0);
 
@@ -2916,8 +2962,13 @@ function updateDashboard(){
     const starsTxt = '★'.repeat(full) + (half ? '☆' : '') + '☆'.repeat(Math.max(0, 5 - full - (half?1:0)));
     avgStarsEl.textContent = starsTxt;
   }
-  if(pct4El) pct4El.textContent = totalCaught ? `${(100*star4/totalCaught).toFixed(1)}%` : '0.0%';
+  if(pct4El) pct4El.textContent = totalCaught ? `${(100*(star4)/totalCaught).toFixed(1)}%` : '0.0%';
   if(pct5El) pct5El.textContent = totalCaught ? `${(100*star5/totalCaught).toFixed(1)}%` : '0.0%';
+
+  // Star distribution (exact 2★–5★, normalized within 2–5★)
+  try{
+    renderStarDistributionBar(totalCaught, star2, star3, star4, star5);
+  }catch(_){/* no-op */}
 
   // Best map: best average points (avg of caught fish points) per map; blank if nothing caught yet
   let bestMap = '';
@@ -3935,7 +3986,7 @@ function buildShareKPIs(opts){
 
   const locs = location ? [location] : getLocationList();
   for(const loc of locs){
-    byMap[loc] = {sum:0, cnt:0};
+    byMap[loc] = {sum:0, cnt:0, pointsByCat:{Common:0,Rare:0,Epic:0,Legendary:0}, countsByCat:{Common:0,Rare:0,Epic:0,Legendary:0}};
     const fishList = LOCATIONS[loc] || [];
     for(const fish of fishList){
       const raw = recs?.[loc]?.[fish.name];
@@ -3956,6 +4007,8 @@ function buildShareKPIs(opts){
       totalPoints += pts;
       byMap[loc].sum += pts;
       byMap[loc].cnt += 1;
+      byMap[loc].pointsByCat[fish.category] += pts;
+      byMap[loc].countsByCat[fish.category] += 1;
 
       if(stars === 4) star4 += 1;
       if(stars === 5) star5 += 1;
@@ -3971,23 +4024,33 @@ function buildShareKPIs(opts){
   }
 
   let bestMap = "";
-  let bestAvg = 0;
+  let bestMapScore = -Infinity;
+  let bestMapPoints = 0;
+  const _rarities = ['Common','Rare','Epic','Legendary'];
   if(location){
-    const cnt = byMap[location]?.cnt || 0;
     bestMap = location;
-    bestAvg = cnt ? (byMap[location].sum / cnt) : 0;
+    bestMapPoints = byMap[location]?.sum || 0;
   }else{
     for(const loc of Object.keys(byMap)){
-      const cnt = byMap[loc].cnt;
-      const avg = cnt ? (byMap[loc].sum / cnt) : 0;
-      if(avg > bestAvg){
-        bestAvg = avg;
+      const bm = byMap[loc];
+      if(!bm || (bm.cnt||0) <= 0) continue;
+      let sumAvg = 0;
+      for(const r of _rarities){
+        const c = bm.countsByCat?.[r] || 0;
+        const avg = c ? ((bm.pointsByCat?.[r] || 0) / c) : 0;
+        sumAvg += avg;
+      }
+      const score = sumAvg / _rarities.length;
+      const points = bm.sum || 0;
+      if(score > bestMapScore || (score === bestMapScore && points > bestMapPoints)){
+        bestMapScore = score;
         bestMap = loc;
+        bestMapPoints = points;
       }
     }
   }
 
-  const pct4 = totalCaught ? (star4 / totalCaught * 100) : 0;
+  const pct4 = totalCaught ? ((star4) / totalCaught * 100) : 0;
   const pct5 = totalCaught ? (star5 / totalCaught * 100) : 0;
 
   return {
@@ -3997,7 +4060,7 @@ function buildShareKPIs(opts){
     totalPoints: _shareSafeNumber(totalPoints),
     totalCaught: _shareSafeNumber(totalCaught),
     bestMap,
-    bestAvg: _shareSafeNumber(bestAvg),
+    bestMapPoints: _shareSafeNumber(bestMapPoints),
     pct4: _shareSafeNumber(pct4),
     pct5: _shareSafeNumber(pct5),
     topByRarity
@@ -4066,6 +4129,11 @@ function generateShareImage(opts){
     ctx.font='700 22px system-ui, -apple-system, Segoe UI, Roboto, Arial';
     ctx.fillText(txt, x, y);
   };
+  const drawNote = (txt, x, y) => {
+    ctx.fillStyle='rgba(255,255,255,.55)';
+    ctx.font='600 16px system-ui, -apple-system, Segoe UI, Roboto, Arial';
+    ctx.fillText(txt, x, y);
+  };
   const drawValue = (txt, x, y, weight=900, px=48) => {
     ctx.fillStyle='rgba(255,255,255,.92)';
     ctx.font=`${weight} ${px}px system-ui, -apple-system, Segoe UI, Roboto, Arial`;
@@ -4080,18 +4148,19 @@ function generateShareImage(opts){
     drawValue(k.location || '—', pad+26, topY+valueYOff, 800, 40);
   }else{
     drawLabel('Best map', pad+26, topY+labelYOff);
+    // compact note on the same header line (right-aligned) to avoid tall KPI cards
+    const noteTxt = 'Balanced across rarities';
+    ctx.fillStyle='rgba(255,255,255,.58)';
+    ctx.font=`700 16px system-ui, -apple-system, Segoe UI, Roboto, Arial`;
+    const noteW = ctx.measureText(noteTxt).width;
+    ctx.fillText(noteTxt, pad+colW-26-noteW, topY+labelYOff);
     drawValue(k.bestMap || '—', pad+26, topY+valueYOff, 800, 40);
   }
 
-  // 2) Total points (per-location) / Average fish score (overall)
+  // 2) Total points
   card(pad+colW+gap, topY, colW, rowH);
-  if(k.location){
-    drawLabel('Total points', pad+colW+gap+26, topY+labelYOff);
-    drawValue((k.totalPoints ? k.totalPoints.toFixed(0) : '0'), pad+colW+gap+26, topY+valueYOff, 900, 52);
-  }else{
-    drawLabel('Average fish score', pad+colW+gap+26, topY+labelYOff);
-    drawValue((k.bestAvg ? k.bestAvg.toFixed(0) : '0'), pad+colW+gap+26, topY+valueYOff, 900, 52);
-  }
+  drawLabel('Total points', pad+colW+gap+26, topY+labelYOff);
+  drawValue((k.totalPoints ? k.totalPoints.toFixed(0) : '0'), pad+colW+gap+26, topY+valueYOff, 900, 52);
 
   // 3) % 4★ catches
   card(pad, y2, colW, rowH);
