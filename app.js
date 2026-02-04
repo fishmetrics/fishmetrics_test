@@ -763,45 +763,80 @@ const bestMapEl = document.getElementById("bestMap");
 
 
 
-function renderStarDistributionBar(totalCaught, star2, star3, star4, star5){
+function renderStarDistributionBar(totalCaught, star1, star2, star3, star4, star5){
   const bar = document.getElementById('starDistributionBar');
   const legend = document.getElementById('starDistributionLegend');
   if(!bar) return;
 
-  const total25 = (star2||0) + (star3||0) + (star4||0) + (star5||0);
-  if(!total25){
+  const season = (typeof isSeasonMode === 'function') ? isSeasonMode() : false;
+
+  const rangeEl = document.getElementById('starDistRange');
+  if(rangeEl) rangeEl.textContent = season ? '1–5★' : '2–5★';
+
+
+  // In Season mode, show 1–5★ because 1★ represents OOS fish and is meaningful there.
+  // In All-time, keep a cleaner progression view by showing 2–5★ only.
+  const counts = season
+    ? [
+        { stars: 1, count: star1||0, cls: 'star-1' },
+        { stars: 2, count: star2||0, cls: 'star-2' },
+        { stars: 3, count: star3||0, cls: 'star-3' },
+        { stars: 4, count: star4||0, cls: 'star-4' },
+        { stars: 5, count: star5||0, cls: 'star-5' },
+      ]
+    : [
+        { stars: 2, count: star2||0, cls: 'star-2' },
+        { stars: 3, count: star3||0, cls: 'star-3' },
+        { stars: 4, count: star4||0, cls: 'star-4' },
+        { stars: 5, count: star5||0, cls: 'star-5' },
+      ];
+
+  const totalShown = counts.reduce((s,x)=>s+(x.count||0),0);
+  if(!totalShown){
     bar.innerHTML = '';
     if(legend) legend.textContent = '';
     return;
   }
 
-  // Use totalCaught (all caught fish) as denominator so segment %s align with KPI %s.
-  // If totalCaught is not provided, fall back to 2–5★ total.
-  const denom = (totalCaught && totalCaught > 0) ? totalCaught : total25;
-
-  const segs = [
-    { stars: 2, count: star2||0, cls: 'star-2' },
-    { stars: 3, count: star3||0, cls: 'star-3' },
-    { stars: 4, count: star4||0, cls: 'star-4' },
-    { stars: 5, count: star5||0, cls: 'star-5' },
-  ];
+  // Denominator:
+  // - Season: all fish (1–5★) so bar % aligns with KPIs.
+  // - All-time: normalize within 2–5★ so the bar fills and reads as progression.
+  const denom = season
+    ? ((totalCaught && totalCaught > 0) ? totalCaught : totalShown)
+    : totalShown;
 
   bar.innerHTML = '';
-  segs.forEach((s, i)=>{
-    if(!s.count) return; // don't render zero-width segments
-    const pct = (s.count / denom) * 100;
+
+  // Visual helpers: minimum width (so small segments remain visible) + separators.
+  const MIN_PX = 4;
+  const barWidth = bar.getBoundingClientRect().width || 0;
+
+  const nonZero = counts.filter(c=>c.count>0);
+  const pctRaw = nonZero.map(c => (c.count / denom) * 100);
+
+  // Convert to px widths, enforce a minimum px, then renormalize back to % for CSS widths.
+  const pxRaw = pctRaw.map(p => (p/100) * barWidth);
+  const pxAdj = pxRaw.map(px => Math.max(px, MIN_PX));
+  const pxTotal = pxAdj.reduce((s,x)=>s+x,0) || 1;
+
+  nonZero.forEach((c, i)=>{
     const el = document.createElement('div');
-    el.className = `star-seg ${s.cls}` + (i ? ' with-sep' : '');
-    el.style.width = `${pct}%`;
-    el.title = `${s.stars}★: ${pct.toFixed(1)}% (${s.count})`;
+    el.className = `star-seg ${c.cls}` + (i ? ' with-sep' : '');
+    const pctAdj = (pxAdj[i] / pxTotal) * 100;
+    el.style.width = `${pctAdj}%`;
+    const pctForLabel = (c.count / denom) * 100;
+    el.title = `${c.stars}★: ${pctForLabel.toFixed(1)}% (${c.count})`;
     bar.appendChild(el);
   });
 
   if(legend){
-    const basis = (denom === total25) ? `Based on ${total25} fish (2–5★)` : `Based on ${denom} fish (all stars)`;
-    legend.textContent = `${basis} • ` + segs.map(s=>{
-      const pct = (s.count / denom) * 100;
-      return `${s.stars}★ ${pct.toFixed(1)}% (${s.count})`;
+    const rangeLabel = season ? '1–5★' : '2–5★';
+    const basis = season
+      ? `Based on ${denom} fish (${rangeLabel})`
+      : `Based on ${totalShown} fish (${rangeLabel})`;
+    legend.textContent = `${basis} • ` + counts.map(c=>{
+      const pct = (c.count / denom) * 100;
+      return `${c.stars}★ ${pct.toFixed(1)}% (${c.count})`;
     }).join(' • ');
   }
 }
@@ -2947,6 +2982,7 @@ function updateDashboard(){
   const totalPoints = locs.reduce((s,l)=>s+(byLocKPI[l]?.totalPoints||0),0);
   const totalStars = locs.reduce((s,l)=>s+(byLocKPI[l]?.totalStars||0),0);
   const totalCaught = locs.reduce((s,l)=>s+(byLocKPI[l]?.caught||0),0);
+  const star1 = locs.reduce((s,l)=>s+((byLocKPI[l]?.starCounts||[0,0,0,0,0])[0]||0),0);
   const star2 = locs.reduce((s,l)=>s+((byLocKPI[l]?.starCounts||[0,0,0,0,0])[1]||0),0);
   const star3 = locs.reduce((s,l)=>s+((byLocKPI[l]?.starCounts||[0,0,0,0,0])[2]||0),0);
   const star4 = locs.reduce((s,l)=>s+((byLocKPI[l]?.starCounts||[0,0,0,0,0])[3]||0),0);
@@ -2967,7 +3003,7 @@ function updateDashboard(){
 
   // Star distribution (exact 2★–5★, normalized within 2–5★)
   try{
-    renderStarDistributionBar(totalCaught, star2, star3, star4, star5);
+    renderStarDistributionBar(totalCaught, star1, star2, star3, star4, star5);
   }catch(_){/* no-op */}
 
   // Best map: best average points (avg of caught fish points) per map; blank if nothing caught yet

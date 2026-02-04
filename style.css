@@ -3077,6 +3077,7 @@ button.menu-item[data-share="backup"]:hover{
 .star-dist-bar .star-seg.with-sep{
   border-left:1px solid rgba(255,255,255,0.28);
 }
+.star-dist-bar .star-1{ background: var(--red1); }
 .star-dist-bar .star-2{ background: var(--red2); }
 .star-dist-bar .star-3{ background: var(--red3); }
 .star-dist-bar .star-4{ background: var(--red4); }
