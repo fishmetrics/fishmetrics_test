@@ -322,7 +322,7 @@
         <span class="instr-text">
           <strong>Welcome to FishMetrics.</strong>
           First things first: this isn't a scientific measure of any fisherperson's skills, so shouldn't be taken too seriously.
-          If you like playing with numbers like I do, keeping tabs on your CotD fishing all-time, or casually comparing stats
+          If you like playing with numbers like I do, keeping tabs on your CotD fishing career, or casually comparing stats
           with friends and clanmates, FishMetrics is for you.
            Enjoy!
         </span>
@@ -340,7 +340,27 @@
           </span>
       </p>
 
-      <p class="ack-wrapper"><strong>Data &amp; Backups</strong><br>
+      
+
+      <div class="light-divider"></div>
+
+
+      
+
+      <p class="ack-wrapper"><strong>Preferences</strong><br>
+        <span class="instr-text">
+          <div class="pref-panel">
+            <label class="pref-toggle">
+              <input type="checkbox" id="prefAutoUpdatePB">
+              Auto-update All-time PBs from Season
+            </label>
+            <div class="pref-note">When enabled, season catches that beat your all-time PB will update automatically.</div>
+          </div>
+        </span>
+      </p>
+<div class="light-divider"></div>
+
+<p class="ack-wrapper"><strong>Data &amp; Backups</strong><br>
         <span class="instr-text">
           Want to move FishMetrics to another device (or just keep a safety copy)?
         </span>
@@ -503,6 +523,7 @@ Not affiliated with any company or organization of a similar name.</div>
         <input type="checkbox" id="pbConfirmAlways">
         Always update All-time PBs from Season
       </label>
+      <div class="modal-note">You can change this later in Preferences.</div>
       <div class="modal-actions">
         <button type="button" class="btn-secondary" id="pbConfirmNo">Keep Season only</button>
         <button type="button" class="btn-primary" id="pbConfirmYes">Update PB</button>

@@ -5834,3 +5834,26 @@ function _addMonths(date, months){
   window.addEventListener('resize', () => setTimeout(findAndClamp, 0));
   window.addEventListener('orientationchange', () => setTimeout(findAndClamp, 50));
 })();
+
+
+// Preferences: allow toggling PB auto-update after opting in
+function initPreferences(){
+  const cb = document.getElementById('prefAutoUpdatePB');
+  if(!cb) return;
+  let enabled = false;
+  try{
+    enabled = localStorage.getItem('fm_auto_update_pb_from_season') === "true";
+  }catch(_){}
+  cb.checked = enabled;
+
+  cb.addEventListener('change', () => {
+    try{
+      if(cb.checked){
+        localStorage.setItem('fm_auto_update_pb_from_season', "true");
+      }else{
+        localStorage.removeItem('fm_auto_update_pb_from_season');
+      }
+    }catch(_){}
+  });
+}
+document.addEventListener('DOMContentLoaded', initPreferences);
