@@ -1643,8 +1643,15 @@ function confirmCareerPbUpdate(opts){
 
   yes.onclick = () => {
     try{
-      if(always.checked) localStorage.setItem('fm_auto_update_pb_from_season', "true");
-    }catch(_){}
+      if(always.checked){
+        localStorage.setItem('fm_auto_update_pb_from_season', "true");
+        // If Preferences toggle exists, sync it immediately
+        const prefCb = document.getElementById('prefAutoUpdatePB');
+        if(prefCb) prefCb.checked = true;
+      }
+    }catch(_){ }
+    // In case the Preferences UI mounts later, ensure it syncs
+    try{ if(typeof initPreferences === 'function') initPreferences(); }catch(_){ }
     cleanup();
     opts && opts.onYes && opts.onYes();
   };
@@ -1971,9 +1978,9 @@ function renderTable(){
               setTimeout(()=>{ inlineErr.classList.remove("success"); if(inlineErr.textContent === "All-time PB! Updated."){ inlineErr.textContent=""; inlineErr.classList.remove("show"); } }, 1800);
             },
             onNo: () => {
-              inlineErr.textContent = "All-time PB available (not updated).";
+              inlineErr.textContent = "All time PB not updated!";
               inlineErr.classList.add("show");
-              setTimeout(()=>{ if(inlineErr.textContent === "All-time PB available (not updated)."){ inlineErr.textContent=""; inlineErr.classList.remove("show"); } }, 1800);
+              setTimeout(()=>{ if(inlineErr.textContent === "All time PB not updated!"){ inlineErr.textContent=""; inlineErr.classList.remove("show"); } }, 1800);
             }
           });
         }
@@ -5839,12 +5846,24 @@ function _addMonths(date, months){
 // Preferences: allow toggling PB auto-update after opting in
 function initPreferences(){
   const cb = document.getElementById('prefAutoUpdatePB');
-  if(!cb) return;
+  if(!cb){
+    // Preferences UI may mount after initial load (tab-render). Retry briefly.
+    try{
+      window.__fmPrefRetryCount = (window.__fmPrefRetryCount || 0) + 1;
+      if(window.__fmPrefRetryCount < 40) setTimeout(initPreferences, 250);
+    }catch(_){ }
+    return;
+  }
+
   let enabled = false;
   try{
     enabled = localStorage.getItem('fm_auto_update_pb_from_season') === "true";
-  }catch(_){}
+  }catch(_){ }
   cb.checked = enabled;
+
+  // Avoid adding multiple listeners if initPreferences runs more than once
+  if(cb.dataset && cb.dataset.wired === "1") return;
+  if(cb.dataset) cb.dataset.wired = "1";
 
   cb.addEventListener('change', () => {
     try{
@@ -5853,7 +5872,7 @@ function initPreferences(){
       }else{
         localStorage.removeItem('fm_auto_update_pb_from_season');
       }
-    }catch(_){}
+    }catch(_){ }
   });
 }
 document.addEventListener('DOMContentLoaded', initPreferences);
