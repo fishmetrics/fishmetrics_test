@@ -3,11 +3,11 @@
   --font-display: 'Orbitron', system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
 
   /* richer variation across the red family for the Star Catches chart */
-  --red1: rgba(255, 170, 110, .88);
-  --red2: rgba(255, 120, 90, .88);
-  --red3: rgba(255, 70, 70, .88);
-  --red4: rgba(230, 30, 70, .88);
-  --red5: rgba(150, 0, 40, .92);
+  --red1: #fff7cc;
+  --red2: #ffd24d;
+  --red3: #ff9f1a;
+  --red4: #ff5a1f; /* orange-red */
+  --red5: #d61f2c; /* lighter deep red */
 
   --bg:#0b1b3a;
   --bg2:#0a2a5a;
@@ -2147,7 +2147,7 @@ input.outofseason{
   pointer-events: none;
   max-width: 260px;
   white-space: nowrap;
-  box-shadow: 0 8px 22px rgba(0,0,0,0.35);
+  box-shadow: 0 8px 22px rgba(0,0,0,0.55);
 }
 
 body.season-active .oos-note{
@@ -2292,6 +2292,22 @@ tr.oos-row td input { opacity: 1; } /* keep inputs readable */
   box-shadow: 0 0 0 2px rgba(255,77,77,.18);
   vertical-align: middle;
   transform: translateY(-1px);
+}
+
+/* --- All-time: Season-imported PB badge --- */
+.pb-import-badge{
+  display:block;
+  margin-top:4px;
+  margin-left:0;
+  padding:0;
+  border:none;
+  border-radius:0;
+  font-size:10px;
+  line-height:1.15;
+  letter-spacing:0.2px;
+  color: rgba(255,255,255,0.55);
+  background: transparent;
+  white-space: nowrap;
 }
 
 
@@ -2532,7 +2548,7 @@ body.season-active {
   background: #ffffff;
   color: #111827;
   border: 1px solid rgba(0,0,0,0.10);
-  box-shadow: 0 20px 60px rgba(0,0,0,0.35);
+  box-shadow: 0 20px 60px rgba(0,0,0,0.55);
 }
 #restoreConfirmBackdrop .modal-title{
   color: #111827;
@@ -2563,7 +2579,7 @@ body.season-active {
   background: #ffffff;
   color: #111827;
   border: 1px solid rgba(0,0,0,0.10);
-  box-shadow: 0 20px 60px rgba(0,0,0,0.35);
+  box-shadow: 0 20px 60px rgba(0,0,0,0.55);
 }
 .modal-title{
   color: #111827;
@@ -2613,7 +2629,7 @@ body.season-active {
   background: #ffffff !important;
   color: #111827 !important;
   border: 1px solid rgba(0,0,0,0.10) !important;
-  box-shadow: 0 20px 60px rgba(0,0,0,0.35) !important;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.55) !important;
 }
 #privacyModal .privacy-content h3,
 #releaseNotesModal .privacy-content h3{
@@ -3158,3 +3174,35 @@ button.menu-item[data-share="backup"]:hover{
 
 /* Light section divider (Instructions) */
 .light-divider{height:1px;width:100%;background:rgba(255,255,255,0.22);box-shadow:0 1px 0 rgba(0,0,0,0.18);margin:22px 0;}
+
+
+/* PB policy radios (Preferences + PB modal) */
+.pb-policy-options{
+  display:flex;
+  flex-wrap:wrap;
+  gap:18px;
+  align-items:center;
+}
+.pref-option, .modal-check{
+  font-weight: normal;
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+}
+
+.pb-policy-options label{ white-space: nowrap; }
+
+
+button.disabled{ opacity: 0.55; cursor: not-allowed; }
+
+
+.season-banner{ display:flex; align-items:center; justify-content:space-between; gap:12px; }
+.season-banner-right{ display:flex; align-items:center; }
+.season-banner-right .toggle-label{ white-space:nowrap; }
+
+
+/* Darker separators for star distribution bar */
+.star-distribution-bar > div:not(:last-child),
+.star-dist-bar > div:not(:last-child){
+  border-right: 2px solid rgba(0,0,0,0.55);
+}

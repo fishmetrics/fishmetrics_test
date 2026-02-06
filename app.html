@@ -116,6 +116,13 @@
     </div>
 
   </div>
+<div class="season-banner-right">
+  <label class="toggle" title="Toggle to include or exclude out-of-season fish in Season dashboard KPIs and charts.">
+    <input type="checkbox" id="includeOOSDashboardToggle">
+    <span class="slider"></span>
+    <span class="toggle-label">Include OOS</span>
+  </label>
+</div>
 </div>
 <div class="dash-controls" aria-label="Dashboard Controls">
   <label class="toggle">
@@ -349,14 +356,29 @@
 
       <p class="ack-wrapper"><strong>Preferences</strong><br>
         <span class="instr-text">
-          <div class="pref-panel">
-            <label class="pref-toggle">
-              <input type="checkbox" id="prefAutoUpdatePB">
-              Auto-update All-time PBs from Season
-            </label>
-            <div class="pref-note">When enabled, season catches that beat your all-time PB will update automatically.</div>
-          </div>
-        </span>
+          <div class="pref-panel pb-policy-panel">
+  <div class="pref-note" style="margin-bottom:10px;">Choose how FishMetrics handles All-time PB updates when a Season catch beats your best.</div>
+
+<div class="pb-policy-options" role="radiogroup" aria-label="PB update preference">
+<label class="pref-option">
+  <input type="radio" name="pbPolicyPref" id="prefPbAsk" value="ask">
+  Ask every time
+</label>
+
+    <label class="pref-option">
+      <input type="radio" name="pbPolicyPref" id="prefPbAlways" value="always">
+      Always update PB
+    </label>
+
+    <label class="pref-option">
+      <input type="radio" name="pbPolicyPref" id="prefPbNever" value="never">
+      Never update PB
+    </label>
+  </div>
+
+  
+</div>
+</span>
       </p>
 <div class="light-divider"></div>
 
@@ -468,7 +490,7 @@ Not affiliated with any company or organization of a similar name.</div>
   <div class="footer-right">
     <button class="version-btn footer-meta-btn" onclick="openReleaseNotes()" aria-label="Version and release notes">
       <span class="footer-icon" aria-hidden="true">ⓘ</span>
-      <span class="footer-label">v1.4.4</span>
+      <span class="footer-label">v1.4.5</span>
     </button>
   </div>
 </footer>
@@ -488,7 +510,7 @@ Not affiliated with any company or organization of a similar name.</div>
     <button onclick="clearFishMetricsData()">Clear All Local Data</button>
 
     <p class="privacy-footnote">
-      GDPR compliance: FishMetrics v1.4.4 – local-only data storage.
+      GDPR compliance: FishMetrics v1.4.5 – local-only data storage.
     </p>
 
     <button class="close-btn" onclick="closePrivacyNotice()">Close</button>
@@ -497,15 +519,25 @@ Not affiliated with any company or organization of a similar name.</div>
 
 <div id="releaseNotesModal" class="privacy-modal">
   <div class="privacy-content">
-    <h3>FishMetrics v1.4.4</h3>
+<h3>FishMetrics v1.4.5</h3>
 
-    <ul class="release-notes">
-      <li>Marina fish added</li>
-      <li>Season view added</li>
-      <li>Career Targets added</li>
-      <li>Focus Mode added</li>
-      <li>Minor UI changes</li>
-    </ul>
+<ul class="release-notes">
+  <li>Added star distribution</li>
+  <li>New toggle in Season view</li>
+  <li>Minor UI improvements</li>
+  <li>Minor bug fixes</li>
+
+</ul>
+
+<h3>FishMetrics v1.4.4</h3>
+
+<ul class="release-notes">
+  <li>Marina fish added</li>
+  <li>Season view added</li>
+  <li>Career Targets added</li>
+  <li>Focus Mode added</li>
+  <li>Minor UI changes</li>
+</ul>
 
     <button class="close-btn" onclick="closeReleaseNotes()">Close</button>
   </div>
@@ -519,10 +551,16 @@ Not affiliated with any company or organization of a similar name.</div>
       <div class="modal-body" id="pbConfirmBody">
         This season catch beats your All-time best. Update All-time PB?
       </div>
-      <label class="modal-check">
-        <input type="checkbox" id="pbConfirmAlways">
-        Always update All-time PBs from Season
-      </label>
+      <div class="modal-checks pb-policy-options" role="radiogroup" aria-label="PB update preference">
+  <label class="modal-check">
+    <input type="radio" name="pbPolicyModal" id="pbModalAlways" value="always">
+    Always update PB
+  </label>
+  <label class="modal-check">
+    <input type="radio" name="pbPolicyModal" id="pbModalNever" value="never">
+    Never update PB
+  </label>
+</div>
       <div class="modal-note">You can change this later in Preferences.</div>
       <div class="modal-actions">
         <button type="button" class="btn-secondary" id="pbConfirmNo">Keep Season only</button>
