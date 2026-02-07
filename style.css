@@ -3206,3 +3206,34 @@ button.disabled{ opacity: 0.55; cursor: not-allowed; }
 .star-dist-bar > div:not(:last-child){
   border-right: 2px solid rgba(0,0,0,0.55);
 }
+
+
+/* --- Patch: Preferences radios wrap + alignment (safe; does not affect Records table) --- */
+@media (max-width: 600px){
+  .pb-policy-options{ flex-direction: column; align-items: flex-start; gap: 10px; }
+  .pb-policy-options label{ white-space: normal; }
+}
+
+/* Prevent horizontal overflow in Instructions (mobile) */
+.instructions-text, .ack-wrapper, .instr-text{
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow-wrap: anywhere;
+}
+
+/* Preferences radio alignment fix (PB policy options) */
+.pb-policy-options .pref-option{
+  display: grid;
+  grid-template-columns: 18px 1fr;
+  column-gap: 12px;
+  align-items: center;
+  text-align: left;
+}
+.pb-policy-options .pref-option input[type="radio"]{
+  margin: 0;
+  width: 18px;
+  height: 18px;
+}
+@media (max-width: 600px){
+  .pb-policy-options .pref-option{ width: 100%; }
+}
