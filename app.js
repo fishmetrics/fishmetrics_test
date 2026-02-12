@@ -761,86 +761,6 @@ const bestMapEl = document.getElementById("bestMap");
 
 
 
-
-
-function renderStarDistributionBar(totalCaught, star1, star2, star3, star4, star5, oos1=0, oos2=0, oos3=0, oos4=0, oos5=0){
-  const bar = document.getElementById('starDistributionBar');
-  const legend = document.getElementById('starDistributionLegend');
-  if(!bar) return;
-
-  const season = (typeof isSeasonMode === 'function') ? isSeasonMode() : false;
-
-  const rangeEl = document.getElementById('starDistRange');
-  if(rangeEl) rangeEl.textContent = season ? '1–5★' : '2–5★';
-
-
-  // In Season mode, show 1–5★ because 1★ represents OOS fish and is meaningful there.
-  // In All-time, keep a cleaner progression view by showing 2–5★ only.
-  const counts = season
-    ? [
-        { stars: 1, count: star1||0, oos: oos1||0, cls: 'star-1' },
-        { stars: 2, count: star2||0, oos: oos2||0, cls: 'star-2' },
-        { stars: 3, count: star3||0, oos: oos3||0, cls: 'star-3' },
-        { stars: 4, count: star4||0, oos: oos4||0, cls: 'star-4' },
-        { stars: 5, count: star5||0, oos: oos5||0, cls: 'star-5' },
-      ]
-    : [
-        { stars: 2, count: star2||0, oos: 0, cls: 'star-2' },
-        { stars: 3, count: star3||0, oos: 0, cls: 'star-3' },
-        { stars: 4, count: star4||0, oos: 0, cls: 'star-4' },
-        { stars: 5, count: star5||0, oos: 0, cls: 'star-5' },
-      ];
-
-  const totalShown = counts.reduce((s,x)=>s+(x.count||0),0);
-  if(!totalShown){
-    bar.innerHTML = '';
-    if(legend) legend.textContent = '';
-    return;
-  }
-
-  // Denominator:
-  // - Season: all fish (1–5★) so bar % aligns with KPIs.
-  // - All-time: normalize within 2–5★ so the bar fills and reads as progression.
-  const denom = season
-    ? ((totalCaught && totalCaught > 0) ? totalCaught : totalShown)
-    : totalShown;
-
-  bar.innerHTML = '';
-
-  // Visual helpers: minimum width (so small segments remain visible) + separators.
-  const MIN_PX = 4;
-  const barWidth = bar.getBoundingClientRect().width || 0;
-
-  const nonZero = counts.filter(c=>c.count>0);
-  const pctRaw = nonZero.map(c => (c.count / denom) * 100);
-
-  // Convert to px widths, enforce a minimum px, then renormalize back to % for CSS widths.
-  const pxRaw = pctRaw.map(p => (p/100) * barWidth);
-  const pxAdj = pxRaw.map(px => Math.max(px, MIN_PX));
-  const pxTotal = pxAdj.reduce((s,x)=>s+x,0) || 1;
-
-  nonZero.forEach((c, i)=>{
-    const el = document.createElement('div');
-    el.className = `star-seg ${c.cls}` + (i ? ' with-sep' : '');
-    const pctAdj = (pxAdj[i] / pxTotal) * 100;
-    el.style.width = `${pctAdj}%`;
-    const pctForLabel = (c.count / denom) * 100;
-    const oosPart = (season && (c.oos||0)>0) ? ` • OOS: ${c.oos}` : '';
-    el.title = `${c.stars}★: ${pctForLabel.toFixed(1)}% (${c.count})${oosPart}`;
-    bar.appendChild(el);
-  });
-
-  if(legend){
-    const rangeLabel = season ? '1–5★' : '2–5★';
-    const basis = season
-      ? `Based on ${denom} fish (${rangeLabel})`
-      : `Based on ${totalShown} fish (${rangeLabel})`;
-    legend.textContent = `${basis} • ` + counts.map(c=>{
-      const pct = (c.count / denom) * 100;
-      return `${c.stars}★ ${pct.toFixed(1)}% (${c.count})`;
-    }).join(' • ');
-  }
-}
 function initIncludeLegendaryToggle(){
   const el = document.getElementById("includeLegendaryToggle");
   if(!el) return;
@@ -853,25 +773,12 @@ function initIncludeLegendaryToggle(){
     try{ updateSeasonUncaughtCount(); }catch(_){}
   });
 }
-function initIncludeOOSDashboardToggle(){
-  const el = document.getElementById("includeOOSDashboardToggle");
-  if(!el) return;
-  el.checked = !!includeOOSSeasonDashboard;
-  el.addEventListener("change", ()=>{
-    includeOOSSeasonDashboard = !!el.checked;
-    try{ localStorage.setItem("includeOOSSeasonDashboard", JSON.stringify(includeOOSSeasonDashboard)); }catch(_){}
-    try{ updateDashboard(); }catch(_){}
-  });
-}
-
 
 // ---- Dashboard slicers (left panel) ----
 // These slicers affect ONLY the Dashboard charts (not other tabs, not the records table).
 let dashboardLocation = "__ALL__"; // "__ALL__" or a specific location
 // Dashboard-only: include/exclude Legendary in KPIs + dashboard charts
 let includeLegendaryDashboard = JSON.parse(localStorage.getItem("includeLegendaryDashboard") ?? "true");
-let includeOOSSeasonDashboard = JSON.parse(localStorage.getItem("includeOOSSeasonDashboard") ?? "true"); // default include all
-
 let dashboardCategories = new Set(CATEGORY_ORDER); // multi-select
 
 function updateScoreRangesLocation(){
@@ -1612,201 +1519,22 @@ function setTableHeaders(isAll){
 
 
 
-/* === PB update policy (Season -> All-time) ===
-   localStorage key: fm_pb_update_policy = 'always' | 'never' | (unset => ask each time)
-*/
-function getPbUpdatePolicy(){
-  try{
-    const p = localStorage.getItem('fm_pb_update_policy');
-    return (p === 'always' || p === 'never') ? p : null;
-  }catch(_){ return null; }
-}
-function setPbUpdatePolicy(policy){
-  try{
-    if(policy === 'always' || policy === 'never'){
-      localStorage.setItem('fm_pb_update_policy', policy);
-    }else{
-      localStorage.removeItem('fm_pb_update_policy');
-    }
-  }catch(_){}
-}
-
-/* === Season-imported PB precision handling (All-time) ===
-   Fix rare cases where Season-derived PBs produce weights with >2 decimals
-   (e.g., 0.375). All-time manual entry remains 2dp, but Season-imported
-   PBs can retain 3dp so points/stars match the Season-derived PB.
-
-   Storage: fish-level flags in localStorage (fish names are globally unique
-   per game). Badge shows only when the flag is true AND the stored PB has 3dp.
-*/
-
-const FM_PB_IMPORTED_KEY = 'fm_pb_imported_from_season_fish';
-
-function _loadPbImportedMap(){
-  try{
-    const raw = localStorage.getItem(FM_PB_IMPORTED_KEY);
-    const obj = raw ? JSON.parse(raw) : null;
-    return (obj && typeof obj === 'object') ? obj : {};
-  }catch(_){ return {}; }
-}
-
-function _savePbImportedMap(map){
-  try{ localStorage.setItem(FM_PB_IMPORTED_KEY, JSON.stringify(map || {})); }catch(_){ }
-}
-
-function isPbImportedFromSeason(fishName){
-  const m = _loadPbImportedMap();
-  return !!m?.[fishName];
-}
-
-function setPbImportedFromSeason(fishName, value){
-  try{
-    const m = _loadPbImportedMap();
-    if(value) m[fishName] = true;
-    else delete m[fishName];
-    _savePbImportedMap(m);
-  }catch(_){ }
-}
-
-function _decimalPlaces(str){
-  const s = String(str ?? '').trim();
-  const i = s.indexOf('.');
-  return (i === -1) ? 0 : Math.max(0, s.length - i - 1);
-}
-
-function _isSmallFishByDisplayWeight(weightStr){
-  const n = parseFloat(String(weightStr ?? '').trim());
-  if(Number.isNaN(n)) return false;
-  return n > 0 && n < 1;
-}
-
-function _shouldFlagSeasonImportedPb(fish, derivedWeightStr){
-  // Flag if the Season-derived weight has >2 decimals. (Manual All-time entry remains 2dp.)
-  const dp = _decimalPlaces(derivedWeightStr);
-  return dp > 2;
-}
-
-function _hasThreeDp(str){
-  // Historically named for 3dp; now means "has >2 decimals" for Season-imported PB precision.
-  return _decimalPlaces(str) > 2;
-}
-
-function syncPbPolicyUI(){
-  const policy = getPbUpdatePolicy(); // 'always' | 'never' | null (ask)
-
-  const prefAsk = document.getElementById('prefPbAsk');
-  const prefAlways = document.getElementById('prefPbAlways');
-  const prefNever  = document.getElementById('prefPbNever');
-
-  const modalAsk = document.getElementById('pbModalAsk');
-  const modalAlways = document.getElementById('pbModalAlways');
-  const modalNever  = document.getElementById('pbModalNever');
-
-  if(prefAsk && prefAlways && prefNever){
-    prefAsk.checked = !policy;
-    prefAlways.checked = policy === 'always';
-    prefNever.checked  = policy === 'never';
-  }
-  if(modalAsk && modalAlways && modalNever){
-    modalAsk.checked = !policy;
-    modalAlways.checked = policy === 'always';
-    modalNever.checked  = policy === 'never';
-  }
-}
-function initPbPolicyPreferences(){
-  const prefAsk    = document.getElementById('prefPbAsk');
-  const prefAlways = document.getElementById('prefPbAlways');
-  const prefNever  = document.getElementById('prefPbNever');
-  if(!prefAsk || !prefAlways || !prefNever) return;
-
-  // initial sync
-  syncPbPolicyUI();
-
-  // radio change => persist + sync everywhere
-  [prefAsk, prefAlways, prefNever].forEach(r=>{
-    r.addEventListener('change', ()=>{
-      if(prefAsk && prefAsk.checked) setPbUpdatePolicy(null);
-      else if(prefAlways.checked) setPbUpdatePolicy('always');
-      else if(prefNever.checked) setPbUpdatePolicy('never');
-      else setPbUpdatePolicy(null);
-      syncPbPolicyUI();
-    });
-  });
-}
-document.addEventListener('DOMContentLoaded', initPbPolicyPreferences);
-
 function confirmCareerPbUpdate(opts){
   // opts: {fishName, location, oldPts, newPts, unit, onYes, onNo}
-  const policy = getPbUpdatePolicy();
-  if(policy === 'always'){
-    opts && opts.onYes && opts.onYes();
-    return;
-  }
-  if(policy === 'never'){
-    opts && opts.onNo && opts.onNo();
-    return;
-  }
-const backdrop = document.getElementById('pbConfirmBackdrop');
+  try{
+    const pref = localStorage.getItem('fm_auto_update_pb_from_season');
+    if(pref === "true"){
+      opts && opts.onYes && opts.onYes();
+      return;
+    }
+  }catch(_){}
+
+  const backdrop = document.getElementById('pbConfirmBackdrop');
   const body = document.getElementById('pbConfirmBody');
   const yes = document.getElementById('pbConfirmYes');
   const no = document.getElementById('pbConfirmNo');
-  const always = document.getElementById('pbModalAlways');
-  const never = document.getElementById('pbModalNever');
-
-function updatePbModalActionState(){
-  try{
-    // If "Never update PB" is selected, disable the Update PB action.
-    // If "Always update PB" is selected, disable the "Keep season only" action.
-    const alwaysEl = document.getElementById('pbModalAlways');
-    const neverEl = document.getElementById('pbModalNever');
-    const updateBtn = document.getElementById('pbConfirmYes');
-    const keepBtn = document.getElementById('pbConfirmNo');
-
-    if(!updateBtn || !keepBtn) return;
-
-    const neverSelected = !!(neverEl && neverEl.checked);
-    const alwaysSelected = !!(alwaysEl && alwaysEl.checked);
-
-    updateBtn.disabled = neverSelected;
-    keepBtn.disabled = alwaysSelected;
-
-    updateBtn.classList.toggle('disabled', neverSelected);
-    keepBtn.classList.toggle('disabled', alwaysSelected);
-
-    if(neverSelected){
-      updateBtn.title = "Disabled because 'Never update PB' is selected.";
-    }else{
-      updateBtn.title = "";
-    }
-    if(alwaysSelected){
-      keepBtn.title = "Disabled because 'Always update PB' is selected.";
-    }else{
-      keepBtn.title = "";
-    }
-
-    if(updateBtn.disabled && document.activeElement === updateBtn){
-      keepBtn.focus();
-    }
-    if(keepBtn.disabled && document.activeElement === keepBtn){
-      if(!updateBtn.disabled) updateBtn.focus();
-    }
-  }catch(_){}
-}
-
-// Wire modal radio changes to keep the action button in sync.
-try{
-  const askEl = document.getElementById('pbModalAsk');
-  const alwaysEl = document.getElementById('pbModalAlways');
-  const neverEl = document.getElementById('pbModalNever');
-  [askEl, alwaysEl, neverEl].forEach(el=>{
-    if(el) el.addEventListener('change', updatePbModalActionState);
-  });
-}catch(_){}
-
-// Initial state when modal opens
-updatePbModalActionState();
-
-  if(!backdrop || !body || !yes || !no || !always || !never){
+  const always = document.getElementById('pbConfirmAlways');
+  if(!backdrop || !body || !yes || !no || !always){
     // Fallback
     if(confirm("New All-time PB detected. Update All-time PB?")){
       opts && opts.onYes && opts.onYes();
@@ -1834,46 +1562,14 @@ updatePbModalActionState();
   backdrop.classList.add('show');
   backdrop.setAttribute('aria-hidden','false');
 
-  // Sync modal radios to stored preference
-  syncPbPolicyUI();
-
   yes.onclick = () => {
-    if(yes && yes.disabled) return;
-
     try{
-      const ask = document.getElementById('pbModalAsk');
-      if(ask && ask.checked) setPbUpdatePolicy(null);
-      else if(always.checked) setPbUpdatePolicy('always');
-      else if(never.checked) setPbUpdatePolicy('never');
-      else setPbUpdatePolicy(null);
-      syncPbPolicyUI();
-    }catch(_){ }
-
-    try{
-      if(always.checked){
-        localStorage.setItem('fm_auto_update_pb_from_season', "true");
-        // If Preferences toggle exists, sync it immediately
-        const prefCb = document.getElementById('prefPbAlways');
-        if(prefCb) prefCb.checked = true;
-      }
-    }catch(_){ }
-    // In case the Preferences UI mounts later, ensure it syncs
-    try{ if(typeof initPreferences === 'function') initPreferences(); }catch(_){ }
+      if(always.checked) localStorage.setItem('fm_auto_update_pb_from_season', "true");
+    }catch(_){}
     cleanup();
     opts && opts.onYes && opts.onYes();
   };
   no.onclick = () => {
-    if(no && no.disabled) return;
-
-    try{
-      const ask = document.getElementById('pbModalAsk');
-      if(ask && ask.checked) setPbUpdatePolicy(null);
-      else if(never.checked) setPbUpdatePolicy('never');
-      else if(always.checked) setPbUpdatePolicy('always');
-      else setPbUpdatePolicy(null);
-      syncPbPolicyUI();
-    }catch(_){ }
-
     cleanup();
     opts && opts.onNo && opts.onNo();
   };
@@ -1977,14 +1673,7 @@ function recomputeFromDOM(){
     // Validation
     const inp = weightInp || row.querySelector("input");
     if(!inp) return;
-    // All-time: normally allow up to 2dp. For rare Season-imported PBs, allow up to 3dp
-    // so points/stars can be computed from the precise derived weight.
-    let allow3dpHere = false;
-    try{
-      allow3dpHere = (!isSeasonMode || !isSeasonMode()) && isPbImportedFromSeason(fish?.name) && _decimalPlaces(inp.value) > 2;
-    }catch(_){ allow3dpHere = false; }
-    const rx = allow3dpHere ? /^(\d*(\.\d{0,4})?)?$/ : /^(\d*(\.\d{0,2})?)?$/;
-    if(!rx.test(inp.value)){
+    if(!/^(\d*(\.\d{0,2})?)?$/.test(inp.value)){
       inp.classList.add("invalid");
       return;
     }
@@ -2197,21 +1886,15 @@ function renderTable(){
             unit: (typeof weightUnit !== 'undefined') ? weightUnit : "",
             onYes: () => {
               // Store in the currently selected unit so Career matches the unit label
-              try{
-                if(_shouldFlagSeasonImportedPb(f, wStr)){
-                  setPbImportedFromSeason(f.name, true);
-                }
-              }catch(_){ }
               setCareerStoredWeight(f.location, f.name, wStr);
-              try{ if(typeof refreshUI === 'function') refreshUI(); }catch(_){ }
               inlineErr.textContent = "All-time PB! Updated.";
               inlineErr.classList.add("show","success");
               setTimeout(()=>{ inlineErr.classList.remove("success"); if(inlineErr.textContent === "All-time PB! Updated."){ inlineErr.textContent=""; inlineErr.classList.remove("show"); } }, 1800);
             },
             onNo: () => {
-              inlineErr.textContent = "All time PB not updated!";
+              inlineErr.textContent = "All-time PB available (not updated).";
               inlineErr.classList.add("show");
-              setTimeout(()=>{ if(inlineErr.textContent === "All time PB not updated!"){ inlineErr.textContent=""; inlineErr.classList.remove("show"); } }, 1800);
+              setTimeout(()=>{ if(inlineErr.textContent === "All-time PB available (not updated)."){ inlineErr.textContent=""; inlineErr.classList.remove("show"); } }, 1800);
             }
           });
         }
@@ -2259,43 +1942,13 @@ function renderTable(){
       return decPart === "" ? intPart : `${intPart}.${decPart}`;
     }
 
-    // Allow 3dp display + correct recompute only for Season-imported PBs (rare small fish edge case).
-    const storedCareerW = getStoredWeight(f.location, f.name);
-    let allow3dp = false;
-    try{
-      allow3dp = (!seasonMode) && isPbImportedFromSeason(f.name) && _hasThreeDp(storedCareerW);
-    }catch(_){ allow3dp = false; }
-
-    // Set step to match allowed precision (purely UX)
-    i.step = allow3dp ? (_decimalPlaces(storedCareerW) >= 4 ? "0.0001" : "0.001") : "0.01";
-    i.value = allow3dp ? String(storedCareerW ?? "") : clampTwoDecimals(String(storedCareerW ?? ""));
-
-    // Add a badge next to the fish name in All-time view for these special PBs
-    try{
-      if(allow3dp){
-        const fishTd = r.children && r.children[2];
-        if(fishTd){
-          const b = document.createElement('span');
-          b.className = 'pb-import-badge';
-          b.textContent = 'Imported from Season';
-          fishTd.appendChild(b);
-        }
-      }
-    }catch(_){ }
-
-    const _initialCareerW = String(i.value ?? "");
-    let _pendingClearPbImportFlag = false;
+    i.value = getStoredWeight(f.location, f.name);
     i.addEventListener('focus', ()=>{ r.classList.add('editing'); });
 
     function commitWeight(){
       if(suppress) return;
-      let rawStr = String(i.value ?? "").trim();
-
-      // If this is a Season-imported 3dp PB and the user hasn't actually changed it,
-      // keep the 3dp value (do NOT clamp down).
-      const keep3dp = !!(allow3dp && rawStr === _initialCareerW && _hasThreeDp(rawStr));
-      const raw = keep3dp ? rawStr : clampTwoDecimals(rawStr);
-      if(!keep3dp && i.value !== raw){
+      const raw = clampTwoDecimals(String(i.value ?? "").trim());
+      if(i.value !== raw){
         suppress = true;
         i.value = raw;
         suppress = false;
@@ -2338,13 +1991,6 @@ function renderTable(){
 
       setInlineError(i, "");
       setStoredWeight(f.location, f.name, raw);
-
-      // Clear the Season-import badge/flag ONLY after a successful edit or when the PB becomes 2dp.
-      try{
-        if(_pendingClearPbImportFlag || (_decimalPlaces(raw) <= 2)){
-          if(isPbImportedFromSeason(f.name)) setPbImportedFromSeason(f.name, false);
-        }
-      }catch(_){ }
       recomputeFromDOM();
     }
 
@@ -2352,21 +1998,6 @@ function renderTable(){
     i.addEventListener('blur', ()=>{ r.classList.remove('editing'); });
     i.addEventListener("input", ()=>{
       if(suppress) return;
-      // If this is an imported 3dp PB, allow it to sit unchanged without clamping.
-      // As soon as the user edits it, revert to 2dp behavior (matching the game) and clear flag on save.
-      if(allow3dp && String(i.value ?? '') === _initialCareerW){
-        recomputeFromDOM();
-        return;
-      }
-      if(allow3dp){
-        allow3dp = false;
-        _pendingClearPbImportFlag = true;
-        // Also remove badge immediately for clarity
-        try{
-          const bd = r.querySelector('.pb-import-badge');
-          if(bd) bd.remove();
-        }catch(_){ }
-      }
       const clamped = clampTwoDecimals(i.value);
       if(i.value !== clamped){
         suppress = true;
@@ -3066,7 +2697,7 @@ brokenXAxisBreak);
 }
 
 function computeAggregates(records, opts = {}){
-  const { includeLegendary = true, includeOOS = true } = opts;
+  const { includeLegendary = true } = opts;
   const recs = records || recordsByLocation || {};
 
   const byLoc = {};
@@ -3084,7 +2715,6 @@ function computeAggregates(records, opts = {}){
 
     for (const fish of LOCATIONS[loc]){
       if(!includeLegendary && fish.category === 'Legendary') continue;
-      if((typeof isSeasonMode === 'function' && isSeasonMode()) && !includeOOS && !isFishInSeason(fish.name)) continue;
       const raw = recs?.[loc]?.[fish.name];
       const w = parseAndClampRecordLbs(raw, fish);
       const valid = raw !== "" && !Number.isNaN(w) && w > 0 && w >= fish.min && w <= fish.max;
@@ -3106,7 +2736,7 @@ function computeAggregates(records, opts = {}){
 }
 
 function computeDashboardAggregates(records, opts = {}){
-  const { includeLegendary = true, includeOOS = true } = opts;
+  const { includeLegendary = true } = opts;
   const recs = records || recordsByLocation || {};
   const locsAll = getLocationList();
   const locs = (dashboardLocation && dashboardLocation !== '__ALL__' && LOCATIONS[dashboardLocation])
@@ -3128,7 +2758,6 @@ function computeDashboardAggregates(records, opts = {}){
     for (const fish of (LOCATIONS[loc] || [])){
       if(!dashboardCategories.has(fish.category)) continue;
       if(!includeLegendary && fish.category === 'Legendary') continue;
-      if((typeof isSeasonMode === 'function' && isSeasonMode()) && !includeOOS && !isFishInSeason(fish.name)) continue;
       const raw = recs?.[loc]?.[fish.name];
       let w = parseUserWeightToLbs(raw);
       if(weightUnit === 'kgs' && tinyFishKgAcceptsDisplayed(raw, fish)){
@@ -3248,13 +2877,13 @@ function updateSeasonProgress(){
 function updateDashboard(){
   const effectiveRecords = getEffectiveRecords();
   const activeView = document.querySelector('.tab-view.active')?.id;
-  const { byLoc: byLocAll, allFish } = computeAggregates(effectiveRecords, { includeOOS: includeOOSSeasonDashboard });
-  const { byLoc: byLocKPI } = computeAggregates(effectiveRecords, { includeLegendary: includeLegendaryDashboard, includeOOS: includeOOSSeasonDashboard });
+  const { byLoc: byLocAll, allFish } = computeAggregates(effectiveRecords);
+  const { byLoc: byLocKPI } = computeAggregates(effectiveRecords, { includeLegendary: includeLegendaryDashboard });
   const locs = getLocationList();
   const byLoc = byLocAll;
 
   // Dashboard charts use slicers (location + rarity). Other tabs ignore slicers.
-  const { byLoc: dashByLoc, locs: dashLocs } = computeDashboardAggregates(effectiveRecords, { includeLegendary: includeLegendaryDashboard, includeOOS: includeOOSSeasonDashboard });
+  const { byLoc: dashByLoc, locs: dashLocs } = computeDashboardAggregates(effectiveRecords, { includeLegendary: includeLegendaryDashboard });
 
   // Precompute commonly used arrays (Dashboard charts)
   const pointsCommon = dashLocs.map(l=>dashByLoc[l].pointsByCat.Common);
@@ -3274,40 +2903,8 @@ function updateDashboard(){
   const totalPoints = locs.reduce((s,l)=>s+(byLocKPI[l]?.totalPoints||0),0);
   const totalStars = locs.reduce((s,l)=>s+(byLocKPI[l]?.totalStars||0),0);
   const totalCaught = locs.reduce((s,l)=>s+(byLocKPI[l]?.caught||0),0);
-  const star1 = locs.reduce((s,l)=>s+((byLocKPI[l]?.starCounts||[0,0,0,0,0])[0]||0),0);
-  const star2 = locs.reduce((s,l)=>s+((byLocKPI[l]?.starCounts||[0,0,0,0,0])[1]||0),0);
-  const star3 = locs.reduce((s,l)=>s+((byLocKPI[l]?.starCounts||[0,0,0,0,0])[2]||0),0);
   const star4 = locs.reduce((s,l)=>s+((byLocKPI[l]?.starCounts||[0,0,0,0,0])[3]||0),0);
   const star5 = locs.reduce((s,l)=>s+((byLocKPI[l]?.starCounts||[0,0,0,0,0])[4]||0),0);
-
-// OOS breakdown for Star Distribution tooltips (Season view only).
-let oosStar1 = 0, oosStar2 = 0, oosStar3 = 0, oosStar4 = 0, oosStar5 = 0;
-try{
-  if(typeof isSeasonMode === 'function' && isSeasonMode() && includeOOSSeasonDashboard){
-    for(const loc of (locs || [])){
-      const recs = (seasonRecordsByLocation && seasonRecordsByLocation[loc]) ? seasonRecordsByLocation[loc] : null;
-      if(!recs) continue;
-      for(const fishName of Object.keys(recs)){
-        if(isFishInSeason(fishName)) continue;
-        const f = getFishObj(loc, fishName);
-        if(!f) continue;
-        if(!includeLegendaryDashboard && f.category === 'Legendary') continue;
-        const raw = String(recs[fishName] ?? '').trim();
-        if(!raw) continue;
-        const lbs = parseUserWeightToLbs(raw);
-        if(!Number.isFinite(lbs)) continue;
-        const rawPts = calculatePointsRaw(lbs, f);
-        const st = calculateStars(f.category, rawPts);
-        if(st===1) oosStar1++;
-        else if(st===2) oosStar2++;
-        else if(st===3) oosStar3++;
-        else if(st===4) oosStar4++;
-        else if(st===5) oosStar5++;
-      }
-    }
-  }
-}catch(_){/*no-op*/}
-
 
   if(totalPointsEl) totalPointsEl.textContent = fmtNumber(totalPoints);
 
@@ -3319,13 +2916,8 @@ try{
     const starsTxt = '★'.repeat(full) + (half ? '☆' : '') + '☆'.repeat(Math.max(0, 5 - full - (half?1:0)));
     avgStarsEl.textContent = starsTxt;
   }
-  if(pct4El) pct4El.textContent = totalCaught ? `${(100*(star4)/totalCaught).toFixed(1)}%` : '0.0%';
+  if(pct4El) pct4El.textContent = totalCaught ? `${(100*star4/totalCaught).toFixed(1)}%` : '0.0%';
   if(pct5El) pct5El.textContent = totalCaught ? `${(100*star5/totalCaught).toFixed(1)}%` : '0.0%';
-
-  // Star distribution (exact 2★–5★, normalized within 2–5★)
-  try{
-    renderStarDistributionBar(totalCaught, star1, star2, star3, star4, star5, oosStar1, oosStar2, oosStar3, oosStar4, oosStar5);
-  }catch(_){/* no-op */}
 
   // Best map: best average points (avg of caught fish points) per map; blank if nothing caught yet
   let bestMap = '';
@@ -4149,7 +3741,7 @@ function _buildSeasonArchiveSnapshot(){
   return {
     schemaVersion: "season-archive-v2",
     exportedAt: now.toISOString(),
-    app: { name: "FishMetrics", version: "v1.4.5" },
+    app: { name: "FishMetrics", version: "v1.4.4" },
     season: { seasonId, startedAt, month },
     rules: {
       oosCaps: { Common: 357, Rare: 476, Epic: 595 },
@@ -4212,7 +3804,6 @@ async function initApp(){
   buildLocationButtons();
   setupRaritySlicers();
   initIncludeLegendaryToggle();
-  initIncludeOOSDashboardToggle();
   makeCharts();
   locationSelect.onchange = renderTable;
   renderTable();
@@ -4344,7 +3935,7 @@ function buildShareKPIs(opts){
 
   const locs = location ? [location] : getLocationList();
   for(const loc of locs){
-    byMap[loc] = {sum:0, cnt:0, pointsByCat:{Common:0,Rare:0,Epic:0,Legendary:0}, countsByCat:{Common:0,Rare:0,Epic:0,Legendary:0}};
+    byMap[loc] = {sum:0, cnt:0};
     const fishList = LOCATIONS[loc] || [];
     for(const fish of fishList){
       const raw = recs?.[loc]?.[fish.name];
@@ -4365,8 +3956,6 @@ function buildShareKPIs(opts){
       totalPoints += pts;
       byMap[loc].sum += pts;
       byMap[loc].cnt += 1;
-      byMap[loc].pointsByCat[fish.category] += pts;
-      byMap[loc].countsByCat[fish.category] += 1;
 
       if(stars === 4) star4 += 1;
       if(stars === 5) star5 += 1;
@@ -4382,33 +3971,23 @@ function buildShareKPIs(opts){
   }
 
   let bestMap = "";
-  let bestMapScore = -Infinity;
-  let bestMapPoints = 0;
-  const _rarities = ['Common','Rare','Epic','Legendary'];
+  let bestAvg = 0;
   if(location){
+    const cnt = byMap[location]?.cnt || 0;
     bestMap = location;
-    bestMapPoints = byMap[location]?.sum || 0;
+    bestAvg = cnt ? (byMap[location].sum / cnt) : 0;
   }else{
     for(const loc of Object.keys(byMap)){
-      const bm = byMap[loc];
-      if(!bm || (bm.cnt||0) <= 0) continue;
-      let sumAvg = 0;
-      for(const r of _rarities){
-        const c = bm.countsByCat?.[r] || 0;
-        const avg = c ? ((bm.pointsByCat?.[r] || 0) / c) : 0;
-        sumAvg += avg;
-      }
-      const score = sumAvg / _rarities.length;
-      const points = bm.sum || 0;
-      if(score > bestMapScore || (score === bestMapScore && points > bestMapPoints)){
-        bestMapScore = score;
+      const cnt = byMap[loc].cnt;
+      const avg = cnt ? (byMap[loc].sum / cnt) : 0;
+      if(avg > bestAvg){
+        bestAvg = avg;
         bestMap = loc;
-        bestMapPoints = points;
       }
     }
   }
 
-  const pct4 = totalCaught ? ((star4) / totalCaught * 100) : 0;
+  const pct4 = totalCaught ? (star4 / totalCaught * 100) : 0;
   const pct5 = totalCaught ? (star5 / totalCaught * 100) : 0;
 
   return {
@@ -4418,7 +3997,7 @@ function buildShareKPIs(opts){
     totalPoints: _shareSafeNumber(totalPoints),
     totalCaught: _shareSafeNumber(totalCaught),
     bestMap,
-    bestMapPoints: _shareSafeNumber(bestMapPoints),
+    bestAvg: _shareSafeNumber(bestAvg),
     pct4: _shareSafeNumber(pct4),
     pct5: _shareSafeNumber(pct5),
     topByRarity
@@ -4487,11 +4066,6 @@ function generateShareImage(opts){
     ctx.font='700 22px system-ui, -apple-system, Segoe UI, Roboto, Arial';
     ctx.fillText(txt, x, y);
   };
-  const drawNote = (txt, x, y) => {
-    ctx.fillStyle='rgba(255,255,255,.55)';
-    ctx.font='600 16px system-ui, -apple-system, Segoe UI, Roboto, Arial';
-    ctx.fillText(txt, x, y);
-  };
   const drawValue = (txt, x, y, weight=900, px=48) => {
     ctx.fillStyle='rgba(255,255,255,.92)';
     ctx.font=`${weight} ${px}px system-ui, -apple-system, Segoe UI, Roboto, Arial`;
@@ -4506,19 +4080,18 @@ function generateShareImage(opts){
     drawValue(k.location || '—', pad+26, topY+valueYOff, 800, 40);
   }else{
     drawLabel('Best map', pad+26, topY+labelYOff);
-    // compact note on the same header line (right-aligned) to avoid tall KPI cards
-    const noteTxt = 'Balanced across rarities';
-    ctx.fillStyle='rgba(255,255,255,.58)';
-    ctx.font=`700 16px system-ui, -apple-system, Segoe UI, Roboto, Arial`;
-    const noteW = ctx.measureText(noteTxt).width;
-    ctx.fillText(noteTxt, pad+colW-26-noteW, topY+labelYOff);
     drawValue(k.bestMap || '—', pad+26, topY+valueYOff, 800, 40);
   }
 
-  // 2) Total points
+  // 2) Total points (per-location) / Average fish score (overall)
   card(pad+colW+gap, topY, colW, rowH);
-  drawLabel('Total points', pad+colW+gap+26, topY+labelYOff);
-  drawValue((k.totalPoints ? k.totalPoints.toFixed(0) : '0'), pad+colW+gap+26, topY+valueYOff, 900, 52);
+  if(k.location){
+    drawLabel('Total points', pad+colW+gap+26, topY+labelYOff);
+    drawValue((k.totalPoints ? k.totalPoints.toFixed(0) : '0'), pad+colW+gap+26, topY+valueYOff, 900, 52);
+  }else{
+    drawLabel('Average fish score', pad+colW+gap+26, topY+labelYOff);
+    drawValue((k.bestAvg ? k.bestAvg.toFixed(0) : '0'), pad+colW+gap+26, topY+valueYOff, 900, 52);
+  }
 
   // 3) % 4★ catches
   card(pad, y2, colW, rowH);
@@ -4786,30 +4359,6 @@ function _seasonStoredWeightsFromPointsBackup(pointsByLoc){
 
 function buildBackupPayload(){
   const now = new Date();
-
-  // Include Season-imported PB precision flags (additive; safe for older builds to ignore).
-  // Only export flags that still correspond to an actual 3dp stored PB, so we don't carry stale flags.
-  let pbImportedFromSeasonFish = {};
-  try{
-    const m = _loadPbImportedMap();
-    const out = {};
-    for(const fishName of Object.keys(m || {})){
-      if(!m[fishName]) continue;
-      // Scan CAREER records directly (do not depend on current mode).
-      // Fish names are unique per game, so we can scan locations.
-      let wStr = '';
-      try{
-        const srcRec = recordsByLocation || {};
-        for(const loc of Object.keys(srcRec || {})){
-          const w2 = (srcRec[loc] || {})[fishName];
-          if(w2 != null && String(w2).trim() !== ''){ wStr = String(w2); break; }
-        }
-      }catch(_){ }
-      if(_hasThreeDp(wStr)) out[fishName] = true;
-    }
-    pbImportedFromSeasonFish = out;
-  }catch(_){ pbImportedFromSeasonFish = {}; }
-
   const payload = {
     meta: {
       app: 'FishMetrics',
@@ -4819,7 +4368,6 @@ function buildBackupPayload(){
     settings: {
       weightUnit: (weightUnit === 'kgs') ? 'kgs' : 'lbs'
     },
-    pbImportedFromSeasonFish,
     recordsByLocation: _buildFullAllTimeRecordsTemplate(),
     // Season backups should store POINTS (user input truth). Weight is derived.
     seasonRecordsByLocation: _seasonPointsByLocationFromStoredWeights()
@@ -4917,13 +4465,12 @@ function _normalizeBackupObject(parsed){
   if(!parsed || typeof parsed !== 'object') return null;
   const records = parsed.recordsByLocation || parsed.records || parsed.data || null;
   if(!records || typeof records !== 'object') return null;
-  const pbImported = (parsed && typeof parsed.pbImportedFromSeasonFish === 'object') ? parsed.pbImportedFromSeasonFish : null;
   const unit = parsed?.settings?.weightUnit || parsed?.settings?.unit || parsed?.weightUnit || null;
   const exportedAt = parsed?.meta?.exportedAt || parsed?.exportedAt || null;
   const version = parsed?.meta?.version || parsed?.version || null;
   const season = parsed.seasonRecordsByLocation || parsed.seasonRecords || null;
   const seasonMeta = (parsed && typeof parsed.seasonMeta === 'object') ? parsed.seasonMeta : null;
-  return { recordsByLocation: records, seasonRecordsByLocation: (season && typeof season === 'object') ? season : null, seasonMeta, pbImportedFromSeasonFish: pbImported, weightUnit: unit, exportedAt, version };
+  return { recordsByLocation: records, seasonRecordsByLocation: (season && typeof season === 'object') ? season : null, seasonMeta, weightUnit: unit, exportedAt, version };
 }
 
 function applyRestoredState(restored){
@@ -4945,28 +4492,6 @@ function applyRestoredState(restored){
   try{ localStorage.setItem('weightUnit', weightUnit); }catch(_){ }
   try{ localStorage.setItem('recordsUnit', weightUnit); }catch(_){ }
   try{ saveRecordsToStorage(); }catch(_){ }
-
-  // Restore Season-imported PB precision flags (if present). This is additive and safe for older backups.
-  // Only keep flags that still correspond to an actual 3dp stored PB in the restored all-time data.
-  try{
-    const pbIn = (restored && typeof restored.pbImportedFromSeasonFish === 'object') ? restored.pbImportedFromSeasonFish : null;
-    const out = {};
-    if(pbIn){
-      for(const fishName of Object.keys(pbIn || {})){
-        if(!pbIn[fishName]) continue;
-        let wStr = '';
-        try{
-          for(const loc of Object.keys(restored.recordsByLocation || {})){
-            const rec = (restored.recordsByLocation || {})[loc] || {};
-            const v = rec[fishName];
-            if(v != null && String(v).trim() !== ''){ wStr = String(v); break; }
-          }
-        }catch(_){ }
-        if(_hasThreeDp(wStr)) out[fishName] = true;
-      }
-    }
-    _savePbImportedMap(out);
-  }catch(_){ try{ _savePbImportedMap({}); }catch(__){} }
 
   // Update unit toggle UI
   try{
@@ -5654,9 +5179,6 @@ function showRestoreConfirmModal(linesText){
     backdrop.classList.add('show');
     backdrop.setAttribute('aria-hidden','false');
 
-  // Sync modal radios to stored preference
-  syncPbPolicyUI();
-
     const cleanup = (val)=>{
       backdrop.classList.remove('show');
       backdrop.setAttribute('aria-hidden','true');
@@ -6207,38 +5729,3 @@ function _addMonths(date, months){
   window.addEventListener('resize', () => setTimeout(findAndClamp, 0));
   window.addEventListener('orientationchange', () => setTimeout(findAndClamp, 50));
 })();
-
-
-// Preferences: allow toggling PB auto-update after opting in
-function initPreferences(){
-  const cb = document.getElementById('prefPbAlways');
-  if(!cb){
-    // Preferences UI may mount after initial load (tab-render). Retry briefly.
-    try{
-      window.__fmPrefRetryCount = (window.__fmPrefRetryCount || 0) + 1;
-      if(window.__fmPrefRetryCount < 40) setTimeout(initPreferences, 250);
-    }catch(_){ }
-    return;
-  }
-
-  let enabled = false;
-  try{
-    enabled = localStorage.getItem('fm_auto_update_pb_from_season') === "true";
-  }catch(_){ }
-  cb.checked = enabled;
-
-  // Avoid adding multiple listeners if initPreferences runs more than once
-  if(cb.dataset && cb.dataset.wired === "1") return;
-  if(cb.dataset) cb.dataset.wired = "1";
-
-  cb.addEventListener('change', () => {
-    try{
-      if(cb.checked){
-        localStorage.setItem('fm_auto_update_pb_from_season', "true");
-      }else{
-        localStorage.removeItem('fm_auto_update_pb_from_season');
-      }
-    }catch(_){ }
-  });
-}
-document.addEventListener('DOMContentLoaded', initPreferences);
