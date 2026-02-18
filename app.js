@@ -485,18 +485,6 @@ function __buildSeasonOrderedFishList(locName){
 }
 
 
-function setupHomeButton(){
-  const btn = document.getElementById('homeBtn');
-  if(!btn) return;
-  // avoid double-binding
-  if(btn.dataset && btn.dataset.homeBound === '1') return;
-  if(btn.dataset) btn.dataset.homeBound = '1';
-  btn.addEventListener('click', () => {
-    // Go back to landing page
-    window.location.href = 'index.html';
-  });
-}
-
 function setupShareButton(){
   const btn = document.getElementById('menuBtn'); // repurposed as Share button
   const dropdown = document.getElementById('shareDropdown');
@@ -1371,25 +1359,9 @@ function getLocationList(){
 // Persisted records per location (and in the combined view)
 const STORAGE_KEY = "fishmetrics_records_v1"; // legacy (localStorage) key used only for one-time migration
 const IDB_DB_NAME = "fishmetrics";
-const IDB_DB_VERSION = 3;
+const IDB_DB_VERSION = 2;
 const IDB_STORE = "location_records";
 const IDB_STORE_SEASON = "season_location_records";
-
-const IDB_STORE_VIP = "location_records_vip";
-const IDB_STORE_SEASON_VIP = "season_location_records_vip";
-
-function isVipModeActive(){
-  try { return document.documentElement.classList.contains('vip-mode'); } catch(_) { return false; }
-}
-
-// Store router (Option 1: keep Main stores as-is, add VIP stores)
-function getAllTimeStoreName(){
-  return isVipModeActive() ? IDB_STORE_VIP : IDB_STORE;
-}
-function getSeasonStoreName(){
-  return isVipModeActive() ? IDB_STORE_SEASON_VIP : IDB_STORE_SEASON;
-}
-
 
 let recordsByLocation = {}; // in-memory cache, persisted to IndexedDB
 
@@ -1404,17 +1376,10 @@ function openIdb(){
       if (!db.objectStoreNames.contains(IDB_STORE)) {
         db.createObjectStore(IDB_STORE, { keyPath: "location" });
       }
-      if (!db.objectStoreNames.contains(IDB_STORE_SEASON)) {
+    if (!db.objectStoreNames.contains(IDB_STORE_SEASON)) {
         db.createObjectStore(IDB_STORE_SEASON, { keyPath: "location" });
       }
-      // VIP stores (added in v1.5.0). Keep Main stores unchanged; VIP stores start empty.
-      if (!db.objectStoreNames.contains(IDB_STORE_VIP)) {
-        db.createObjectStore(IDB_STORE_VIP, { keyPath: "location" });
-      }
-      if (!db.objectStoreNames.contains(IDB_STORE_SEASON_VIP)) {
-        db.createObjectStore(IDB_STORE_SEASON_VIP, { keyPath: "location" });
-      }
-    };
+};
     req.onsuccess = () => resolve(req.result);
     req.onerror = () => reject(req.error);
   });
@@ -1424,8 +1389,8 @@ function openIdb(){
 async function idbLoadAllRecords(){
   const db = await openIdb();
   return new Promise((resolve, reject) => {
-    const tx = db.transaction(getAllTimeStoreName(), "readonly");
-    const store = tx.objectStore(getAllTimeStoreName());
+    const tx = db.transaction(IDB_STORE, "readonly");
+    const store = tx.objectStore(IDB_STORE);
     const req = store.getAll();
     req.onsuccess = () => {
       const out = {};
@@ -1439,8 +1404,8 @@ async function idbLoadAllRecords(){
 async function idbLoadAllSeasonRecords(){
   const db = await openIdb();
   return new Promise((resolve, reject) => {
-    const tx = db.transaction(getSeasonStoreName(), "readonly");
-    const store = tx.objectStore(getSeasonStoreName());
+    const tx = db.transaction(IDB_STORE_SEASON, "readonly");
+    const store = tx.objectStore(IDB_STORE_SEASON);
     const req = store.getAll();
     req.onsuccess = () => {
       const out = {};
@@ -1454,8 +1419,8 @@ async function idbLoadAllSeasonRecords(){
 async function idbSaveAllSeasonRecords(records){
   const db = await openIdb();
   return new Promise((resolve, reject) => {
-    const tx = db.transaction(getSeasonStoreName(), "readwrite");
-    const store = tx.objectStore(getSeasonStoreName());
+    const tx = db.transaction(IDB_STORE_SEASON, "readwrite");
+    const store = tx.objectStore(IDB_STORE_SEASON);
     const clearReq = store.clear();
     clearReq.onerror = () => reject(clearReq.error);
     clearReq.onsuccess = () => {
@@ -1478,8 +1443,8 @@ async function idbSaveAllSeasonRecords(records){
 async function idbSaveAllRecords(records){
   const db = await openIdb();
   return new Promise((resolve, reject) => {
-    const tx = db.transaction(getAllTimeStoreName(), "readwrite");
-    const store = tx.objectStore(getAllTimeStoreName());
+    const tx = db.transaction(IDB_STORE, "readwrite");
+    const store = tx.objectStore(IDB_STORE);
     // Clear + re-add keeps behavior identical to previous single-key localStorage save
     const clearReq = store.clear();
     clearReq.onerror = () => reject(clearReq.error);
@@ -4373,7 +4338,6 @@ async function initApp(){
   try{ await autoRollSeasonMonthly(); }catch(_){ }
   setupTabs();
   setupShareButton();
-  setupHomeButton();
   setupHeaderMenu();
   setupWeightUnitToggle();
   setupBackupRestoreUI();
@@ -4400,67 +4364,6 @@ async function initApp(){
     try{ updateSeasonUncaughtCount(); }catch(_){} }catch(_){}
 	  try{ if(typeof renderCareerTargets === 'function') renderCareerTargets(); }catch(_){}
 }
-
-// --- VIP mode (visual-only) -------------------------------------------------
-// VIP mode is signaled via URL hash: app.html#vip
-// This is intentionally visual-only for now (no data/points/backup logic changes).
-function getVipFlagFromUrl(){
-  try{
-    const h = (window.location.hash || '').toLowerCase();
-    // Treat any #vip* as VIP (e.g., #vip, #vip-season, #vip/anything)
-    return h.includes('vip');
-  }catch(_){ return false; }
-}
-
-function applyModeUI(mode){
-  try{
-    const isVip = (mode === 'vip');
-    document.documentElement.classList.toggle('vip-mode', isVip);
-
-    const mainBtn = document.getElementById('modeMainBtn');
-    const vipBtn  = document.getElementById('modeVipBtn');
-    if(mainBtn) mainBtn.classList.toggle('active', !isVip);
-    if(vipBtn)  vipBtn.classList.toggle('active',  isVip);
-  }catch(_){}
-}
-
-function syncModeFromUrlOrStorage(){
-  try{
-    applyModeUI(getVipFlagFromUrl() ? 'vip' : 'main');
-  }catch(_){
-    applyModeUI(getVipFlagFromUrl() ? 'vip' : 'main');
-  }
-}
-
-function setMode(mode){
-  try{
-    const MODE_KEY = 'FM_MODE';
-    const m = (mode || 'main').toLowerCase() === 'vip' ? 'vip' : 'main';
-    localStorage.setItem(MODE_KEY, m);
-    applyModeUI(m);
-
-    // URL: hash is only used as an override flag.
-    if(m === 'vip'){
-      if(!getVipFlagFromUrl()) window.location.hash = 'vip';
-    }else{
-      if(window.location.hash){
-        try{ history.replaceState(null, '', window.location.pathname + window.location.search); }
-        catch(_){ window.location.hash = ''; }
-      }
-    }
-  }catch(_){}
-}
-
-// Wire mode buttons (top of left panel)
-try{
-  document.getElementById('modeMainBtn')?.addEventListener('click', () => setMode('main'));
-  document.getElementById('modeVipBtn')?.addEventListener('click',  () => setMode('vip'));
-}catch(_){}
-
-syncModeFromUrlOrStorage();
-window.addEventListener('hashchange', syncModeFromUrlOrStorage);
-// ---------------------------------------------------------------------------
-
 initApp();
 
 function setupTabs(){
