@@ -256,7 +256,7 @@ h1{
   margin: auto;
   top: 50%;
   transform: translateY(-50%);
-  width: 280px;
+  width: min(420px, 92vw);
   background: #ffffff;
   color: #111;
   border-radius: 14px;
@@ -288,6 +288,57 @@ h1{
   box-shadow: none;
 }
 
+/* VIP modal content */
+.vip-title{
+  font-size: 24px;
+  font-weight: 800;
+  letter-spacing: .5px;
+  margin-bottom: 6px;
+}
+.vip-sub{
+  font-size: 13px;
+  opacity: .8;
+  margin-bottom: 16px;
+}
+.vip-box{
+  text-align: left;
+  background: rgba(0,0,0,.04);
+  border: 1px solid rgba(0,0,0,.08);
+  border-radius: 12px;
+  padding: 14px 12px;
+  margin-bottom: 16px;
+}
+.vip-row{
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  margin: 10px 0;
+}
+.vip-dot{
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  background: #39ff14;
+  margin-top: 6px;
+  flex: 0 0 auto;
+}
+.vip-item-title{
+  font-weight: 700;
+  margin-bottom: 2px;
+}
+.vip-item-body{
+  font-size: 13px;
+  line-height: 1.35;
+  opacity: .9;
+}
+.vip-input{
+  width: 100%;
+  padding: 10px 10px;
+  border-radius: 10px;
+  border: 1px solid rgba(0,0,0,.18);
+  background: #f6f6f6;
+}
+
 </style>
 </head>
 <body>
@@ -306,7 +357,7 @@ h1{
 
       <div class="ctaRow">
         <a class="btn" href="app.html" aria-label="Enter FishMetrics">Enter Main</a>
-        <a class="btn btnVip" href="#" id="enterVipBtn" aria-label="Enter VIP">Enter VIP</a>
+        <a class="btn btnVip" href="app.html#vip" id="enterVipBtn" aria-label="Enter VIP">Enter VIP</a>
       </div>
 
       </div>
@@ -315,58 +366,45 @@ h1{
     
   </div>
 
-<script>
-  (function(){
-    const vip = document.getElementById('enterVipBtn');
-    if(vip){
-      vip.addEventListener('click', function(){
-        
-      });
-    }
-  })();
-</script>
 
 <div id="vipModal" class="vip-modal" aria-hidden="true">
   <div class="vip-modal-backdrop"></div>
   <div class="vip-modal-card">
-    <div class="vip-modal-text">Patience . . .</div>
-    <button class="vip-modal-close" aria-label="Close">OK</button>
-  </div>
+    <div class="vip-title">VIP</div>
+    <div class="vip-sub">Early-access goodies for FishMetrics supporters.</div>
+
+    <div class="vip-box">
+      <div class="vip-row">
+        <span class="vip-dot"></span>
+        <div class="vip-item">
+          <div class="vip-item-title">Perks (WIP)</div>
+          <div class="vip-item-body">Beta builds, extra stats, and experiments before they hit the main app.</div>
+        </div>
+      </div>
+
+      <div class="vip-row">
+        <span class="vip-dot"></span>
+        <div class="vip-item">
+          <div class="vip-item-title">VIP Code</div>
+          <div class="vip-item-body">
+            <input id="vipCodeInput" class="vip-input" type="text" inputmode="text" autocomplete="off" placeholder="Enter code (coming soon)" disabled />
+          </div>
+        </div>
+      </div>
+
+      <div class="vip-row">
+        <span class="vip-dot"></span>
+        <div class="vip-item">
+          <div class="vip-item-title">Status</div>
+          <div id="vipStatus" class="vip-item-body">Not enabled yet — building this section now.</div>
+        </div>
+      </div>
+    </div>
+
+    <button class="vip-modal-close" aria-label="Close">Close</button>
+</div>
 </div>
 
-<script>
-(function(){
-  const btn = document.getElementById('enterVipBtn');
-  const modal = document.getElementById('vipModal');
-  const closeBtn = modal ? modal.querySelector('.vip-modal-close') : null;
-
-  function openModal(){
-    if(!modal) return;
-    modal.setAttribute('aria-hidden','false');
-    document.body.classList.add('vip-modal-open');
-    closeBtn && closeBtn.focus();
-  }
-
-  function closeModal(){
-    if(!modal) return;
-    modal.setAttribute('aria-hidden','true');
-    document.body.classList.remove('vip-modal-open');
-  }
-
-  if(btn){
-    btn.addEventListener('click', function(e){ e.preventDefault(); openModal(); });
-    btn.addEventListener('mousedown', e => e.preventDefault());
-  }
-  if(closeBtn){
-    closeBtn.addEventListener('click', closeModal);
-  }
-  if(modal){
-    modal.addEventListener('click', e => {
-      if(e.target.classList.contains('vip-modal-backdrop')) closeModal();
-    });
-  }
-})();
-</script>
 </body>
 
 </html>
