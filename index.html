@@ -357,7 +357,7 @@ h1{
 
       <div class="ctaRow">
         <a class="btn" href="app.html" aria-label="Enter FishMetrics">Enter Main</a>
-        <a class="btn btnVip" href="#" id="enterVipBtn" aria-label="Enter VIP">Enter VIP</a>
+        <a class="btn btnVip" href="app.html#vip" id="enterVipBtn" aria-label="Enter VIP">Enter VIP</a>
       </div>
 
       </div>
@@ -366,16 +366,6 @@ h1{
     
   </div>
 
-<script>
-  (function(){
-    const vip = document.getElementById('enterVipBtn');
-    if(vip){
-      vip.addEventListener('click', function(){
-        
-      });
-    }
-  })();
-</script>
 
 <div id="vipModal" class="vip-modal" aria-hidden="true">
   <div class="vip-modal-backdrop"></div>
@@ -415,39 +405,6 @@ h1{
 </div>
 </div>
 
-<script>
-(function(){
-  const btn = document.getElementById('enterVipBtn');
-  const modal = document.getElementById('vipModal');
-  const closeBtn = modal ? modal.querySelector('.vip-modal-close') : null;
-
-  function openModal(){
-    if(!modal) return;
-    modal.setAttribute('aria-hidden','false');
-    document.body.classList.add('vip-modal-open');
-    closeBtn && closeBtn.focus();
-  }
-
-  function closeModal(){
-    if(!modal) return;
-    modal.setAttribute('aria-hidden','true');
-    document.body.classList.remove('vip-modal-open');
-  }
-
-  if(btn){
-    btn.addEventListener('click', function(e){ e.preventDefault(); openModal(); });
-    btn.addEventListener('mousedown', e => e.preventDefault());
-  }
-  if(closeBtn){
-    closeBtn.addEventListener('click', closeModal);
-  }
-  if(modal){
-    modal.addEventListener('click', e => {
-      if(e.target.classList.contains('vip-modal-backdrop')) closeModal();
-    });
-  }
-})();
-</script>
 </body>
 
 </html>
