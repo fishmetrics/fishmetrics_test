@@ -3994,3 +3994,24 @@ html.vip-mode .brand-sub{
 html:not(.vip-mode) .brand-sub{
   padding-left: 0;
 }
+
+
+/* VIP reset button (VIP-only utility) */
+.vip-reset-btn{
+  width: 100%;
+  margin: 10px 0 10px 0;
+  padding: 9px 12px;
+  border-radius: 12px;
+  font-weight: 700;
+  font-size: 13px;
+  border: 1px solid rgba(255,255,255,0.18);
+  background: rgba(255,255,255,0.06);
+  color: rgba(255,255,255,0.9);
+  cursor: pointer;
+}
+.vip-reset-btn:hover{
+  background: rgba(255,255,255,0.09);
+}
+html:not(.vip-mode) .vip-reset-btn{
+  display:none;
+}

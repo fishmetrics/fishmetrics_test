@@ -1369,7 +1369,7 @@ function getLocationList(){
 }
 
 // Persisted records per location (and in the combined view)
-const STORAGE_KEY = getLegacyAllTimeKey(); // legacy (localStorage) key used only for one-time migration
+const STORAGE_KEY = "fishmetrics_records_v1"; // legacy (localStorage) key used only for one-time migration
 const IDB_DB_NAME = "fishmetrics";
 const IDB_DB_VERSION = 3;
 const IDB_STORE = "location_records";
@@ -1379,15 +1379,7 @@ const IDB_STORE_VIP = "location_records_vip";
 const IDB_STORE_SEASON_VIP = "season_location_records_vip";
 
 function isVipModeActive(){
-  try { return document.documentElement.classList.contains('vip-mode'); } 
-
-function getLegacyAllTimeKey(){
-  return isVipModeActive() ? 'fishmetrics_records_vip_v1' : 'fishmetrics_records_v1';
-}
-function getLegacySeasonKey(){
-  return isVipModeActive() ? 'fishmetrics_season_records_vip_v1' : getLegacySeasonKey();
-}
-catch(_) { return false; }
+  try { return document.documentElement.classList.contains('vip-mode'); } catch(_) { return false; }
 }
 
 // Store router (Option 1: keep Main stores as-is, add VIP stores)
@@ -1401,6 +1393,30 @@ function getSeasonStoreName(){
 
 
 
+
+
+async function clearVipStores(){
+  return new Promise((resolve, reject) => {
+    try{
+      const req = indexedDB.open(IDB_DB_NAME, IDB_DB_VERSION);
+      req.onsuccess = () => {
+        const db = req.result;
+        try{
+          const tx1 = db.transaction(IDB_STORE_VIP, "readwrite");
+          tx1.objectStore(IDB_STORE_VIP).clear();
+          const tx2 = db.transaction(IDB_STORE_SEASON_VIP, "readwrite");
+          tx2.objectStore(IDB_STORE_SEASON_VIP).clear();
+          let done = 0;
+          const finish = () => { done++; if(done>=2){ db.close(); resolve(); } };
+          tx1.oncomplete = finish; tx2.oncomplete = finish;
+          tx1.onerror = () => { db.close(); reject(tx1.error); };
+          tx2.onerror = () => { db.close(); reject(tx2.error); };
+        }catch(e){ db.close(); reject(e); }
+      };
+      req.onerror = () => reject(req.error);
+    }catch(e){ reject(e); }
+  });
+}
 function syncActiveCachesToMode(){
   if (isVipModeActive()){
     recordsByLocation = recordsByLocation_vip;
@@ -1576,7 +1592,7 @@ async function loadSeasonRecords(){
 
   // legacy fallback (if any)
   let legacy = {};
-  try { legacy = JSON.parse(localStorage.getItem(getLegacySeasonKey()) || "{}"); } catch { legacy = {}; }
+  try { legacy = JSON.parse(localStorage.getItem('fishmetrics_season_records_v1') || "{}"); } catch { legacy = {}; }
   if (legacy && Object.keys(legacy).length){
     let canonLegacy = legacy;
     try{ canonLegacy = canonicalizeRecordsByLocation(legacy); }catch(_){ canonLegacy = legacy; }
@@ -4193,7 +4209,7 @@ async function autoRollSeasonMonthly(){
     // Reset season records for the new month
     seasonRecordsByLocation = {};
     try{ await saveSeasonRecords(seasonRecordsByLocation || {}); }catch(_){}
-    try{ localStorage.setItem(getLegacySeasonKey(), JSON.stringify(seasonRecordsByLocation || {})); }catch(_){}
+    try{ localStorage.setItem('fishmetrics_season_records_v1', JSON.stringify(seasonRecordsByLocation || {})); }catch(_){}
 
     // Set new month markers
     try{ localStorage.setItem('fm_season_month', currentMonth); }catch(_){}
@@ -4911,7 +4927,7 @@ function saveRecordsToStorage(){
     localStorage.setItem(STORAGE_KEY, JSON.stringify(recordsByLocation || {}));
     localStorage.setItem('recordsUnit', 'lbs');
     // Season records backup
-    localStorage.setItem(getLegacySeasonKey(), JSON.stringify(seasonRecordsByLocation || {}));
+    localStorage.setItem('fishmetrics_season_records_v1', JSON.stringify(seasonRecordsByLocation || {}));
   }catch(_){}
 }
 
@@ -5286,7 +5302,7 @@ function applyRestoredState(restored){
     // Backups store season as points; convert to stored derived weights for in-app use.
     seasonRecordsByLocation = canonicalizeRecordsByLocation(_seasonStoredWeightsFromPointsBackup(restored.seasonRecordsByLocation || {}));
     try{ if(typeof saveSeasonRecords === 'function') saveSeasonRecords(seasonRecordsByLocation || {}); }catch(_){ }
-    try{ localStorage.setItem(getLegacySeasonKey(), JSON.stringify(seasonRecordsByLocation || {})); }catch(_){ }
+    try{ localStorage.setItem('fishmetrics_season_records_v1', JSON.stringify(seasonRecordsByLocation || {})); }catch(_){ }
   }
   const u = (restored.weightUnit === 'kgs') ? 'kgs' : 'lbs';
   weightUnit = u;
@@ -5958,6 +5974,28 @@ _setCareerTargetButtonsActive();
   }
 
   document.addEventListener('DOMContentLoaded', ()=>{
+  const resetVipBtn = document.getElementById('resetVipBtn');
+  if(resetVipBtn){
+    resetVipBtn.addEventListener('click', async () => {
+      if(!document.documentElement.classList.contains('vip-mode')) return;
+      const ok = confirm('Reset VIP data? This clears VIP All-time and VIP Season only.');
+      if(!ok) return;
+      try{
+        await clearVipStores();
+        // reload VIP view data
+        try{ await reloadActiveModeFromIdb(); }catch(_){}
+        try{ if(typeof updateDashboard==='function') updateDashboard(); }catch(_){}
+        try{ if(typeof updateSeasonProgress==='function') updateSeasonProgress(); }catch(_){}
+        try{ if(typeof renderAll==='function') renderAll(); }catch(_){}
+        alert('VIP data cleared.');
+      }catch(e){
+        console.error(e);
+        alert('Could not clear VIP data.');
+      }
+    });
+  }
+
+
   try {
     if (sessionStorage.getItem('fm_showClearToast') === '1') {
       sessionStorage.removeItem('fm_showClearToast');
