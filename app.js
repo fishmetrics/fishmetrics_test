@@ -1438,6 +1438,36 @@ function openIdb(){
   return openIdb._p;
 }
 
+
+async function idbReadAll(storeName){
+  return new Promise((resolve, reject) => {
+    try{
+      const req = indexedDB.open(IDB_DB_NAME, IDB_DB_VERSION);
+      req.onsuccess = () => {
+        const db = req.result;
+        try{
+          const tx = db.transaction(storeName, "readonly");
+          const store = tx.objectStore(storeName);
+          const out = {};
+          const cursorReq = store.openCursor();
+          cursorReq.onsuccess = (e) => {
+            const cursor = e.target.result;
+            if(cursor){
+              out[cursor.key] = cursor.value;
+              cursor.continue();
+            }else{
+              try{ db.close(); }catch(_){}
+              resolve(out);
+            }
+          };
+          cursorReq.onerror = () => { try{db.close();}catch(_){} reject(cursorReq.error); };
+        }catch(e){ try{db.close();}catch(_){} reject(e); }
+      };
+      req.onerror = () => reject(req.error);
+    }catch(e){ reject(e); }
+  });
+}
+
 async function idbLoadAllRecords(){
   const db = await openIdb();
   return new Promise((resolve, reject) => {
@@ -5162,21 +5192,45 @@ function buildBackupPayload(){
 
 async function downloadBackupJSON(){
   try{
-    const payload = buildBackupPayload();
-    // If all all-time records are empty, warn before exporting an empty template.
+    // Unified backup: always export all 4 sections regardless of current view.
+    // All-time data is stored canonically in lbs. Season data uses points as the source of truth.
+    const mainAllTime = await idbReadAll(IDB_STORE);               // location_records
+    const mainSeason  = await idbReadAll(IDB_STORE_SEASON);        // season_location_records
+    const vipAllTime  = await idbReadAll(IDB_STORE_VIP);           // location_records_vip
+    const vipSeason   = await idbReadAll(IDB_STORE_SEASON_VIP);    // season_location_records_vip
+
+    const payload = {
+      schema: "fm_unified_backup_v1",
+      version: (typeof APP_VERSION !== "undefined" ? APP_VERSION : "1.5.0"),
+      createdAt: new Date().toISOString(),
+      main: {
+        allTime: { recordsByLocation: mainAllTime || {}, meta: { canonicalWeightUnit: "lbs", sourceOfTruth: "weight" } },
+        season:  { recordsByLocation: mainSeason  || {}, meta: { sourceOfTruth: "points" } }
+      },
+      vip: {
+        allTime: { recordsByLocation: vipAllTime || {}, meta: { canonicalWeightUnit: "lbs", sourceOfTruth: "weight" } },
+        season:  { recordsByLocation: vipSeason  || {}, meta: { sourceOfTruth: "points" } }
+      }
+    };
+
+    // Warn only if all 4 sections are empty.
     try{
-      const nAll = _countBackupRecords(payload.recordsByLocation || {});
-      if(nAll === 0){
-        const ok = await showRestoreConfirmModal('All records empty, do you still want to proceed?');
+      const n = _countBackupRecords(payload.main.allTime.recordsByLocation) +
+                _countBackupRecords(payload.main.season.recordsByLocation) +
+                _countBackupRecords(payload.vip.allTime.recordsByLocation) +
+                _countBackupRecords(payload.vip.season.recordsByLocation);
+      if(n === 0){
+        const ok = confirm("Export an empty unified backup template?");
         if(!ok) return;
       }
-    }catch(_){ }
+    }catch(_){}
+
     const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     const date = (function(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');})();
     a.href = url;
-    a.download = `fishmetrics_backup_${date}.json`;
+    a.download = `fishmetrics_backup_${date}_unified.json`;
     document.body.appendChild(a);
     a.click();
     a.remove();
