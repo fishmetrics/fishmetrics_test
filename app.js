@@ -431,6 +431,103 @@ const LOCATIONS = {
   { name:"boiuna", category:"Legendary", min:2204.62, max:6613.86 }
 	 ]
 	};
+
+
+// === VIP Locations & Fish Catalog (v1.5.0) ===
+// VIP has NO overlap with Main locations/fish.
+const VIP_LOCATION_ORDER = [
+  "Chemical Plant",
+  "Nuclear Plant"
+];
+
+// Weights are canonical lbs. Points formula is shared.
+const LOCATIONS_VIP = {
+  "Chemical Plant": [
+    { name:"glowfish", category:"Common", min:33.07, max:66.14 },
+    { name:"raspberryfish", category:"Common", min:44.09, max:94.8 },
+    { name:"wicked carp", category:"Common", min:17.64, max:35.27 },
+    { name:"crystal fin", category:"Common", min:13.23, max:26.46 },
+    { name:"zombifin", category:"Common", min:50.71, max:101.41 },
+    { name:"flatjaw", category:"Common", min:26.46, max:55.12 },
+    { name:"spotted windchaser", category:"Common", min:13.23, max:26.46 },
+    { name:"glow puffball", category:"Common", min:30.86, max:61.73 },
+    { name:"cthulhu carp", category:"Common", min:110.23, max:220.46 },
+    { name:"nylonfish", category:"Common", min:8.82, max:17.64 },
+    { name:"luminator", category:"Common", min:55.12, max:121.25 },
+    { name:"telebass", category:"Common", min:22.05, max:55.12 },
+    { name:"long sparker", category:"Common", min:15.43, max:33.07 },
+    { name:"rotting deadfish", category:"Common", min:57.32, max:114.64 },
+    { name:"phosphorite", category:"Common", min:35.27, max:77.16 },
+    { name:"fireborn scales", category:"Common", min:55.12, max:127.87 },
+    { name:"burned potfish", category:"Common", min:8.82, max:17.64 },
+    { name:"bubblefin", category:"Common", min:22.05, max:55.12 },
+    { name:"silvered amelinium", category:"Common", min:66.14, max:143.3 },
+    { name:"fish-eye", category:"Common", min:6.61, max:13.23 },
+    { name:"teapotfish", category:"Common", min:22.05, max:44.09 },
+    { name:"anvilfish", category:"Common", min:77.16, max:165.35 },
+    { name:"chupakabrafish", category:"Common", min:6.61, max:15.43 },
+    { name:"slimesnail", category:"Common", min:13.23, max:30.86 },
+    { name:"wheelreef", category:"Common", min:11.02, max:551.15 },
+    { name:"barreltail", category:"Common", min:33.1, max:110.23 },
+    { name:"toxic salmon", category:"Common", min:55.11, max:110.23 },
+    { name:"anchorscale", category:"Common", min:44.09, max:99.21 },
+    { name:"bottlegill", category:"Common", min:11.02, max:22.05 },
+    { name:"cantrout", category:"Common", min:8.82, max:17.64 },
+    { name:"uranium eel", category:"Common", min:59.52, max:114.64 },
+    { name:"bootfish", category:"Common", min:15.43, max:33.07 },
+    { name:"flipper sneaker", category:"Common", min:4.41, max:11.02 },
+    { name:"graterfin", category:"Common", min:48.5, max:92.59 },
+    { name:"mailfish", category:"Common", min:15.43, max:30.86 },
+    { name:"toxic puffer", category:"Common", min:33.07, max:81.57 },
+    { name:"plant waterer", category:"Common", min:35.27, max:57.32 },
+    { name:"gnawfish", category:"Common", min:17.64, max:39.68 },
+    { name:"rusty mutang", category:"Common", min:90.39, max:180.78 },
+    { name:"biterfish", category:"Common", min:26.45, max:59.52 },
+    { name:"zombie genius", category:"Common", min:72.25, max:163.14 },
+    { name:"stale deadfish", category:"Rare", min:63.93, max:132.28 },
+    { name:"stringed guitarfish", category:"Rare", min:48.5, max:90.39 },
+    { name:"banjoplayer", category:"Rare", min:35.27, max:74.96 },
+    { name:"cuddlyfish", category:"Rare", min:74.96, max:171.96 },
+    { name:"bomberfish", category:"Rare", min:171.96, max:330.69 },
+    { name:"soccerfish", category:"Rare", min:33.07, max:66.14 },
+    { name:"brainfish", category:"Rare", min:24.25, max:55.12 },
+    { name:"sawfish", category:"Rare", min:37.48, max:90.39 },
+    { name:"bonebite", category:"Rare", min:46.3, max:94.8 },
+    { name:"gasmist swimmer", category:"Rare", min:28.66, max:79.36 },
+    { name:"guitarfin", category:"Rare", min:37.48, max:83.78 },
+    { name:"swagfish", category:"Rare", min:130.07, max:264.55 },
+    { name:"fingered glovefish", category:"Rare", min:6.61, max:15.43 },
+    { name:"round tubefish", category:"Epic", min:174.16, max:385.81 },
+    { name:"polish spudfish", category:"Epic", min:233.69, max:467.38 },
+    { name:"seahorse abomination", category:"Epic", min:48.5, max:101.41 },
+    { name:"ribbed bonefish", category:"Epic", min:187.39, max:396.83 },
+    { name:"nightmary", category:"Legendary", min:440.92, max:1102.31 }
+  ],
+  "Nuclear Plant": [
+    { name:"AppleGill", category:"Common", min:0.44, max:4.41 },
+    { name:"Bat-eel", category:"Common", min:2.2, max:8.82 },
+    { name:"Bottlefin", category:"Common", min:2.2, max:6.61 },
+    { name:"BreadnButterjaw", category:"Common", min:4.41, max:8.82 },
+    { name:"Bulpgill", category:"Common", min:0.22, max:4.41 },
+    { name:"Carrotfin", category:"Common", min:3.3, max:11.02 },
+    { name:"Double Troutot", category:"Common", min:4.41, max:15.34 },
+    { name:"Forknose", category:"Common", min:2.2, max:13.22 },
+    { name:"Geigerfin", category:"Common", min:17.64, max:37.48 },
+    { name:"Irradiated Cutfin", category:"Common", min:11.02, max:22.04 },
+    { name:"Knifetail", category:"Common", min:2.2, max:6.61 },
+    { name:"Oniongill", category:"Common", min:1.1, max:8.82 },
+    { name:"Potatofin", category:"Common", min:4.41, max:13.63 },
+    { name:"RocknRollKingjaw", category:"Common", min:4.41, max:19.84 },
+    { name:"Rug-ball-swimmer", category:"Common", min:2.2, max:11.02 },
+    { name:"Sausagetail", category:"Common", min:4.41, max:15.43 },
+    { name:"Trianglegill", category:"Common", min:1.1, max:6.61 },
+    { name:"Footsalmon", category:"Rare", min:11.02, max:26.46 },
+    { name:"Magnetfin", category:"Rare", min:6.61, max:44.09 },
+    { name:"Yellow Submarinecod", category:"Rare", min:33.07, max:198.42 },
+    { name:"Devil Mutanoid", category:"Epic", min:11.02, max:33.07 },
+    { name:"Giant Busbass", category:"Epic", min:220.46, max:661.39 }
+  ]
+};
 // Season Log Records should follow the in-game ordering (UI-only).
 // All-time/career remains alphabetical for quick scanning.
 // Keys are fish "name" strings as used in LOCATIONS / backups.
@@ -444,6 +541,9 @@ const SEASON_GAME_ORDER = {
   "scotland": ["european smelt", "grey trout", "powan", "chub", "twaite shad", "freshwater bream", "northern pike", "sea trout", "allis shad", "rainbow trout", "tench", "gudgeon", "three spined stickleback", "vendace", "roach", "rudd", "lamprey", "european perch", "dace", "carp", "european whitefish", "european grayling", "european eel", "common sturgeon", "bull trout", "scottish salmon", "nessie"],
   "thailand": ["pla kad thong", "bighead carp", "aligator gar", "spotted sorubim", "empurau", "rice eel", "red tail tiger catfish", "giant devil catfish", "bambusa", "tapah", "great snakehead", "yellow mystus", "wallago", "black ear catfish", "rohu", "ripsaw catfish", "malayan leaffish", "marbled sand goby", "fire eel", "giant freshwater whipray", "striped catfish", "giant pangasius", "mekong giant catfish", "juliens golden prize carp", "giant siamese", "naga"],
   "amazon": ["amazon pellona", "peacock bass", "tucunare", "corvina", "jatuarana", "redtail catfish", "tiger sorubim", "redhook myleus", "pacu", "zungaro", "curimbata", "lambari", "giant trahira", "redeye piranha", "red piranha", "speckled pavon", "freshwater barracuda", "bicuda", "arowana", "amazon puffer", "pirapitinga", "electric eel", "flatwhiskered catfish", "lau lau", "rock bacu", "payara", "cachama", "arapaima", "boiuna"]
+,
+  "chemical plant": ["glowfish", "raspberryfish", "wicked carp", "crystal fin", "zombifin", "flatjaw", "spotted windchaser", "glow puffball", "cthulhu carp", "nylonfish", "luminator", "telebass", "long sparker", "rotting deadfish", "phosphorite", "fireborn scales", "burned potfish", "bubblefin", "silvered amelinium", "fish-eye", "teapotfish", "anvilfish", "chupakabrafish", "slimesnail", "wheelreef", "barreltail", "toxic salmon", "anchorscale", "bottlegill", "cantrout", "uranium eel", "bootfish", "flipper sneaker", "graterfin", "mailfish", "toxic puffer", "plant waterer", "gnawfish", "rusty mutang", "biterfish", "zombie genius", "stale deadfish", "stringed guitarfish", "banjoplayer", "cuddlyfish", "bomberfish", "soccerfish", "brainfish", "sawfish", "bonebite", "gasmist swimmer", "guitarfin", "swagfish", "fingered glovefish", "round tubefish", "polish spudfish", "seahorse abomination", "ribbed bonefish", "nightmary"],
+  "nuclear plant": []
 };
 
 
@@ -456,7 +556,7 @@ function __seasonGameOrderListForLocation(locName){
 
 function __buildSeasonOrderedFishList(locName){
   const loc = String(locName||'').trim();
-  const fishDefs = (LOCATIONS && LOCATIONS[loc]) ? LOCATIONS[loc] : [];
+  const fishDefs = (getLocationsData() && getLocationsData()[loc]) ? getLocationsData()[loc] : [];
   const byName = new Map((fishDefs||[]).map(f=>[String(f.name||'').toLowerCase(), f]));
 
   const orderedNames = __seasonGameOrderListForLocation(loc) || [];
@@ -958,7 +1058,7 @@ function populateLocationOptions(){
   getLocationList().forEach(loc=>{
     const opt=document.createElement("option");
     opt.value=loc;
-    opt.textContent = `${loc} (${LOCATIONS[loc].length})`;
+    opt.textContent = `${loc} (${getLocationsData()[loc].length})`;
     locationSelect.appendChild(opt);
   });
 
@@ -967,6 +1067,7 @@ function populateLocationOptions(){
     totalFishCountAllEl.textContent = allCount;
   }
 }
+syncModeFromUrlOrStorage();
 populateLocationOptions();
 
 function buildLocationButtons(){
@@ -1364,8 +1465,9 @@ function applySeasonCommonsRaresImprovementStyling(){
 
 
 function getLocationList(){
-  // Preserve desired location order even if object key order changes
-  return LOCATION_ORDER.filter(l=>Object.prototype.hasOwnProperty.call(LOCATIONS,l));
+  const data = getLocationsData();
+  const order = getLocationOrder();
+  return order.filter(l=>Object.prototype.hasOwnProperty.call(data,l));
 }
 
 // Persisted records per location (and in the combined view)
@@ -1382,12 +1484,32 @@ function isVipModeActive(){
   try { return document.documentElement.classList.contains('vip-mode'); } catch(_) { return false; }
 }
 
+
+function applyVipSeasonFishInsightsVisibility(){
+  try{
+    const hide = (typeof isVipModeActive === 'function' && isVipModeActive()) &&
+                 (typeof isSeasonMode === 'function' && isSeasonMode());
+    const legPanel = document.getElementById('legendaryChart')?.closest('.panel');
+    const fearPanel = document.getElementById('fearsomeChart')?.closest('.panel');
+    if(legPanel) legPanel.style.display = hide ? 'none' : '';
+    if(fearPanel) fearPanel.style.display = hide ? 'none' : '';
+  }catch(_){}
+}
+
 // Store router (Option 1: keep Main stores as-is, add VIP stores)
 function getAllTimeStoreName(){
   return isVipModeActive() ? IDB_STORE_VIP : IDB_STORE;
 }
 function getSeasonStoreName(){
   return isVipModeActive() ? IDB_STORE_SEASON_VIP : IDB_STORE_SEASON;
+}
+
+
+function getLocationsData(){
+  return isVipModeActive() ? LOCATIONS_VIP : LOCATIONS;
+}
+function getLocationOrder(){
+  return isVipModeActive() ? VIP_LOCATION_ORDER : LOCATION_ORDER;
 }
 
 
@@ -1468,6 +1590,25 @@ async function idbReadAll(storeName){
   });
 }
 
+async function idbReadAllRecordsOnly(storeName){
+  const raw = await idbReadAll(storeName);
+  const out = {};
+  try{
+    Object.keys(raw || {}).forEach((loc)=>{
+      const v = raw[loc];
+      if(v && typeof v === "object" && Object.prototype.hasOwnProperty.call(v, "records")){
+        out[loc] = v.records || {};
+      }else{
+        // already unwrapped
+        out[loc] = v || {};
+      }
+    });
+  }catch(_){}
+  return out;
+}
+
+
+
 async function idbLoadAllRecords(){
   const db = await openIdb();
   return new Promise((resolve, reject) => {
@@ -1546,6 +1687,55 @@ async function idbSaveAllRecords(records){
     tx.onabort = () => reject(tx.error);
   });
 }
+// Save records to a specific store (used by unified restore). Does NOT depend on current mode.
+async function idbSaveAllRecordsToStore(storeName, records){
+  const db = await openIdb();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(storeName, "readwrite");
+    const store = tx.objectStore(storeName);
+    const clearReq = store.clear();
+    clearReq.onerror = () => reject(clearReq.error);
+    clearReq.onsuccess = () => {
+      const entries = Object.entries(records || {});
+      if (entries.length === 0) { resolve(); return; }
+      let pending = entries.length;
+      entries.forEach(([location, rec]) => {
+        const putReq = store.put({ location, records: rec || {} });
+        putReq.onerror = () => reject(putReq.error);
+        putReq.onsuccess = () => {
+          pending -= 1;
+          if (pending === 0) resolve();
+        };
+      });
+    };
+    tx.onabort = () => reject(tx.error);
+  });
+}
+
+async function idbSaveAllSeasonRecordsToStore(storeName, records){
+  const db = await openIdb();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(storeName, "readwrite");
+    const store = tx.objectStore(storeName);
+    const clearReq = store.clear();
+    clearReq.onerror = () => reject(clearReq.error);
+    clearReq.onsuccess = () => {
+      const entries = Object.entries(records || {});
+      if (entries.length === 0) { resolve(); return; }
+      let pending = entries.length;
+      entries.forEach(([location, rec]) => {
+        const putReq = store.put({ location, records: rec || {} });
+        putReq.onerror = () => reject(putReq.error);
+        putReq.onsuccess = () => {
+          pending -= 1;
+          if (pending === 0) resolve();
+        };
+      });
+    };
+    tx.onabort = () => reject(tx.error);
+  });
+}
+
 
 // One-time migration from localStorage (older builds) to IndexedDB
 async function loadRecords(){
@@ -2058,26 +2248,29 @@ function isSeasonMode(){
 
 function getStoredWeight(loc, fishName){
   const store = isSeasonMode() ? seasonRecordsByLocation : recordsByLocation;
-  return store?.[loc]?.[fishName] ?? "";
+  const key = canonicalizeFishName(fishName);
+  return store?.[loc]?.[key] ?? "";
 }
 
 function setCareerStoredWeight(loc, fishName, value){
+  const key = canonicalizeFishName(fishName);
   if(!recordsByLocation[loc]) recordsByLocation[loc] = {};
   if(value === "" || value == null){
-    delete recordsByLocation[loc][fishName];
+    delete recordsByLocation[loc][key];
   }else{
-    recordsByLocation[loc][fishName] = value;
+    recordsByLocation[loc][key] = value;
   }
   saveRecordsToStorage();
 }
 
 function setStoredWeight(loc, fishName, value){
   const store = isSeasonMode() ? seasonRecordsByLocation : recordsByLocation;
+  const key = canonicalizeFishName(fishName);
   if(!store[loc]) store[loc] = {};
   if(value === "" || value == null){
-    delete store[loc][fishName];
+    delete store[loc][key];
   }else{
-    store[loc][fishName] = value;
+    store[loc][key] = value;
   }
   if(isSeasonMode()) saveSeasonRecords(seasonRecordsByLocation || {}); else saveRecords(recordsByLocation || {});
   try{ updateDashboard();
@@ -2247,7 +2440,7 @@ function renderTable(){
 	 }else{
 	  if(isAll){
 	   currentFish = getLocationList().flatMap(loc=>
-	     LOCATIONS[loc].map(f=>({ ...f, location: loc }))
+	     getLocationsData()[loc].map(f=>({ ...f, location: loc }))
 	   ).sort((a,b)=>{
 	     const ra=CATEGORY_RANK[a.category] ?? 999;
 	     const rb=CATEGORY_RANK[b.category] ?? 999;
@@ -2257,7 +2450,7 @@ function renderTable(){
 	     return a.name.localeCompare(b.name);
 	   });
 	  }else{
-	   currentFish=[...LOCATIONS[selected]].map(f=>({ ...f, location: selected })).sort((a,b)=>{
+	   currentFish=[...getLocationsData()[selected]].map(f=>({ ...f, location: selected })).sort((a,b)=>{
 	     const ra=CATEGORY_RANK[a.category] ?? 999;
 	     const rb=CATEGORY_RANK[b.category] ?? 999;
 	     if(ra!==rb) return ra-rb;
@@ -2391,7 +2584,8 @@ function renderTable(){
 
       // If this season entry beats the career record, optionally update career too (with confirmation)
       try{
-        const careerRaw = (recordsByLocation?.[f.location]?.[f.name] ?? "");
+        const careerKey = canonicalizeFishName(f.name);
+        const careerRaw = (recordsByLocation?.[f.location]?.[careerKey] ?? "");
         const careerLbs = parseStoredWeightLbs(String(careerRaw||""));
         const careerPts = (!Number.isNaN(careerLbs) && careerLbs>0) ? calculatePoints(careerLbs, f) : 0;
         if(pts > (careerPts||0)) {
@@ -3296,10 +3490,10 @@ function computeAggregates(records, opts = {}){
       caught: 0,
     };
 
-    for (const fish of LOCATIONS[loc]){
+    for (const fish of getLocationsData()[loc]){
       if(!includeLegendary && fish.category === 'Legendary') continue;
       if((typeof isSeasonMode === 'function' && isSeasonMode()) && !includeOOS && !isFishInSeason(fish.name)) continue;
-      const raw = recs?.[loc]?.[fish.name];
+      const raw = recs?.[loc]?.[canonicalizeFishName(fish.name)];
       const w = parseAndClampRecordLbs(raw, fish);
       const valid = raw !== "" && !Number.isNaN(w) && w > 0 && w >= fish.min && w <= fish.max;
       if(!valid) continue;
@@ -3323,7 +3517,7 @@ function computeDashboardAggregates(records, opts = {}){
   const { includeLegendary = true, includeOOS = true } = opts;
   const recs = records || recordsByLocation || {};
   const locsAll = getLocationList();
-  const locs = (dashboardLocation && dashboardLocation !== '__ALL__' && LOCATIONS[dashboardLocation])
+  const locs = (dashboardLocation && dashboardLocation !== '__ALL__' && getLocationsData()[dashboardLocation])
     ? [dashboardLocation]
     : locsAll;
 
@@ -3339,11 +3533,11 @@ function computeDashboardAggregates(records, opts = {}){
       caught: 0,
     };
 
-    for (const fish of (LOCATIONS[loc] || [])){
+    for (const fish of (getLocationsData()[loc] || [])){
       if(!dashboardCategories.has(fish.category)) continue;
       if(!includeLegendary && fish.category === 'Legendary') continue;
       if((typeof isSeasonMode === 'function' && isSeasonMode()) && !includeOOS && !isFishInSeason(fish.name)) continue;
-      const raw = recs?.[loc]?.[fish.name];
+      const raw = recs?.[loc]?.[canonicalizeFishName(fish.name)];
       let w = parseStoredWeightLbs(raw);
       const valid = raw !== "" && !Number.isNaN(w) && w > 0 && w >= fish.min && w <= fish.max;
       if(!valid) continue;
@@ -3389,7 +3583,7 @@ function getEffectiveRecords(){
     if(!Number.isFinite(w)) return;
     if(w < fish.min || w > fish.max) return;
     // effectiveRecords should remain canonical lbs like storage
-    merged[loc][fish.name] = formatLbsForStorage(w, { decimals: 2 });
+    merged[loc][canonicalizeFishName(fish.name)] = formatLbsForStorage(w, { decimals: 2 });
   });
 
   return merged;
@@ -3402,13 +3596,15 @@ function updateSeasonUncaughtCount(){
     const el = document.getElementById('seasonUncaughtCount');
     if(!el) return;
 
-    const total = Object.values(LOCATIONS || {}).reduce((sum, arr)=>sum + (arr ? arr.length : 0), 0) || 200;
+    // Use active dataset (Main vs VIP) for totals + validation.
+    const activeLocs = (typeof getLocationsData === 'function') ? getLocationsData() : (LOCATIONS || {});
+    const total = Object.values(activeLocs || {}).reduce((sum, arr)=>sum + (arr ? arr.length : 0), 0) || 200;
 
     // Count caught fish entries this season (by location + fish)
     const caught = new Set();
     for(const loc of Object.keys(seasonRecordsByLocation || {})){
       const recs = seasonRecordsByLocation[loc] || {};
-      const fishLookup = new Map((LOCATIONS?.[loc] || []).map(f=>[String(f.name).toLowerCase(), f]));
+      const fishLookup = new Map(((activeLocs && activeLocs[loc]) ? activeLocs[loc] : []).map(f=>[String(f.name).toLowerCase(), f]));
       for(const fishName of Object.keys(recs)){
         const f = fishLookup.get(String(fishName).toLowerCase());
         if(!f) continue;
@@ -3432,13 +3628,15 @@ function updateSeasonProgress(){
     const wrap = document.getElementById('seasonProgress');
     if(!label || !fill || !wrap) return;
 
-    const total = Object.values(LOCATIONS || {}).reduce((sum, arr)=>sum + (arr ? arr.length : 0), 0) || 200;
+    // Use active dataset (Main vs VIP) for totals + validation.
+    const activeLocs = (typeof getLocationsData === 'function') ? getLocationsData() : (LOCATIONS || {});
+    const total = Object.values(activeLocs || {}).reduce((sum, arr)=>sum + (arr ? arr.length : 0), 0) || 200;
 
     // Count caught fish entries this season (by location + fish)
     const caught = new Set();
     for(const loc of Object.keys(seasonRecordsByLocation || {})){
       const recs = seasonRecordsByLocation[loc] || {};
-      const fishLookup = new Map((LOCATIONS?.[loc] || []).map(f=>[String(f.name).toLowerCase(), f]));
+      const fishLookup = new Map(((activeLocs && activeLocs[loc]) ? activeLocs[loc] : []).map(f=>[String(f.name).toLowerCase(), f]));
       for(const fishName of Object.keys(recs)){
         const f = fishLookup.get(String(fishName).toLowerCase());
         if(!f) continue;
@@ -3453,6 +3651,30 @@ function updateSeasonProgress(){
 
     label.textContent = `${caughtCount}/${total}`;
     fill.style.width = `${pct}%`;
+  }catch(_){}
+}
+
+function updateSeasonBannerHeader(){
+  try{
+    const banner = document.getElementById('seasonBanner');
+    const titleEl = document.getElementById('seasonBannerTitle');
+    if(!banner || !titleEl) return;
+
+    // Title: "Season Active — Month YYYY" (always)
+    let monthLabel = "";
+    try{
+      monthLabel = new Intl.DateTimeFormat('en-US', { month: 'long', year: 'numeric' }).format(new Date());
+    }catch(_){ monthLabel = ""; }
+    titleEl.textContent = monthLabel ? `Season Active — ${monthLabel}` : "Season Active";
+
+    // Subtitle: distinguish VIP vs Main (only)
+    const subEl = banner.querySelector('.season-banner-sub');
+    if(subEl){
+      const usingVipDataset = (typeof getLocationsData === 'function') && (getLocationsData() === LOCATIONS_VIP);
+      subEl.textContent = usingVipDataset
+        ? "Monthly CotD VIP Season • All-time stats unaffected"
+        : "Monthly CotD Season • All-time stats unaffected";
+    }
   }catch(_){}
 }
 
@@ -3563,8 +3785,31 @@ try{
   if(bestMapEl) bestMapEl.textContent = anyCaught ? bestMap : '-' ;
 
   // Bestiary progress = how many unique fish have a stored (valid) record
-  const totalFish = Object.values(LOCATIONS).reduce((sum,arr)=>sum+arr.length,0);
-  const caughtUnique = new Set(allFish.map(f=>`${f.location}|${f.name}`)).size;
+  const locationsDataForBestiary = (typeof getLocationsData === 'function')
+    ? getLocationsData()
+    : (isVipModeActive && isVipModeActive() && (typeof LOCATIONS_VIP !== 'undefined') ? LOCATIONS_VIP : (typeof LOCATIONS !== 'undefined' ? LOCATIONS : {}));
+
+  const totalFish = Object.values(locationsDataForBestiary || {}).reduce((sum,arr)=>sum+(Array.isArray(arr)?arr.length:0),0);
+
+  // Count only fish that exist in the active bestiary (Main vs VIP) to avoid drift across releases.
+  const allowedKeys = new Set();
+  try{
+    for(const loc of Object.keys(locationsDataForBestiary || {})){
+      const arr = locationsDataForBestiary[loc] || [];
+      for(const f of (Array.isArray(arr)?arr:[])){
+        const nm = (f && f.name != null) ? String(f.name) : '';
+        if(!nm) continue;
+        allowedKeys.add(`${loc}|${canonicalizeFishName(nm)}`);
+      }
+    }
+  }catch(_){}
+
+  const caughtUnique = new Set(
+    (allFish || [])
+      .map(f=>`${f.location}|${canonicalizeFishName(f.name)}`)
+      .filter(k=>allowedKeys.size ? allowedKeys.has(k) : true)
+  ).size;
+
   const pct = totalFish ? (100 * caughtUnique / totalFish) : 0;
   try{ setDonutProgress(pct); }catch(e){ console.error('Donut update failed', e); }
 
@@ -3646,7 +3891,7 @@ try{
     cats.forEach(c=>{ mins[c]=Infinity; maxs[c]=-Infinity; minFishNames[c]=''; maxFishNames[c]=''; });
 
     getLocationList().forEach(loc=>{
-      (LOCATIONS[loc]||[]).forEach(f=>{
+      (getLocationsData()[loc]||[]).forEach(f=>{
         if(seasonNow && f.category !== 'Legendary' && !isFishInSeason(f.name, new Date())) return;
         const raw = effectiveRecords?.[loc]?.[f.name];
         const w = parseStoredWeightLbs(raw);
@@ -3725,11 +3970,11 @@ try{
         let maxP = -Infinity;
         let minName = '';
         let maxName = '';
-        for (const fish of (LOCATIONS[loc] || [])){
+        for (const fish of (getLocationsData()[loc] || [])){
           if(fish.category !== category) continue;
           if(seasonNow && fish.category !== 'Legendary' && !isFishInSeason(fish.name, new Date())) continue;
           // Use effective (live) records so dumbbells update even before Enter/blur commits
-          const raw = effectiveRecords?.[loc]?.[fish.name];
+          const raw = effectiveRecords?.[loc]?.[canonicalizeFishName(fish.name)];
           let w = parseStoredWeightLbs(raw);
           if(!Number.isFinite(w)) continue;
 
@@ -3797,7 +4042,7 @@ try{
     const pointsByFish = new Map(allFish.map(f=>[`${f.location}|${f.name}`, {points:f.points, stars:f.stars}]));
     const legendaryList = [];
     getLocationList().forEach(loc=>{
-      const legFish = (LOCATIONS[loc] || []).filter(f=>f.category === 'Legendary');
+      const legFish = (getLocationsData()[loc] || []).filter(f=>f.category === 'Legendary');
       legFish.forEach(f=>{
         const rec = pointsByFish.get(`${loc}|${f.name}`);
         const pts = rec ? rec.points : 0;
@@ -3816,7 +4061,11 @@ try{
 
   // Fearsome four (fixed list)
   try{
-    const fearsomeNames = ['whale shark','ocean sunfish','hoodwinker sunfish','manta ray'];
+    const __isVipFI = (typeof isVipModeActive==='function') ? isVipModeActive() : false;
+    const __isVipAlltimeFI = __isVipFI && !document.body.classList.contains('season-active');
+    const fearsomeNames = __isVipAlltimeFI
+      ? ['devil mutanoid','giant busbass','polish spudfish','ribbed bonefish','round tubefish','seahorse abomination']
+      : ['whale shark','ocean sunfish','hoodwinker sunfish','manta ray'];
     const fearMap = new Map(allFish.map(f=>[f.name.toLowerCase(), {points:f.points, stars:f.stars}]));
     const fearList = fearsomeNames.map(n=>{
       const rec = fearMap.get(n);
@@ -3824,6 +4073,11 @@ try{
       return { name: n, value: val };
     });
     if(fearsomeChart){
+      try{
+        const __t = document.getElementById('fearsomeChart')?.closest('.panel')?.querySelector('.panel-title');
+        if(__t) __t.textContent = (__isVipAlltimeFI ? 'The Epics' : 'The Fearsome Four');
+      }catch(_){ }
+
       fearsomeChart.data.labels = fearList.map(f => __wrapWordsFearsome(toTitleCase(f.name), 10));
       fearsomeChart.data.datasets[0].data = fearList.map(f=>f.value);
       safeUpdate(fearsomeChart);
@@ -3858,6 +4112,10 @@ function getSeasonImprovementTargets(allFish, category, limit=10){
     if(seasonNow){
       const list = getSeasonImprovementTargets(allFish, 'Common', 10);
       if(eliteEpicsChart){
+        try{
+          const __t = document.getElementById('eliteEpicsChart')?.closest('.panel')?.querySelector('.panel-title');
+          if(__t) __t.textContent = (__isVipAlltimeFI ? 'The Top Rares' : 'The Elite Epics');
+        }catch(_){ }
         // Season mode: ensure Chart.js does not auto-skip category labels.
         try{
           const y = eliteEpicsChart.options?.scales?.y;
@@ -3871,7 +4129,11 @@ function getSeasonImprovementTargets(allFish, category, limit=10){
         safeUpdate(eliteEpicsChart);
       }
     }else{
-      const eliteNames = ['goldfish','bull shark','king salmon','tiger shark','bull trout','scottish salmon'];
+      const __isVipFI = (typeof isVipModeActive==='function') ? isVipModeActive() : false;
+      const __isVipAlltimeFI = __isVipFI && !document.body.classList.contains('season-active');
+      const eliteNames = __isVipAlltimeFI
+        ? ['magnetfin','yellow submarinecod','striped guitarfish','glovefish','stale deadfish','bomberfish']
+        : ['goldfish','bull shark','king salmon','tiger shark','bull trout','scottish salmon'];
       const eliteMap = new Map(allFish.map(f=>[f.name.toLowerCase(), {points:f.points, stars:f.stars}]));
       const eliteList = eliteNames.map(n=>{
         const rec = eliteMap.get(n);
@@ -3879,6 +4141,10 @@ function getSeasonImprovementTargets(allFish, category, limit=10){
         return { name: n, value: val };
       });
       if(eliteEpicsChart){
+        try{
+          const __t = document.getElementById('eliteEpicsChart')?.closest('.panel')?.querySelector('.panel-title');
+          if(__t) __t.textContent = (__isVipAlltimeFI ? 'The Top Rares' : 'The Elite Epics');
+        }catch(_){ }
         // Career mode: restore default auto-skip behavior.
         try{
           const y = eliteEpicsChart.options?.scales?.y;
@@ -4020,6 +4286,7 @@ function setupSeasonMode(){
     careerBtn.classList.toggle('active', m === "career");
     seasonBtn.classList.toggle('active', m === "season");
     document.body.classList.toggle('season-active', m === "season");
+    try{ applyVipSeasonFishInsightsVisibility(); }catch(_){ }
     try{ updateSeasonProgress(); }catch(_){}
     try{ updateSeasonProgress(); }catch(_){}
     try{ updateSeasonUncaughtCount(); }catch(_){}
@@ -4041,9 +4308,9 @@ function setupSeasonMode(){
       const shortT = document.getElementById('shortLivedTitle');
       const invT = document.getElementById('invisiblesTitle');
       if(m === "season"){
-        if(eliteT) eliteT.innerHTML = 'Commons – Key Targets<span class="panel-subtitle">Lowest-scoring in-season commons</span>';
-        if(shortT) shortT.innerHTML = 'Rares – Key Targets<span class="panel-subtitle">Lowest-scoring in-season rares</span>';
-        if(invT) invT.innerHTML = 'Epics – Key Targets<span class="panel-subtitle">Lowest-scoring in-season epics</span>';
+        if(eliteT) eliteT.innerHTML = 'Commons – Key Targets<span class="panel-subtitle">Lowest-scoring commons</span>';
+        if(shortT) shortT.innerHTML = 'Rares – Key Targets<span class="panel-subtitle">Lowest-scoring rares</span>';
+        if(invT) invT.innerHTML = 'Epics – Key Targets<span class="panel-subtitle">Lowest-scoring epics</span>';
       }else{
         if(eliteT) eliteT.textContent = "The Elite Epics";
         if(shortT) shortT.textContent = "The Short-Lived Specials";
@@ -4055,7 +4322,33 @@ function setupSeasonMode(){
     if(banner){
       banner.classList.toggle('hidden', m !== "season");
       if(m === "season" && titleEl){
-        titleEl.textContent = `Season Active — ${currentSeasonLabel()}`;
+        // Keep banner heading consistent; include month/year in the heading.
+        let monthLabel = "";
+        try{
+          const sid = (typeof getCurrentSeasonId === 'function') ? getCurrentSeasonId() : null;
+          const stored = (function(){ try{ return localStorage.getItem('fm_season_month'); }catch(_){ return null; } })();
+          const ym = String(stored || sid || "");
+          const parts = ym.split('-');
+          if(parts.length>=2){
+            const yy = Number(parts[0]);
+            const mm = Number(parts[1]);
+            if(Number.isFinite(yy) && Number.isFinite(mm)){
+              const dt = new Date(yy, Math.max(0, mm-1), 1);
+              monthLabel = dt.toLocaleString(undefined, { month: 'long', year: 'numeric' });
+            }
+          }
+        }catch(_){ monthLabel = ""; }
+
+        titleEl.textContent = monthLabel ? `Season Active — ${monthLabel}` : "Season Active";
+        try{
+          const subEl = banner.querySelector(".season-banner-sub");
+          if(subEl){
+            const usingVipDataset = getLocationsData() === LOCATIONS_VIP;
+            subEl.textContent = usingVipDataset
+              ? "Monthly CotD VIP Season • All-time stats unaffected"
+              : "Monthly CotD Season • All-time stats unaffected";
+          }
+        }catch(_){ }
       }
     }
 
@@ -4437,6 +4730,7 @@ async function reloadActiveModeFromIdb(){
       seasonRecordsByLocation_main = loadedSeason;
     }
     syncActiveCachesToMode();
+    try{ applyVipSeasonFishInsightsVisibility(); }catch(_){ }
   }catch(e){
     console.error("Reload failed", e);
   }
@@ -4523,10 +4817,15 @@ function setMode(mode){
     localStorage.setItem(MODE_KEY, m);
     applyModeUI(m);
     syncActiveCachesToMode();
-    // Reload data for the newly selected mode (hard isolation)
+    
+    try{ populateLocationOptions(); }catch(_){}
+    try{ buildLocationButtons(); }catch(_){}
+// Reload data for the newly selected mode (hard isolation)
     reloadActiveModeFromIdb().then(()=>{
       try{ if(typeof updateDashboard==='function') updateDashboard(); }catch(_){ }
       try{ if(typeof updateSeasonProgress==='function') updateSeasonProgress(); }catch(_){ }
+      try{ if(typeof updateSeasonBannerHeader==='function') updateSeasonBannerHeader(); }catch(_){ }
+
       try{ if(typeof renderAll==='function') renderAll(); }catch(_){ }
     });
 // URL: hash is only used as an override flag.
@@ -4589,6 +4888,8 @@ function setupTabs(){
     if(viewId === 'focusView'){
       try{ window.refreshFocusTab && window.refreshFocusTab(); }catch(_){ }
     }
+
+    try{ applyVipSeasonFishInsightsVisibility(); }catch(_){ }
   }
 
   buttons.forEach(btn => btn.addEventListener('click', ()=>setActive(btn.getAttribute('data-view'))));
@@ -4673,9 +4974,9 @@ function buildShareKPIs(opts){
   const locs = location ? [location] : getLocationList();
   for(const loc of locs){
     byMap[loc] = {sum:0, cnt:0, pointsByCat:{Common:0,Rare:0,Epic:0,Legendary:0}, countsByCat:{Common:0,Rare:0,Epic:0,Legendary:0}};
-    const fishList = LOCATIONS[loc] || [];
+    const fishList = getLocationsData()[loc] || [];
     for(const fish of fishList){
-      const raw = recs?.[loc]?.[fish.name];
+      const raw = recs?.[loc]?.[canonicalizeFishName(fish.name)];
       // weights stored in lbs; user input may be kg depending on current unit
       let w = parseStoredWeightLbs(raw);
       const valid = raw !== "" && !Number.isNaN(w) && w > 0 && w >= fish.min && w <= fish.max;
@@ -5049,7 +5350,7 @@ function _buildFullAllTimeRecordsTemplate(){
     const src = recordsByLocation || {};
     const locs = (typeof LOCATION_ORDER !== 'undefined' && LOCATION_ORDER.length) ? LOCATION_ORDER : Object.keys(LOCATIONS || {});
     for(const loc of locs){
-      const list = (LOCATIONS && LOCATIONS[loc]) ? LOCATIONS[loc] : [];
+      const list = (getLocationsData() && getLocationsData()[loc]) ? getLocationsData()[loc] : [];
       const dstRec = {};
       const srcRec = src[loc] || {};
       for(const f of list){
@@ -5066,8 +5367,9 @@ function _buildFullAllTimeRecordsTemplate(){
 function _buildFullSeasonRecordsTemplate(){
   const out = {};
   try{
-    for(const loc of Object.keys(LOCATIONS || {})){
-      const fishArr = LOCATIONS[loc] || [];
+    const __locData = (typeof getLocationsData==='function' ? getLocationsData() : (LOCATIONS||{})) || {};
+    for(const loc of Object.keys(__locData)){
+      const fishArr = getLocationsData()[loc] || [];
       const merged = {};
       for(const f of fishArr){
         const n = canonicalizeFishName(f && f.name ? f.name : "");
@@ -5106,13 +5408,14 @@ function _seasonPointsByLocationFromStoredWeights(){
   return tmpl;
 }
 
-function _seasonStoredWeightsFromPointsBackup(pointsByLoc){
+function _seasonStoredWeightsFromPointsBackup(pointsByLoc, locationsObj){
   // Convert a season backup payload (points strings) into in-app stored weight strings.
   const out = {};
   try{
+    const locs = locationsObj || (typeof LOCATIONS !== 'undefined' ? LOCATIONS : {});
     for(const loc of Object.keys(pointsByLoc || {})){
       const recs = pointsByLoc[loc] || {};
-      const fishLookup = new Map((LOCATIONS?.[loc] || []).map(f=>[String(f.name).toLowerCase(), f]));
+      const fishLookup = new Map((locs?.[loc] || []).map(f=>[String(f.name).toLowerCase(), f]));
       for(const fishName of Object.keys(recs)){
         const rawPts = String(recs[fishName] ?? '').trim();
         if(!rawPts) continue;
@@ -5190,26 +5493,106 @@ function buildBackupPayload(){
   return payload;
 }
 
+
+
+function seasonPointsFromStoredWeightsObj(seasonRecordsObj, locationsObj){
+  // Convert stored season values (weights) into exported points strings.
+  const out = {};
+  const cur = seasonRecordsObj || {};
+  const locs = locationsObj || {};
+  try{
+    for(const loc of Object.keys(cur)){
+      const recs = cur[loc] || {};
+      const fishLookup = new Map(((locs[loc] || [])).map(f=>[String(f.name).toLowerCase(), f]));
+      for(const fishName of Object.keys(recs)){
+        const f = fishLookup.get(String(fishName).toLowerCase());
+        if(!f) continue;
+        const rawW = recs[fishName];
+        const wLbs = parseStoredWeightLbs(String(rawW||""));
+        if(!Number.isFinite(wLbs) || wLbs <= 0) continue;
+        const pts = calculatePoints(wLbs, f);
+        if(!pts) continue;
+        if(!out[loc]) out[loc] = {};
+        out[loc][canonicalizeFishName(f.name)] = String(pts);
+      }
+    }
+  }catch(_){}
+  return out;
+}
+
+function orderLocationsForBackup(recordsObj, locationList){
+  const src = recordsObj || {};
+  const ordered = {};
+  const seen = new Set();
+  (locationList || []).forEach((loc)=>{
+    if(!loc) return;
+    if(Object.prototype.hasOwnProperty.call(src, loc)){
+      ordered[loc] = src[loc];
+    }else{
+      // keep empty location blocks if desired; for backups we omit truly empty locations
+    }
+    seen.add(loc);
+  });
+  // Append any extra keys not in the location list (future-proof)
+  Object.keys(src).forEach((loc)=>{
+    if(!seen.has(loc)){
+      ordered[loc] = src[loc];
+    }
+  });
+  return ordered;
+}
+
+function getVipLocationListForBackup(){
+  // If VIP has its own location ordering in the future, use it.
+  try{
+    if (typeof VIP_LOCATION_ORDER !== 'undefined' && Array.isArray(VIP_LOCATION_ORDER) && VIP_LOCATION_ORDER.length){
+      return VIP_LOCATION_ORDER.slice();
+    }
+  }catch(_){}
+  try{
+    if (typeof getVipLocationList === 'function'){
+      const v = getVipLocationList();
+      if (Array.isArray(v) && v.length) return v.slice();
+    }
+  }catch(_){}
+  // Fallback: use main ordering for now.
+  try{
+    if (typeof getLocationList === 'function'){
+      const m = getLocationList();
+      if (Array.isArray(m) && m.length) return m.slice();
+    }
+  }catch(_){}
+  return [];
+}
+
 async function downloadBackupJSON(){
   try{
     // Unified backup: always export all 4 sections regardless of current view.
     // All-time data is stored canonically in lbs. Season data uses points as the source of truth.
-    const mainAllTime = await idbReadAll(IDB_STORE);               // location_records
-    const mainSeason  = await idbReadAll(IDB_STORE_SEASON);        // season_location_records
-    const vipAllTime  = await idbReadAll(IDB_STORE_VIP);           // location_records_vip
-    const vipSeason   = await idbReadAll(IDB_STORE_SEASON_VIP);    // season_location_records_vip
+    const mainAllTime = await idbReadAllRecordsOnly(IDB_STORE);               // location_records
+    const mainSeasonRaw  = await idbReadAllRecordsOnly(IDB_STORE_SEASON);        // season_location_records
+    const mainSeasonPts = seasonPointsFromStoredWeightsObj(mainSeasonRaw, (typeof LOCATIONS !== 'undefined') ? LOCATIONS : {});
+    const vipAllTime  = await idbReadAllRecordsOnly(IDB_STORE_VIP);           // location_records_vip
+    const vipSeasonRaw   = await idbReadAllRecordsOnly(IDB_STORE_SEASON_VIP);
+    const vipLocations = (typeof LOCATIONS_VIP !== 'undefined') ? LOCATIONS_VIP : LOCATIONS;
+    const vipSeasonPts = seasonPointsFromStoredWeightsObj(vipSeasonRaw, vipLocations);
+    // season_location_records_vip
+
+    const mainLocOrder = (typeof getLocationList === 'function') ? getLocationList() : (typeof LOCATION_ORDER !== 'undefined' ? LOCATION_ORDER : []);
+    const vipLocOrder = getVipLocationListForBackup();
 
     const payload = {
       schema: "fm_unified_backup_v1",
       version: (typeof APP_VERSION !== "undefined" ? APP_VERSION : "1.5.0"),
       createdAt: new Date().toISOString(),
+      seasonMeta: (function(){ try{ const sid = (typeof getCurrentSeasonId === 'function') ? getCurrentSeasonId() : null; return sid ? { seasonId: String(sid) } : null; }catch(_){ return null; } })(),
       main: {
-        allTime: { recordsByLocation: mainAllTime || {}, meta: { canonicalWeightUnit: "lbs", sourceOfTruth: "weight" } },
-        season:  { recordsByLocation: mainSeason  || {}, meta: { sourceOfTruth: "points" } }
+        allTime: { recordsByLocation: orderLocationsForBackup(mainAllTime || {}, mainLocOrder), meta: { canonicalWeightUnit: "lbs", sourceOfTruth: "weight" } },
+        season:  { recordsByLocation: orderLocationsForBackup(mainSeasonPts || {}, mainLocOrder), meta: { sourceOfTruth: "points" } }
       },
       vip: {
-        allTime: { recordsByLocation: vipAllTime || {}, meta: { canonicalWeightUnit: "lbs", sourceOfTruth: "weight" } },
-        season:  { recordsByLocation: vipSeason  || {}, meta: { sourceOfTruth: "points" } }
+        allTime: { recordsByLocation: orderLocationsForBackup(vipAllTime || {}, vipLocOrder), meta: { canonicalWeightUnit: "lbs", sourceOfTruth: "weight" } },
+        season:  { recordsByLocation: orderLocationsForBackup(vipSeasonPts || {}, vipLocOrder), meta: { sourceOfTruth: "points" } }
       }
     };
 
@@ -5293,6 +5676,45 @@ function _countBackupUniqueCanonicalFish(obj){
 
 function _normalizeBackupObject(parsed){
   if(!parsed || typeof parsed !== 'object') return null;
+
+  // Unified backups (v1.5.0+): always export all 4 sections
+  try{
+    if(String(parsed.schema || '') === 'fm_unified_backup_v1'){
+      const mainAT = parsed?.main?.allTime?.recordsByLocation;
+      const mainS  = parsed?.main?.season?.recordsByLocation;
+      const vipAT  = parsed?.vip?.allTime?.recordsByLocation;
+      const vipS   = parsed?.vip?.season?.recordsByLocation;
+
+      const pbImported = (parsed && typeof parsed.pbImportedFromSeasonFish === 'object') ? parsed.pbImportedFromSeasonFish : null;
+      const unit = parsed?.settings?.weightUnit || parsed?.settings?.unit || null;
+      const storageUnit = parsed?.settings?.storageUnit || parsed?.settings?.recordsUnit || null;
+
+      const exportedAt = parsed?.createdAt || parsed?.meta?.exportedAt || parsed?.exportedAt || null;
+      const version = parsed?.version || parsed?.meta?.version || null;
+      const seasonMeta = (parsed && typeof parsed.seasonMeta === 'object') ? parsed.seasonMeta : null;
+
+      // At least one section must be an object.
+      const hasAny = (mainAT && typeof mainAT === 'object') || (mainS && typeof mainS === 'object') ||
+                     (vipAT && typeof vipAT === 'object') || (vipS && typeof vipS === 'object');
+      if(!hasAny) return null;
+
+      return {
+        schemaType: 'unified',
+        mainAllTime: (mainAT && typeof mainAT === 'object') ? mainAT : null,
+        mainSeason:  (mainS  && typeof mainS  === 'object') ? mainS  : null,
+        vipAllTime:  (vipAT  && typeof vipAT  === 'object') ? vipAT  : null,
+        vipSeason:   (vipS   && typeof vipS   === 'object') ? vipS   : null,
+        seasonMeta,
+        pbImportedFromSeasonFish: pbImported,
+        weightUnit: unit,
+        storageUnit,
+        exportedAt,
+        version
+      };
+    }
+  }catch(_){}
+
+  // Legacy backups (pre-unified): only Main sections exist.
   const records = parsed.recordsByLocation || parsed.records || parsed.data || null;
   if(!records || typeof records !== 'object') return null;
   const pbImported = (parsed && typeof parsed.pbImportedFromSeasonFish === 'object') ? parsed.pbImportedFromSeasonFish : null;
@@ -5302,21 +5724,48 @@ function _normalizeBackupObject(parsed){
   const version = parsed?.meta?.version || parsed?.version || null;
   const season = parsed.seasonRecordsByLocation || parsed.seasonRecords || null;
   const seasonMeta = (parsed && typeof parsed.seasonMeta === 'object') ? parsed.seasonMeta : null;
-  return { recordsByLocation: records, seasonRecordsByLocation: (season && typeof season === 'object') ? season : null, seasonMeta, pbImportedFromSeasonFish: pbImported, weightUnit: unit, storageUnit, exportedAt, version };
+
+  return {
+    schemaType: 'legacy',
+    mainAllTime: records,
+    mainSeason: (season && typeof season === 'object') ? season : null,
+    vipAllTime: null,
+    vipSeason: null,
+    seasonMeta,
+    pbImportedFromSeasonFish: pbImported,
+    weightUnit: unit,
+    storageUnit,
+    exportedAt,
+    version
+  };
 }
 
 function applyRestoredState(restored){
+  // Unified restore model:
+  // - Write ONLY the sections that exist in the backup.
+  // - Preserve any store not present in the backup (do not clear it).
+  // - Main/VIP are isolated (no mirroring).
+  // - Season restore is gated by seasonMeta.seasonId matching current season (fail closed).
+
+  const hasMainAT = !!(restored && restored.mainAllTime && typeof restored.mainAllTime === 'object');
+  const hasVipAT  = !!(restored && restored.vipAllTime  && typeof restored.vipAllTime  === 'object');
+  const hasMainS  = !!(restored && restored.mainSeason  && typeof restored.mainSeason  === 'object');
+  const hasVipS   = !!(restored && restored.vipSeason   && typeof restored.vipSeason   === 'object');
+
   // Canonicalize + merge alias fish keys so old backups don't wipe data
-  const restoredCareer = canonicalizeRecordsByLocation(restored.recordsByLocation || {});
+  const restoredMainCareer = hasMainAT ? canonicalizeRecordsByLocation(restored.mainAllTime || {}) : null;
+  const restoredVipCareer  = hasVipAT  ? canonicalizeRecordsByLocation(restored.vipAllTime  || {}) : null;
+
   // Older backups may have stored weights in the preferred display unit (e.g., kgs).
   // Convert restored weights to canonical lbs for internal storage.
-  try{
-    const su = (restored && restored.storageUnit) ? String(restored.storageUnit) : '';
-    const fromUnit = (su === 'lbs' || su === 'kgs') ? su : ((restored && restored.weightUnit === 'kgs') ? 'kgs' : 'lbs');
-    if(fromUnit === 'kgs'){
+  function _convertCareerObjToLbsIfNeeded(careerObj){
+    try{
+      const su = (restored && restored.storageUnit) ? String(restored.storageUnit) : '';
+      const fromUnit = (su === 'lbs' || su === 'kgs') ? su : ((restored && restored.weightUnit === 'kgs') ? 'kgs' : 'lbs');
+      if(fromUnit !== 'kgs') return;
       const factor = 2.2046226218; // lbs per kg
-      for(const loc of Object.keys(restoredCareer || {})){
-        const locObj = restoredCareer[loc] || {};
+      for(const loc of Object.keys(careerObj || {})){
+        const locObj = careerObj[loc] || {};
         for(const fishName of Object.keys(locObj || {})){
           const raw = locObj[fishName];
           const s = String(raw ?? '').trim();
@@ -5326,61 +5775,93 @@ function applyRestoredState(restored){
           locObj[fishName] = _fmtTrimFixed(n * factor, 4);
         }
       }
+    }catch(_){}
+  }
+  if(restoredMainCareer) _convertCareerObjToLbsIfNeeded(restoredMainCareer);
+  if(restoredVipCareer)  _convertCareerObjToLbsIfNeeded(restoredVipCareer);
+
+  // Apply in-memory caches (preserve caches that aren't restored)
+  if(restoredMainCareer) recordsByLocation_main = restoredMainCareer;
+  if(restoredVipCareer)  recordsByLocation_vip  = restoredVipCareer;
+
+  // Season gating
+  const curSeasonId = (typeof getCurrentSeasonId === 'function') ? getCurrentSeasonId() : null;
+  const backupSeasonId = (restored && restored.seasonMeta && restored.seasonMeta.seasonId) ? String(restored.seasonMeta.seasonId) : null;
+  const seasonMatches = (!!curSeasonId && !!backupSeasonId && String(curSeasonId) === String(backupSeasonId));
+
+  let restoredMainSeasonStored = null;
+  let restoredVipSeasonStored = null;
+
+  if(seasonMatches && hasMainS){
+    try{
+      restoredMainSeasonStored = canonicalizeRecordsByLocation(
+        _seasonStoredWeightsFromPointsBackup(restored.mainSeason || {}, (typeof LOCATIONS !== 'undefined' ? LOCATIONS : {}))
+      );
+    }catch(_){ restoredMainSeasonStored = null; }
+  }
+  if(seasonMatches && hasVipS){
+    try{
+      const vipLocs = (typeof LOCATIONS_VIP !== 'undefined') ? LOCATIONS_VIP : (typeof LOCATIONS !== 'undefined' ? LOCATIONS : {});
+      restoredVipSeasonStored = canonicalizeRecordsByLocation(
+        _seasonStoredWeightsFromPointsBackup(restored.vipSeason || {}, vipLocs)
+      );
+    }catch(_){ restoredVipSeasonStored = null; }
+  }
+
+  if(restoredMainSeasonStored) seasonRecordsByLocation_main = restoredMainSeasonStored;
+  if(restoredVipSeasonStored)  seasonRecordsByLocation_vip  = restoredVipSeasonStored;
+
+  // Persist ONLY the stores present in the backup (preserve others).
+  try{
+    if(restoredMainCareer){
+      idbSaveAllRecordsToStore(IDB_STORE, restoredMainCareer).catch(()=>{});
+    }
+    if(restoredVipCareer){
+      idbSaveAllRecordsToStore(IDB_STORE_VIP, restoredVipCareer).catch(()=>{});
+    }
+    if(restoredMainSeasonStored){
+      idbSaveAllSeasonRecordsToStore(IDB_STORE_SEASON, restoredMainSeasonStored).catch(()=>{});
+    }
+    if(restoredVipSeasonStored){
+      idbSaveAllSeasonRecordsToStore(IDB_STORE_SEASON_VIP, restoredVipSeasonStored).catch(()=>{});
     }
   }catch(_){}
 
-  // Apply restored all-time into the active mode (Main vs VIP are isolated)
-  if (isVipModeActive()) { recordsByLocation_vip = restoredCareer; } else { recordsByLocation_main = restoredCareer; }
-  syncActiveCachesToMode();
-
-  // Only restore season records if the backup explicitly includes them AND the season matches.
-  // This prevents importing an old month (e.g., January) into the current season (e.g., February).
-  const curSeasonId = (typeof getCurrentSeasonId === 'function') ? getCurrentSeasonId() : null;
-  const backupSeasonId = (restored && restored.seasonMeta && restored.seasonMeta.seasonId) ? String(restored.seasonMeta.seasonId) : null;
-  const seasonMatches = (!!curSeasonId && !!backupSeasonId && curSeasonId === backupSeasonId);
-  if(restored && seasonMatches && restored.seasonRecordsByLocation && typeof restored.seasonRecordsByLocation === 'object'){
-    // Backups store season as points; convert to stored derived weights for in-app use.
-    seasonRecordsByLocation = canonicalizeRecordsByLocation(_seasonStoredWeightsFromPointsBackup(restored.seasonRecordsByLocation || {}));
-    try{ if(typeof saveSeasonRecords === 'function') saveSeasonRecords(seasonRecordsByLocation || {}); }catch(_){ }
-    try{ localStorage.setItem('fishmetrics_season_records_v1', JSON.stringify(seasonRecordsByLocation || {})); }catch(_){ }
+  // Restore unit preference only if explicitly provided (unified exports may omit it)
+  if(restored && (restored.weightUnit === 'lbs' || restored.weightUnit === 'kgs')){
+    weightUnit = restored.weightUnit;
+    try{ localStorage.setItem('weightUnit', weightUnit); }catch(_){ }
   }
-  const u = (restored.weightUnit === 'kgs') ? 'kgs' : 'lbs';
-  weightUnit = u;
-  try{ localStorage.setItem('weightUnit', weightUnit); }catch(_){ }
+
+  // Storage unit is always canonical lbs
   try{ localStorage.setItem('recordsUnit', 'lbs'); }catch(_){ }
-  try{ saveRecordsToStorage(); }catch(_){ }
 
-  // Restore Season-imported PB precision flags (if present). This is additive and safe for older backups.
-  // Only keep flags that still correspond to an actual 3dp stored PB in the restored all-time data.
-  try{
-    const pbIn = (restored && typeof restored.pbImportedFromSeasonFish === 'object') ? restored.pbImportedFromSeasonFish : null;
-    const out = {};
-    if(pbIn){
-      for(const fishName of Object.keys(pbIn || {})){
-        if(!pbIn[fishName]) continue;
-        let wStr = '';
-        try{
-          for(const loc of Object.keys(restoredCareer || {})){
-            const rec = (restoredCareer || {})[loc] || {};
-            const v = rec[fishName];
-            if(v != null && String(v).trim() !== ''){ wStr = String(v); break; }
-          }
-        }catch(_){ }
-        if(_hasThreeDp(wStr)) out[fishName] = true;
+  // Restore Season-imported PB precision flags (Main only). This is additive and safe for older backups.
+  // Only apply if the backup includes the map AND we restored Main all-time.
+  if(restoredMainCareer){
+    try{
+      const pbIn = (restored && typeof restored.pbImportedFromSeasonFish === 'object') ? restored.pbImportedFromSeasonFish : null;
+      const out = {};
+      if(pbIn){
+        for(const fishName of Object.keys(pbIn || {})){
+          if(!pbIn[fishName]) continue;
+          let wStr = '';
+          try{
+            for(const loc of Object.keys(restoredMainCareer || {})){
+              const rec = (restoredMainCareer || {})[loc] || {};
+              const v = rec[fishName];
+              if(v != null && String(v).trim() !== ''){ wStr = String(v); break; }
+            }
+          }catch(_){ }
+          if(_hasThreeDp(wStr)) out[fishName] = true;
+        }
       }
-    }
-    _savePbImportedMap(out);
-  }catch(_){ try{ _savePbImportedMap({}); }catch(__){} }
+      _savePbImportedMap(out);
+    }catch(_){ }
+  }
 
-  // Update unit toggle UI
-  try{
-    const lbsBtn = document.getElementById('unitLbs');
-    const kgsBtn = document.getElementById('unitKgs');
-    if(lbsBtn && kgsBtn){
-      lbsBtn.classList.toggle('active', weightUnit === 'lbs');
-      kgsBtn.classList.toggle('active', weightUnit === 'kgs');
-    }
-  }catch(_){ }
+  // Re-bind active caches to the current mode and refresh UI
+  syncActiveCachesToMode();
 
   try{ updateRecordsUnitLabel(); }catch(_){ }
   try{ renderTable(); }catch(_){ }
@@ -5410,11 +5891,28 @@ async function restoreFromFile(file){
         return;
       }
 
+
+      // Detect which sections are present in the backup (before any season gating).
+      const _sectionInfo = (obj)=>({
+        locs: obj && typeof obj === 'object' ? Object.keys(obj || {}).length : 0,
+        fish: obj && typeof obj === 'object' ? _countBackupUniqueCanonicalFish(obj || {}) : 0
+      });
+      const detected = {
+        mainAllTime: _sectionInfo(norm.mainAllTime),
+        mainSeason:  _sectionInfo(norm.mainSeason),
+        vipAllTime:  _sectionInfo(norm.vipAllTime),
+        vipSeason:   _sectionInfo(norm.vipSeason)
+      };
+      const hasDetected = {
+        mainAllTime: (detected.mainAllTime.locs || detected.mainAllTime.fish),
+        mainSeason:  (detected.mainSeason.locs  || detected.mainSeason.fish),
+        vipAllTime:  (detected.vipAllTime.locs  || detected.vipAllTime.fish),
+        vipSeason:   (detected.vipSeason.locs   || detected.vipSeason.fish)
+      };
       // Safety gate: only apply season data if the backup season matches the active season.
-      // If seasonMeta is missing or mismatched, we ignore seasonRecordsByLocation entirely.
+      // If seasonMeta is missing or mismatched, we ignore season payloads entirely (fail closed).
       let seasonMsg = '';
       let seasonApplied = false;
-      // If we skip season restore, keep a reason so we can show a clear message after restore.
       let seasonNotAppliedReason = '';
       let _curSeasonIdForMsg = '';
       let _backupSeasonIdForMsg = '';
@@ -5423,14 +5921,18 @@ async function restoreFromFile(file){
         const backupSeasonId = (norm && norm.seasonMeta && norm.seasonMeta.seasonId) ? String(norm.seasonMeta.seasonId) : null;
         _curSeasonIdForMsg = curSeasonId ? String(curSeasonId) : '';
         _backupSeasonIdForMsg = backupSeasonId ? String(backupSeasonId) : '';
-        const hasSeasonPayload = !!(norm && norm.seasonRecordsByLocation && typeof norm.seasonRecordsByLocation === 'object');
-        if(hasSeasonPayload){
-          if(curSeasonId && backupSeasonId && curSeasonId === backupSeasonId){
+        const hasAnySeasonPayload = !!(
+          (norm && norm.mainSeason && typeof norm.mainSeason === 'object') ||
+          (norm && norm.vipSeason  && typeof norm.vipSeason  === 'object')
+        );
+        if(hasAnySeasonPayload){
+          if(curSeasonId && backupSeasonId && String(curSeasonId) === String(backupSeasonId)){
             seasonMsg = `• Season data: ${backupSeasonId}<br>`;
             seasonApplied = true;
           }else{
-            // Ignore season restore (fail closed)
-            norm.seasonRecordsByLocation = null;
+            // Ignore all season sections
+            norm.mainSeason = null;
+            norm.vipSeason = null;
             seasonMsg = (backupSeasonId && curSeasonId)
               ? `• Season data: ${backupSeasonId} (not applied to current ${curSeasonId})<br>`
               : '• Season data: not applied<br>';
@@ -5441,35 +5943,53 @@ async function restoreFromFile(file){
         }
       }catch(_){ }
 
-      const locCount = Object.keys(norm.recordsByLocation || {}).length;
-      const recCount = _countBackupUniqueCanonicalFish(norm.recordsByLocation || {});
       const unit = (norm.weightUnit === 'kgs') ? 'kgs' : 'lbs';
       const when = norm.exportedAt ? new Date(norm.exportedAt).toLocaleString() : 'Unknown date';
+      // Sections detected (from the backup file)
+      const detectedLines = [];
+      if(hasDetected.mainAllTime) detectedLines.push(`• Main all-time: ${detected.mainAllTime.fish} fish / ${detected.mainAllTime.locs} locations<br>`);
+      if(hasDetected.mainSeason){
+        const note = seasonApplied ? '' : ' (not applied)';
+        detectedLines.push(`• Main season: ${detected.mainSeason.fish} fish / ${detected.mainSeason.locs} locations${note}<br>`);
+      }
+      if(hasDetected.vipAllTime)  detectedLines.push(`• VIP all-time: ${detected.vipAllTime.fish} fish / ${detected.vipAllTime.locs} locations<br>`);
+      if(hasDetected.vipSeason){
+        const note = seasonApplied ? '' : ' (not applied)';
+        detectedLines.push(`• VIP season: ${detected.vipSeason.fish} fish / ${detected.vipSeason.locs} locations${note}<br>`);
+      }
+      if(!detectedLines.length){
+        detectedLines.push('• No recognizable sections found<br>');
+      }
 
-      
-const confirmHtml =
-  `• ${recCount} fish<br>` +
-  `• ${locCount} locations<br>` +
-  `• Units: ${unit}<br>` +
-  `• Exported: ${when}<br>` +
-  `${seasonMsg}` +
-  `<br>` +
-  `Restoring will replace your current Fish Tank. Continue?`;
+      // Totals (all-time only)
+      const totalAllTimeFish = detected.mainAllTime.fish + detected.vipAllTime.fish;
+      const totalAllTimeLocs = detected.mainAllTime.locs + detected.vipAllTime.locs;
 
-const ok = await showRestoreConfirmModal(confirmHtml);
-if(!ok){
-  setBackupMsg('Restore cancelled.');
-  return;
-}
+      const confirmHtml =
+        `<b>Detected in backup:</b><br>` +
+        detectedLines.join('') +
+        `<br>` +
+        `<b>Summary:</b><br>` +
+        `• Total all-time: ${totalAllTimeFish} fish / ${totalAllTimeLocs} locations<br>` +
+        `• Units: ${unit}<br>` +
+        `• Exported: ${when}<br>` +
+        `${seasonMsg}` +
+        `<br>` +
+        `Restoring will replace only the sections present in the backup. Other sections will be preserved. Continue?`;
+
+
+      const ok = await showRestoreConfirmModal(confirmHtml);
+      if(!ok){
+        setBackupMsg('Restore cancelled.');
+        return;
+      }
 
       applyRestoredState(norm);
       if(seasonApplied){
         setBackupMsg('🎉 Fish Tank successfully restored (including Season data).');
-      }else if(parsed && parsed.seasonRecordsByLocation){
-        const bid = (parsed && parsed.seasonMeta && parsed.seasonMeta.seasonId) ? String(parsed.seasonMeta.seasonId) : 'an earlier season';
+      }else if((parsed && parsed.seasonRecordsByLocation) || (parsed && parsed?.main?.season) || (parsed && parsed?.vip?.season)){
+        const bid = (norm && norm.seasonMeta && norm.seasonMeta.seasonId) ? String(norm.seasonMeta.seasonId) : 'an earlier season';
         setBackupMsg(`🎉 Fish Tank successfully restored. Season data from ${bid} was not applied.`);
-        // Make this hard to miss: some users restore from the Share menu and may not be looking at the
-        // Instructions tab where the backup message lives.
         if(seasonNotAppliedReason){
           try{ alert(`Imported all-time data. ${seasonNotAppliedReason}`); }catch(_){ }
         }
@@ -5722,8 +6242,9 @@ let careerTargetPrimary = '3'; // \"3\"|\"4\"|\"5\"|\"oos1\"|\"oos3\"
 function _allFishFlatList(){
   const out = [];
   try{
-    for(const loc of Object.keys(LOCATIONS || {})){
-      for(const f of (LOCATIONS[loc] || [])){
+    const __locData = (typeof getLocationsData==='function' ? getLocationsData() : (LOCATIONS||{})) || {};
+    for(const loc of Object.keys(__locData)){
+      for(const f of (__locData[loc] || [])){
         if(!f || !f.name) continue;
         out.push({
           location: loc,
@@ -5742,7 +6263,7 @@ function _bestScoreForFishRecord(fish){
   // Returns { points, stars } for the user's all-time best record of this fish on this map.
   // If no record, returns { points: 0, stars: 0 }.
   try{
-    const raw = (recordsByLocation?.[fish.location]?.[fish.name] ?? "");
+    const raw = (recordsByLocation?.[fish.location]?.[canonicalizeFishName(fish.name)] ?? "");
     if(String(raw||"").trim()==="") return { points: 0, stars: 0 };
     const lbs = parseStoredWeightLbs(String(raw));
     if(Number.isNaN(lbs) || lbs <= 0) return { points: 0, stars: 0 };
@@ -5805,7 +6326,10 @@ function renderCareerTargets(){
     if(subLabelEl){
       const targetMode = String(careerTargetPrimary || '3');
     try{ _setCareerSecondarySortUI(targetMode); }catch(_){ }
-      subLabelEl.textContent = (targetMode==='oos1') ? 'In season now • OOS next month' : (targetMode==='oos3') ? 'In season now • OOS within 3 months' : 'All-time best stars • In-season this month';    }
+      const __isVip = (typeof isVipModeActive==='function') ? isVipModeActive() : false;
+      subLabelEl.textContent = (targetMode==='oos1') ? 'In season now • OOS next month' :
+        (targetMode==='oos3') ? 'In season now • OOS within 3 months' :
+        (__isVip ? 'All-time best stars' : 'All-time best stars • In-season this month');    }
     if(sortLabelEl) sortLabelEl.textContent = (careerTargetSortMode === "climb") ? "biggest climb" : "closest to target";
     _setCareerTargetButtonsActive();
         _setCareerSortButtonsActive();
@@ -5821,7 +6345,8 @@ const starGoal = (targetMode === '3' || targetMode === '4' || targetMode === '5'
 const isUrgency = (targetMode === 'oos1' || targetMode === 'oos3');
 
 for(const f of fishAll){
-  const inSeasonNow = isFishInSeason(f.name, now);
+  const __isVip = (typeof isVipModeActive==='function') ? isVipModeActive() : false;
+  const inSeasonNow = __isVip ? true : isFishInSeason(f.name, now);
   if(!inSeasonNow) continue;
 
   if(totalsInSeason[f.category] != null) totalsInSeason[f.category] += 1;
@@ -6193,7 +6718,7 @@ function _addMonths(date, months){
   };
 
   function getFishObj(loc, fishName){
-    const list = (LOCATIONS && LOCATIONS[loc]) ? LOCATIONS[loc] : [];
+    const list = (getLocationsData() && getLocationsData()[loc]) ? getLocationsData()[loc] : [];
     return list.find(f => String(f.name) === String(fishName)) || null;
   }
 
@@ -6332,6 +6857,7 @@ function _addMonths(date, months){
 
   // Refresh hook: recompute gaps/progress using latest stored records
   window.refreshFocusTab = function(){
+    try{ repopulateFocusLocations(); }catch(_){ }
     try{ renderGaps(); }catch(_){ }
   };
 
@@ -6367,7 +6893,7 @@ function _addMonths(date, months){
         // if we were previously at limit, refresh the hint based on current selection state
         if(locSel.value && catSel.value){
           const count = Math.max(0, (fishSel.options ? fishSel.options.length - 1 : 0));
-          setHint(`${count} matching In Season fish in ${locSel.value}. Now pick one.`);
+          setHint(`${count} matching ${((typeof isVipModeActive==='function' && isVipModeActive()) ? '' : 'In Season ')}fish in ${locSel.value}. Now pick one.`);
         }
       }
     }
@@ -6440,7 +6966,7 @@ function _addMonths(date, months){
   }
 
   function getCategoriesForLocation(loc){
-    const list = (LOCATIONS && LOCATIONS[loc]) ? LOCATIONS[loc] : [];
+    const list = (getLocationsData() && getLocationsData()[loc]) ? getLocationsData()[loc] : [];
     const cats = Array.from(new Set(list.map(f => f.category).filter(Boolean)));
     cats.sort((a,b)=>{
       const ra = (typeof CATEGORY_RANK === 'object' && CATEGORY_RANK) ? (CATEGORY_RANK[a] ?? 999) : 999;
@@ -6452,7 +6978,7 @@ function _addMonths(date, months){
   }
 
   function getFishForLocationAndCategory(loc, cat){
-    const list = (LOCATIONS && LOCATIONS[loc]) ? LOCATIONS[loc] : [];
+    const list = (getLocationsData() && getLocationsData()[loc]) ? getLocationsData()[loc] : [];
     // Exclude out-of-season fish for the *current* month/season
     const fish = list
       .filter(f => String(f.category) === String(cat))
@@ -6461,12 +6987,24 @@ function _addMonths(date, months){
     return fish;
   }
 
-  // Populate location options (use the same order as elsewhere)
-  resetSelect(locSel, 'Select…');
-  (typeof LOCATION_ORDER !== 'undefined' ? LOCATION_ORDER : Object.keys(LOCATIONS || {})).forEach((loc)=>{
-    if(!loc) return;
-    locSel.appendChild(opt(loc, loc));
-  });
+  function repopulateFocusLocations(){
+    if(!locSel) return;
+    const prev = locSel.value || "";
+    resetSelect(locSel, 'Select…');
+    const __isVip = (typeof isVipModeActive === 'function') ? isVipModeActive() : false;
+    const __order = __isVip
+      ? (typeof VIP_LOCATION_ORDER !== 'undefined' ? VIP_LOCATION_ORDER : Object.keys(LOCATIONS_VIP || {}))
+      : (typeof LOCATION_ORDER !== 'undefined' ? LOCATION_ORDER : Object.keys(LOCATIONS || {}));
+    __order.forEach((loc)=>{
+      if(!loc) return;
+      locSel.appendChild(opt(loc, loc));
+    });
+    // restore previous selection if still valid
+    if(prev && [...locSel.options].some(o=>o.value===prev)) locSel.value = prev;
+  }
+
+  // Populate location options (VIP mode should show VIP locations only)
+  repopulateFocusLocations();
 
   resetSelect(catSel, 'Select…');
   resetSelect(fishSel, 'Select…');
@@ -6515,7 +7053,7 @@ function _addMonths(date, months){
       fishSel.appendChild(opt(String(f.name), label));
     });
     fishSel.disabled = false;
-    setHint(`${fish.length} matching In Season fish in ${loc}. Now pick one.`);
+    setHint(`${fish.length} matching ${((typeof isVipModeActive==='function' && isVipModeActive()) ? '' : 'In Season ')}fish in ${loc}. Now pick one.`);
     updateAddState();
   });
 
@@ -6814,3 +7352,37 @@ try{
   document.addEventListener('DOMContentLoaded', bindFishSearchClearBtn);
   setTimeout(bindFishSearchClearBtn, 350);
 })();
+
+function alignHeaderIconsToTabs(){
+  try{
+    const homeBtn = document.getElementById('homeBtn');
+    const menuWrap = document.querySelector('.header-menu-wrap');
+    const tabLeft = document.getElementById('tabOverview');
+    const tabRight = document.getElementById('tabInstructions');
+    if(!homeBtn || !menuWrap || !tabLeft || !tabRight) return;
+
+    const leftRect = tabLeft.getBoundingClientRect();
+    const rightRect = tabRight.getBoundingClientRect();
+
+    // Only apply when the tabs row is visible (desktop/tablet layouts)
+    if(leftRect.width === 0 || rightRect.width === 0) return;
+
+    // Align home with left edge of Dashboard pill, share with right edge of Instructions pill
+    document.documentElement.style.setProperty('--hdr-left', Math.round(leftRect.left) + 'px');
+    document.documentElement.style.setProperty('--hdr-right', Math.max(0, Math.round(window.innerWidth - rightRect.right)) + 'px');
+  }catch(_){}
+}
+
+
+
+
+// Header icon alignment to top tabs (keeps Home/Share tethered to Dashboard/Instructions pills)
+try{
+  window.addEventListener('resize', ()=>{ alignHeaderIconsToTabs(); });
+}catch(_){}
+
+
+try{
+  setTimeout(()=>{ alignHeaderIconsToTabs(); }, 0);
+  setTimeout(()=>{ alignHeaderIconsToTabs(); }, 200);
+}catch(_){}
