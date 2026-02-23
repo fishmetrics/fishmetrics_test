@@ -140,11 +140,39 @@
   </label>
 </div>
 
+<section id="companionPanel" class="panel companion-panel">
+  <div id="companionHeader" class="panel-title companion-header">
+    Fishing Guide <span id="companionChevron" class="chevron">▾</span>
+    <button id="companionReset" class="companion-reset" aria-label="Reset position">↺</button>
+    <button id="companionDismiss" class="companion-dismiss" aria-label="Dismiss">✕</button>
+  </div>
+  <div id="companionBody" class="companion-body">
+    <div id="companionWelcome" class="companion-welcome hidden">
+      <div class="welcome-title">Welcome to a great day of fishing.</div>
+      <div class="welcome-sub">Log a few catches to unlock:</div>
+      <ul class="welcome-list">
+        <li>Best point opportunities</li>
+        <li>Near milestone upgrades</li>
+        <li>Seasonal advantages</li>
+        <li>Hidden gains</li>
+      </ul>
+    </div>
+    <div id="companionRows" class="companion-rows">
+      <div class="companion-row"><span class="label">Best Point Opportunity</span><span class="value">—</span></div>
+      <div class="companion-row"><span class="label">Immediate Gains Available</span><span class="value">—</span></div>
+      <div class="companion-row"><span class="label">Seasonal Advantage</span><span class="value">—</span></div>
+      <div class="companion-row"><span class="label">Unclaimed Points</span><span class="value">—</span></div>
+    </div>
+  </div>
+</section>
+
 <section aria-label="Summary" class="kpis">
 <div class="kpi">
 <div class="kpi-label">Average Star Rating</div>
 <div class="kpi-stars" id="avgStars">—</div>
 </div>
+
+
 <div class="kpi">
 <div class="kpi-label">Total Points</div>
 <div class="kpi-value" id="totalPoints">0</div>
@@ -628,6 +656,11 @@ Not affiliated with any company or organization of a similar name.</div>
       </div>
     </div>
   </div>
+
+
+<div id="companionRestore" style="display:none;" class="companion-restore-fixed" aria-live="polite">
+  Fishing Guide <span id="restoreGuide" class="restore-link">↺ Restore</span>
+</div>
 
 </body>
 </html>

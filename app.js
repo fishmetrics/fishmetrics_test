@@ -618,6 +618,7 @@ function setupShareButton(){
         console.error('Share failed', err);
         alert('Could not generate share image.');
       }
+      try{ clampGuidePanelIntoView(panel); }catch(_){}
       return;
     }
     const open = dropdown.classList.toggle('open');
@@ -5985,6 +5986,33 @@ async function restoreFromFile(file){
       }
 
       applyRestoredState(norm);
+      try{ showRestoreConfirmation(); }catch(_){}
+      // Small pause so user perceives restore + toast, then jump to Dashboard and scroll to top.
+      try{
+        const btn = document.querySelector('.top-tabs .tab-btn[data-view="dashboardView"]');
+        if(btn){
+          setTimeout(()=>{
+            try{ btn.click(); }catch(_){ }
+            try{ setTimeout(()=>{ try{ anchorToStarsRarity(); }catch(_){ } }, 120); }catch(_){ }
+            // Dashboard render can be async; force scroll-to-top a few times during first paint.
+            try{
+              const forceTop = ()=>{
+                try{ window.scrollTo(0,0); }catch(_){}
+                try{ document.documentElement.scrollTop = 0; }catch(_){}
+                try{ document.body.scrollTop = 0; }catch(_){}
+                try{
+                  const scrollers = document.querySelectorAll('.content, .main-content, .app, .app-container, .panel, .tab-view, .tab-content');
+                  scrollers.forEach(el=>{ try{ el.scrollTop = 0; }catch(_){ } });
+                }catch(_){}
+              };
+              forceTop();
+              let n=0;
+              const t = setInterval(()=>{ forceTop(); if(++n>=10) clearInterval(t); }, 60);
+            }catch(_){}
+          }, 1200);
+        }
+      }catch(_){}
+
       if(seasonApplied){
         setBackupMsg('🎉 Fish Tank successfully restored (including Season data).');
       }else if((parsed && parsed.seasonRecordsByLocation) || (parsed && parsed?.main?.season) || (parsed && parsed?.vip?.season)){
@@ -6064,6 +6092,15 @@ function showClearConfirmation() {
   document.body.appendChild(msg);
   setTimeout(() => msg.remove(), 2000);
 }
+
+function showRestoreConfirmation() {
+  const msg = document.createElement('div');
+  msg.textContent = 'Backup restored';
+  msg.className = 'privacy-clear-confirmation fm-restore-confirmation';
+  document.body.appendChild(msg);
+  setTimeout(() => msg.remove(), 2000);
+}
+
 
 function showClearDataConfirm() {
   return new Promise((resolve) => {
@@ -7386,3 +7423,857 @@ try{
   setTimeout(()=>{ alignHeaderIconsToTabs(); }, 0);
   setTimeout(()=>{ alignHeaderIconsToTabs(); }, 200);
 }catch(_){}
+
+
+
+
+
+
+
+/* Companion Panel Logic (collapsible + dismissible + draggable) */
+(function(){
+  const panel = document.getElementById('companionPanel');
+  if (!panel) return;
+
+  const header = document.getElementById('companionHeader');
+  const body = document.getElementById('companionBody');
+  const rows = document.getElementById('companionRows');
+  const welcome = document.getElementById('companionWelcome');
+  const chevron = document.getElementById('companionChevron');
+  const dismiss = document.getElementById('companionDismiss');
+  const resetBtn = document.getElementById('companionReset');
+
+  const dismissed = localStorage.getItem('fm_companion_dismissed') === '1';
+  const collapsed = localStorage.getItem('fm_companion_collapsed') === '1';
+
+  if (dismissed) {
+    panel.style.display = 'none';
+    return;
+  }
+
+  function applyCollapsed(state){
+    if (state) {
+      body.style.display = 'none';
+      chevron.textContent = '▸';
+    } else {
+      body.style.display = '';
+      chevron.textContent = '▾';
+    }
+  }
+
+  function hasAnyData(){
+    let blob = {};
+    try { blob = JSON.parse(localStorage.getItem('fishmetrics_season_records_v1') || "{}"); } catch { blob = {}; }
+    if (!blob || typeof blob !== 'object') return false;
+    const stack = [blob];
+    while (stack.length){
+      const v = stack.pop();
+      if (Array.isArray(v)){
+        if (v.length) return true;
+      } else if (v && typeof v === 'object'){
+        const keys = Object.keys(v);
+        if (keys.length) {
+          for (const k of keys) stack.push(v[k]);
+        }
+      }
+    }
+    return false;
+  }
+
+  function applyEmptyState(){
+    const empty = !hasAnyData();
+    if (welcome) welcome.classList.toggle('hidden', !empty);
+    if (rows) rows.classList.toggle('hidden', empty);
+  }
+
+  function loadPos(){
+    try { return JSON.parse(localStorage.getItem('fm_companion_pos') || "null"); } catch { return null; }
+  }
+  function savePos(pos){
+    localStorage.setItem('fm_companion_pos', JSON.stringify(pos));
+  }
+  function clearPos(){
+    localStorage.removeItem('fm_companion_pos');
+  }
+  function applyPos(pos){
+    if (!pos) return;
+    panel.style.left = pos.left + 'px';
+    panel.style.top = pos.top + 'px';
+    panel.style.right = 'auto';
+  }
+
+  applyEmptyState();
+  applyCollapsed(collapsed);
+  applyPos(loadPos());
+
+  function clampPanelIntoView(){
+    try{
+      const panel = document.getElementById('companionPanel');
+      if(!panel) return;
+      const rect = panel.getBoundingClientRect();
+      const pad = 10;
+
+      let dx = 0, dy = 0;
+      if(rect.right > window.innerWidth - pad) dx = (window.innerWidth - pad) - rect.right;
+      if(rect.left < pad) dx = pad - rect.left;
+      if(rect.bottom > window.innerHeight - pad) dy = (window.innerHeight - pad) - rect.bottom;
+      if(rect.top < pad) dy = pad - rect.top;
+
+      // Only adjust via transform to avoid re-anchoring (prevents "jump" after import).
+      if(dx || dy){
+        panel.style.transform = `translate(${dx}px, ${dy}px)`;
+      } else {
+        panel.style.transform = 'translate(0px, 0px)';
+      }
+    }catch(_){
+    }
+  }
+
+  setTimeout(clampPanelIntoView, 0);
+  window.addEventListener('resize', clampPanelIntoView);
+
+  // Default placement: if user hasn't dragged it yet, anchor above the "Total Stars / Rarity" chart.
+  
+  function anchorToStarsRarity(){
+
+        // Only meaningful when fixed (desktop)
+    const cs = window.getComputedStyle(panel);
+    if (cs.position !== 'fixed') return;
+
+    const titles = Array.from(document.querySelectorAll('.panel-title'));
+    const targetTitle = titles.find(t => (t.textContent || '').trim() === 'Total Stars / Rarity');
+    if (!targetTitle) return;
+
+    // Try to position panel above the chart container that owns this title.
+    const chartPanel = targetTitle.closest('.panel') || targetTitle.parentElement;
+    if (!chartPanel) return;
+
+    const rect = chartPanel.getBoundingClientRect();
+
+    // Ensure panel has a measurable size
+    panel.style.transform = 'translate(0px, 0px)';
+    panel.style.right = 'auto';
+    panel.style.left = '0px';
+    panel.style.top = '0px';
+    const w = panel.offsetWidth || 300;
+    const h = panel.offsetHeight || 200;
+
+    let left = rect.right - w;
+    let top  = rect.top; // align with top of Total Stars / Rarity chart
+
+    // If panel would go offscreen (very small view), clamp later; no special 'above' behavior.
+
+    // Clamp
+    const pad = 8;
+    left = Math.max(pad, Math.min(left, window.innerWidth - w - pad));
+    top  = Math.max(pad, Math.min(top, window.innerHeight - h - pad));
+
+    panel.style.left = left + 'px';
+    panel.style.top = top + 'px';
+    panel.style.right = 'auto';
+  
+  }
+  // Anchor once on load, and also whenever Dashboard becomes active.
+  anchorToStarsRarity();
+  try{
+    const dashBtn = document.querySelector('.top-tabs .tab-btn[data-view="dashboardView"]');
+    if(dashBtn){ dashBtn.addEventListener('click', ()=>{ setTimeout(anchorToStarsRarity, 50); }); }
+  }catch(_){ }
+
+
+  // Drag handling with threshold to prevent accidental collapse toggle.
+  let isPointerDown = false;
+  let isDragging = false;
+  let justDragged = false;
+  let start = null;
+  const DRAG_THRESHOLD = 5;
+
+  header.addEventListener('mousedown', (e) => {
+    if (e.target === dismiss || e.target === resetBtn) return;
+
+    isPointerDown = true;
+    isDragging = false;
+    justDragged = false;
+
+    const rect = panel.getBoundingClientRect();
+    start = {
+      mouseX: e.clientX,
+      mouseY: e.clientY,
+      rect,
+    };
+
+    // Ensure left/top mode while interacting
+    panel.style.right = 'auto';
+    panel.style.left = rect.left + 'px';
+    panel.style.top = rect.top + 'px';
+
+    e.preventDefault();
+  });
+
+  window.addEventListener('mousemove', (e) => {
+    if (!isPointerDown || !start) return;
+
+    const dx = e.clientX - start.mouseX;
+    const dy = e.clientY - start.mouseY;
+
+    if (!isDragging && (Math.abs(dx) > DRAG_THRESHOLD || Math.abs(dy) > DRAG_THRESHOLD)) {
+      isDragging = true;
+    }
+    if (!isDragging) return;
+
+    let left = start.rect.left + dx;
+    let top  = start.rect.top + dy;
+
+    const pad = 8;
+    const w = panel.offsetWidth || 300;
+    const h = panel.offsetHeight || 200;
+    left = Math.max(pad, Math.min(left, window.innerWidth - w - pad));
+    top  = Math.max(pad, Math.min(top, window.innerHeight - h - pad));
+
+    panel.style.left = left + 'px';
+    panel.style.top = top + 'px';
+
+    savePos({left, top});
+  });
+
+  window.addEventListener('mouseup', () => {
+    if (!isPointerDown) return;
+
+    // If we actually dragged, suppress the next click toggle.
+    if (isDragging) {
+      justDragged = true;
+      setTimeout(() => { justDragged = false; }, 250);
+    }
+
+    isPointerDown = false;
+    isDragging = false;
+    start = null;
+  });
+
+  header.addEventListener('click', (e) => {
+    if (e.target === dismiss || e.target === resetBtn) return;
+    if (justDragged) return;
+
+    const isCollapsed = body.style.display === 'none';
+    localStorage.setItem('fm_companion_collapsed', isCollapsed ? '0' : '1');
+    applyCollapsed(!isCollapsed);
+  });
+
+  dismiss.addEventListener('click', (e) => {
+    e.stopPropagation();
+    localStorage.setItem('fm_companion_dismissed', '1');
+    panel.style.display = 'none';
+  });
+
+  if (resetBtn){
+    resetBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      clearPos();
+      panel.style.left = '';
+      panel.style.top = '';
+      panel.style.right = '22px';
+    });
+  }
+
+  // Re-check after restore/import flows that may run post-load.
+  setTimeout(applyEmptyState, 500);
+})();
+
+
+
+
+
+/* Restore logic for Fishing Guide (robust overlay) */
+(function(){
+  function init(){
+    const panel = document.getElementById('companionPanel');
+    const restoreBox = document.getElementById('companionRestore');
+    const restoreLink = document.getElementById('restoreGuide');
+    const dismissBtn = document.getElementById('companionDismiss');
+    if (!panel || !restoreBox || !restoreLink) return;
+
+    function sync(){
+      const dismissed = localStorage.getItem('fm_companion_dismissed') === '1';
+      if (dismissed){
+        panel.style.display = 'none';
+        restoreBox.style.display = 'block';
+      } else {
+        restoreBox.style.display = 'none';
+      }
+    }
+
+    // Initial sync (after other UI code runs)
+    sync();
+    setTimeout(sync, 300);
+
+    // Make restore appear immediately after dismiss (no reload needed)
+    if (dismissBtn){
+      dismissBtn.addEventListener('click', () => { setTimeout(sync, 0); });
+    }
+    window.addEventListener('storage', sync);
+
+    restoreLink.addEventListener('click', () => {
+      localStorage.removeItem('fm_companion_dismissed');
+      panel.style.display = '';
+      restoreBox.style.display = 'none';
+    });
+
+    // In case other view toggles re-render, re-sync occasionally (lightweight)
+    window.addEventListener('focus', sync);
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+})();
+
+
+/* Fishing Guide Opportunity Logic */
+(function(){
+  function norm(name){ return String(name||'').trim().toLowerCase().replace(/\s+/g,' '); }
+  function normCat(cat){
+    const c = String(cat||'').toLowerCase();
+    if(c.includes('legend')) return 'Legendary';
+    if(c.includes('epic')) return 'Epic';
+    if(c.includes('rare')) return 'Rare';
+    return 'Common';
+  }
+
+  // Build fish lookup (canonical name -> {category,min,max,location})
+  const __fmFishIndexCache = { key:null, idx:{} };
+  function __fmGetFishIndex(){
+    try{
+      const modeKey = (typeof isVipModeActive === 'function' && isVipModeActive()) ? 'vip' : 'main';
+      if (__fmFishIndexCache.key === modeKey && __fmFishIndexCache.idx && Object.keys(__fmFishIndexCache.idx).length) return __fmFishIndexCache.idx;
+
+      const locationsObj = (typeof getLocations === 'function') ? getLocations() : (modeKey === 'vip' ? (typeof LOCATIONS_VIP !== 'undefined' ? LOCATIONS_VIP : {}) : (typeof LOCATIONS !== 'undefined' ? LOCATIONS : {}));
+      const idx = {};
+      Object.keys(locationsObj || {}).forEach(loc=>{
+        (locationsObj[loc] || []).forEach(f=>{
+          const key = norm(f.name);
+          if(!idx[key]) idx[key] = { ...f, location: loc };
+        });
+      });
+
+      __fmFishIndexCache.key = modeKey;
+      __fmFishIndexCache.idx = idx;
+      return idx;
+    }catch(_){
+      return __fmFishIndexCache.idx || {};
+    }
+  }
+
+
+  function toTitle(s){
+    try{ return (typeof toTitleCase === 'function') ? toTitleCase(s) : String(s||''); }catch(_){ return String(s||''); }
+  }
+
+  function getStoredRecords(){
+    // IMPORTANT: In Season dashboards, only use the SEASON dataset (not all-time).
+    // In All-time dashboards, use the all-time dataset.
+    try{
+      const seasonOn = (typeof isSeasonMode === 'function') ? !!isSeasonMode() : document.body.classList.contains('season-active');
+      const base = seasonOn ? (seasonRecordsByLocation || {}) : (recordsByLocation || {});
+      return base || {};
+    }catch(_){}
+    return {};
+  }
+
+  function getFishMeta(fishName){
+    const key = norm(fishName);
+    const idx = __fmGetFishIndex();
+    return idx[key] || null;
+  }
+
+  function fishPointsFromWeight(w, meta){
+    try{
+      if(typeof calculatePoints !== 'function') return 0;
+      const m = meta ? ({...meta, category: normCat(meta.category)}) : meta;
+      return calculatePoints(Number(w), m);
+    }catch(_){ return 0; }
+  }
+
+  function fishMaxPoints(meta){
+    try{
+      if(typeof calculatePoints !== 'function') return 0;
+      const m = meta ? ({...meta, category: normCat(meta.category)}) : meta;
+      return calculatePoints(Number(m.max), m);
+    }catch(_){ return 0; }
+  }
+
+  function nextStarTarget(cat, pts){
+    // Robust: prefer FM helper, but fall back to scanning target arrays if helper fails/mismatched category.
+    let next = 0;
+    try{
+      if(typeof nextTargetPoints === 'function') next = Number(nextTargetPoints(cat, pts)) || 0;
+    }catch(_){}
+    if(next && next > pts) return next;
+
+    const pools = [];
+    try{ if(typeof TARGETS !== 'undefined') pools.push(TARGETS); }catch(_){}
+    try{ if(typeof STAR_TARGETS !== 'undefined') pools.push(STAR_TARGETS); }catch(_){}
+    for(const pool of pools){
+      try{
+        const arr = pool && pool[cat];
+        if(!Array.isArray(arr)) continue;
+        const sorted = arr.map(Number).filter(n=>Number.isFinite(n)).sort((a,b)=>a-b);
+        for(const t of sorted){
+          if(t > pts) return t;
+        }
+      }catch(_){}
+    }
+    /* FINAL_FALLBACK */
+    try{
+      if(typeof STAR_MIN !== 'undefined' && STAR_MIN[cat]){
+        const arr = STAR_MIN[cat].map(Number).filter(n=>Number.isFinite(n) && n>0).sort((a,b)=>a-b);
+        for(const t of arr){
+          if(t > pts) return t;
+        }
+      }
+    }catch(_){}
+    return 0;
+  }
+
+  function rarityBonus(cat){
+    const c = normCat(cat);
+    if(c === 'Legendary') return 30;
+    if(c === 'Epic') return 18;
+    if(c === 'Rare') return 8;
+    return 0;
+  }
+
+  function isCatchable(meta, key){
+    try{
+      const n = (meta && meta.name) ? meta.name : key;
+      return (typeof isFishInSeason === 'function') ? !!isFishInSeason(n) : true;
+    }catch(_){ return true; }
+  }
+
+  function isInSeasonFish(name){
+    try{ return (typeof isFishInSeason === 'function') ? !!isFishInSeason(name) : true; }catch(_){ return true; }
+  }
+
+  function isSeasonModeActive(){
+    try{ return (typeof isSeasonMode === 'function') ? !!isSeasonMode() : document.body.classList.contains('season-active'); }catch(_){ return document.body.classList.contains('season-active'); }
+  }
+
+  
+  function clampPanelIntoViewAfterGuide(){
+    try{
+      const panel = document.getElementById('companionPanel');
+      if(!panel) return;
+      const rect = panel.getBoundingClientRect();
+      const pad = 10;
+
+      let dx = 0, dy = 0;
+      if(rect.right > window.innerWidth - pad) dx = (window.innerWidth - pad) - rect.right;
+      if(rect.left < pad) dx = pad - rect.left;
+      if(rect.bottom > window.innerHeight - pad) dy = (window.innerHeight - pad) - rect.bottom;
+      if(rect.top < pad) dy = pad - rect.top;
+
+      // Only adjust via transform to avoid re-anchoring (prevents "jump" after import).
+      if(dx || dy){
+        panel.style.transform = `translate(${dx}px, ${dy}px)`;
+      } else {
+        panel.style.transform = 'translate(0px, 0px)';
+      }
+    }catch(_){
+    }
+  }
+
+  function setRow(i, label, value){
+    const rows = document.querySelectorAll('#companionRows .companion-row');
+    if(!rows || !rows[i]) return;
+    const l = rows[i].querySelector('.label');
+    const v = rows[i].querySelector('.value');
+    if(l) l.textContent = label;
+    if(v) v.textContent = value;
+  }
+
+  function setBestOpportunity(name, upgradePts){
+    setRow(0, 'High Value Target', `${toTitle(name)} → Next upgrade +${upgradePts} pts`);
+  }
+
+  function setNearTerm(name, dist){
+    setRow(1, 'Closest Upgrade', `${toTitle(name)} → Nearest to next star (needs ${dist} pts`);
+  }
+
+  function setSeasonal(count){
+    setRow(2, 'Worth Catching This Season', `${count} rare fish active`);
+  }
+
+  function setUnclaimed(fishName, pts){
+    if(fishName){
+      setRow(3, 'Missing Fish', `${toTitle(fishName)} → +${pts} pts`);
+    } else {
+      setRow(3, 'Missing Fish', 'No fish uncaught. Bestiary 100%');
+    }
+  }
+
+  function clampGuidePanelIntoView(panel){
+    try{
+      const rect = panel.getBoundingClientRect();
+      const pad = 16;
+      let dx = 0, dy = 0;
+      if(rect.right > window.innerWidth - pad) dx = (window.innerWidth - pad) - rect.right;
+      if(rect.left < pad) dx = pad - rect.left;
+      if(rect.bottom > window.innerHeight - pad) dy = (window.innerHeight - pad) - rect.bottom;
+      if(rect.top < pad) dy = pad - rect.top;
+      if(dx || dy){
+        const left = (panel.style.left ? parseFloat(panel.style.left) : rect.left) || rect.left;
+        const top  = (panel.style.top ? parseFloat(panel.style.top) : rect.top) || rect.top;
+        panel.style.left = (left + dx) + 'px';
+        panel.style.top  = (top + dy) + 'px';
+        panel.style.right = 'auto';
+      }
+    }catch(_){}
+  }
+
+  function updateFishingGuide(){
+    const panel = document.getElementById('companionPanel');
+    if(!panel) return;
+
+    // If dismissed, nothing to update.
+    try{
+      if(localStorage.getItem('fm_companion_dismissed') === '1') return;
+    }catch(_){}
+
+    const records = getStoredRecords();
+
+    // Location order map for deterministic tie-breaks
+    const __fmLocOrderMap = (function(){
+      const map = {};
+      try{
+        const order = (typeof getLocationOrder === 'function') ? getLocationOrder() : [];
+        (order||[]).forEach((loc,i)=>{ map[loc]=i; });
+      }catch(_){ }
+      return map;
+    })();
+    const isSeason = isSeasonModeActive();
+
+    // Flatten current recorded fish (weight-based). records: {loc:{fishKey: weightStr}}
+    const caught = new Map(); // fishKey -> bestWeight
+    Object.keys(records || {}).forEach(loc=>{
+      const m = records[loc] || {};
+      Object.keys(m).forEach(fishKey=>{
+        const w = Number(m[fishKey]);
+        if(!w) return;
+        const k = norm(fishKey);
+        const prev = caught.get(k);
+        if(!prev || w > prev) caught.set(k, w);
+      });
+    });
+
+    const caughtKeys = Array.from(caught.keys());
+    const anyData = caughtKeys.length > 0;
+
+    // Toggle empty/welcome already handled elsewhere, but keep rows sensible.
+    if(!anyData){
+      setRow(0,'High Value Target','—');
+      setRow(1,'Closest Upgrade','—');
+      setRow(2,'Worth Catching This Season','—');
+      setRow(3,'Missing Fish','—');
+      return;
+    }
+
+    // Candidates
+    const candidates = [];
+    caughtKeys.forEach(key=>{
+      const meta = getFishMeta(key);
+      if(!meta) return;
+      if(!isCatchable(meta, key)) return;
+
+      // Respect OOS toggle used in dashboard, if present.
+      try{
+        if(typeof includeOOSSeasonDashboard !== 'undefined' && !includeOOSSeasonDashboard){
+          if(!isInSeasonFish(meta.name || key)) return;
+        }
+      }catch(_){}
+
+      // Respect legendary toggle if present.
+      try{
+        if(typeof includeLegendaryDashboard !== 'undefined' && !includeLegendaryDashboard){
+          if(meta.category === 'Legendary') return;
+        }
+      }catch(_){}
+
+      const w = caught.get(key);
+      const pts = fishPointsFromWeight(w, meta);
+      const maxPts = fishMaxPoints(meta) * (typeof SOFT_CAP_RATIO !== 'undefined' ? SOFT_CAP_RATIO : 1);
+      const gain = Math.max(0, maxPts - pts);
+
+      const next = nextStarTarget(normCat(meta.category), pts);
+      const dist = Math.max(0, (Number(next)||0) - pts);
+      const upgradeGain = dist; // points gained/needed at next upgrade step
+
+      // Star proximity boost (C) only when reasonably near
+      const PROX_ZONE = 60;
+      const proxBoost = (dist > 0 && dist <= PROX_ZONE) ? (PROX_ZONE - dist) : 0;
+
+      // Main score: gain + proxBoost + rarity bonus
+      const score = proxBoost + rarityBonus(meta.category) + Math.min(gain, 200);
+
+      candidates.push({ key, meta, pts, maxPts, gain, dist, upgradeGain, score });
+    });
+
+    if(!candidates.length){
+      // Fallback: attempt uncaught-based suggestion (important for VIP / sparse modes)
+      try{
+        const anyFish = Object.keys(__fmGetFishIndex() || {});
+        if(anyFish.length){
+          const k = anyFish[0];
+          setRow(0,'High Value Target', toTitle(k));
+        }
+      }catch(_){}
+
+      // If filters removed everything, fallback to showing something neutral.
+      setRow(0,'High Value Target','—');
+      setRow(1,'Closest Upgrade','—');
+      setRow(2,'Worth Catching This Season','—');
+      setRow(3,'Missing Fish','—');
+      return;
+    }
+
+    // High Value Target: highest rarity caught fish; within that tier, closest upgrade; then A→Z.
+    (function(){
+      const rank = (cat)=>{
+        const c = normCat(cat);
+        if(c === 'Legendary') return 3;
+        if(c === 'Epic') return 2;
+        if(c === 'Rare') return 1;
+        return 0;
+      };
+
+      const pool0 = candidates.filter(c=>Number(c.dist||0) > 0);
+      const pool = pool0.length ? pool0 : candidates.slice();
+
+      pool.sort((a,b)=>{
+        const ra = rank(a.meta && a.meta.category);
+        const rb = rank(b.meta && b.meta.category);
+        if(rb !== ra) return rb - ra;   // highest rarity first
+        const da = Number(a.dist||0);
+        const db = Number(b.dist||0);
+        if(da !== db) return da - db;   // closest upgrade first
+        return String(a.key).localeCompare(String(b.key)); // stable
+      });
+
+      const best = pool[0];
+      if(!best){
+        setRow(0,'High Value Target','—');
+        return;
+      }
+
+      const d = Number(best.dist||0);
+      if(d > 0){
+        setRow(0,'High Value Target', `${toTitle(best.key)} → Nearest to next star (needs ${d} pts`);
+      } else {
+        setRow(0,'High Value Target', `${toTitle(best.key)} → Nearest to next star`);
+      }
+    })();
+
+// Easy Catch:
+    // If ANY fish uncaught (in-season), pick an uncaught fish from the easiest tier (Common→Rare→Epic→Legendary).
+    // Tie-break: lower-level map first, then A→Z.
+    // If NO fish uncaught (Bestiary 100% for this dataset), pick an easy upgrade target:
+    // start at Common and find the caught fish with the LOWEST current points that is still below effective max (SOFT_CAP_RATIO).
+    // If all fish in tier are maxed, move up to Rare→Epic→Legendary.
+    (function(){
+      const idx = __fmGetFishIndex();
+
+      // Location order map for tie-breaks (lower-level map first)
+      const locOrder = {};
+      try{
+        const locationsObj = (typeof getLocations === 'function') ? getLocations() :
+          ((typeof isVipModeActive === 'function' && isVipModeActive()) ? (typeof LOCATIONS_VIP !== 'undefined' ? LOCATIONS_VIP : {}) : (typeof LOCATIONS !== 'undefined' ? LOCATIONS : {}));
+        Object.keys(locationsObj || {}).forEach((loc,i)=>{ locOrder[loc]=i; });
+      }catch(_){}
+
+      const tiers = ['Common','Rare','Epic','Legendary'];
+      const effRatio = (typeof SOFT_CAP_RATIO !== 'undefined' ? SOFT_CAP_RATIO : 0.945);
+
+      // Phase 1: any uncaught fish?
+      const uncaughtByTier = { Common:[], Rare:[], Epic:[], Legendary:[] };
+      Object.keys(idx || {}).forEach(k=>{
+        const meta = idx[k];
+        if(!meta) return;
+        if(!isCatchable(meta, k)) return;
+
+        try{
+          if(typeof includeLegendaryDashboard !== 'undefined' && !includeLegendaryDashboard){
+            if(normCat(meta.category) === 'Legendary') return;
+          }
+        }catch(_){}
+
+        if(caught.has(k)) return;
+        const t = normCat(meta.category);
+        if(!(t in uncaughtByTier)) return;
+
+        const loc = meta.location || '';
+        const lr = (loc in locOrder) ? locOrder[loc] : 9999;
+        uncaughtByTier[t].push({k, lr});
+      });
+
+      const anyUncaught = tiers.some(t => (uncaughtByTier[t] || []).length > 0);
+
+      if(anyUncaught){
+        for(const t of tiers){
+          const list = uncaughtByTier[t];
+          if(!list || !list.length) continue;
+          list.sort((a,b)=> (a.lr - b.lr) || String(a.k).localeCompare(String(b.k)));
+          const pick = list[0];
+          setRow(1,'Easy Catch', `${toTitle(pick.k)} → Not yet caught`);
+          return;
+        }
+      }
+
+      // Phase 2: bestiary 100% -> easy upgrade
+      for(const t of tiers){
+        const pool = [];
+        caughtKeys.forEach(k=>{
+          const meta = getFishMeta(k);
+          if(!meta) return;
+          if(!isCatchable(meta, k)) return;
+          if(normCat(meta.category) !== t) return;
+
+          const w = caught.get(k);
+          const pts = w ? fishPointsFromWeight(w, meta) : 0;
+          const effMax = fishMaxPoints(meta) * effRatio;
+
+          const gap = effMax - pts;
+          if(!(gap > 0)) return;
+
+          const loc = meta.location || '';
+          const lr = (loc in locOrder) ? locOrder[loc] : 9999;
+          pool.push({k, pts, lr});
+        });
+
+        if(!pool.length) continue;
+
+        pool.sort((a,b)=> (a.pts - b.pts) || (a.lr - b.lr) || String(a.k).localeCompare(String(b.k)));
+        const pick = pool[0];
+        setRow(1,'Easy Catch', `${toTitle(pick.k)} → Easy upgrade`);
+        return;
+      }
+
+      setRow(1,'Easy Catch', 'No easy catches right now');
+    })();
+
+// Seasonal advantage: rare+ fish in season and uncaught
+    // Build uncaught list from catalog
+    const uncaughtRareActive = [];
+    try{
+      Object.keys(__fmGetFishIndex()).forEach(k=>{
+        if(caught.has(k)) return;
+        const meta = __fmGetFishIndex()[k];
+        if(!meta) return;
+        if(!isCatchable(meta, k)) return;
+        if(meta.category === 'Common') return;
+        try{
+          if(typeof includeLegendaryDashboard !== 'undefined' && !includeLegendaryDashboard){
+            if(meta.category === 'Legendary') return;
+          }
+        }catch(_){}
+        if(!isInSeasonFish(meta.name || k)) return;
+        uncaughtRareActive.push(k);
+      });
+    }catch(_){}
+    if(!isSeason){
+      setRow(2,'Seasonal Targets','Switch to Season view');
+    } else {
+      setSeasonal(uncaughtRareActive.length);
+    }
+
+    // Unclaimed points: top 3 uncaught by max points (filtered by season if dashboard excludes OOS)
+    const uncaught = [];
+    try{
+      Object.keys(__fmGetFishIndex()).forEach(k=>{
+        if(caught.has(k)) return;
+        const meta = __fmGetFishIndex()[k];
+        if(!meta) return;
+        if(!isCatchable(meta, k)) return;
+
+        try{
+          if(typeof includeOOSSeasonDashboard !== 'undefined' && !includeOOSSeasonDashboard){
+            if(!isInSeasonFish(meta.name || k)) return;
+          }
+        }catch(_){}
+
+        try{
+          if(typeof includeLegendaryDashboard !== 'undefined' && !includeLegendaryDashboard){
+            if(meta.category === 'Legendary') return;
+          }
+        }catch(_){}
+
+        const maxPts = fishMaxPoints(meta) * (typeof SOFT_CAP_RATIO !== 'undefined' ? SOFT_CAP_RATIO : 1);
+        if(maxPts <= 0) return;
+        uncaught.push({k, maxPts});
+      });
+    }catch(_){}
+    uncaught.sort((a,b)=>{
+      const ra = (function(){ const c=normCat((__fmGetFishIndex()[a.k]||{}).category); return c==='Legendary'?3:c==='Epic'?2:c==='Rare'?1:0; })();
+      const rb = (function(){ const c=normCat((__fmGetFishIndex()[b.k]||{}).category); return c==='Legendary'?3:c==='Epic'?2:c==='Rare'?1:0; })();
+      if(rb!==ra) return rb-ra; // higher rarity first
+      if(b.maxPts!==a.maxPts) return b.maxPts-a.maxPts;
+      const la = __fmLocOrderMap[(__fmGetFishIndex()[a.k]||{}).location] ?? 9999;
+      const lb = __fmLocOrderMap[(__fmGetFishIndex()[b.k]||{}).location] ?? 9999;
+      if(la!==lb) return la-lb; // lower-level map first
+      return String(a.k).localeCompare(String(b.k));
+    });
+    const bestU = uncaught[0];
+    if(bestU){
+      setUnclaimed(bestU.k, bestU.maxPts);
+    setTimeout(clampPanelIntoViewAfterGuide, 0);
+    } else {
+      setUnclaimed(null, 0);
+    setTimeout(clampPanelIntoViewAfterGuide, 0);
+    }
+
+        try{ clampGuidePanelIntoView(panel); }catch(_){}
+
+// Ensure guide rows visible when data exists
+    try{
+      const welcome = document.getElementById('companionWelcome');
+      const rowsEl = document.getElementById('companionRows');
+      if(welcome) welcome.classList.add('hidden');
+      if(rowsEl) rowsEl.classList.remove('hidden');
+    }catch(_){}
+  }
+
+  // Expose for debugging / manual refresh
+  window.__fmUpdateFishingGuide = updateFishingGuide;
+
+  // Wrap updateDashboard so any existing update triggers refresh the guide.
+  // This fixes imports/restores and any toggle changes automatically.
+  function wrapUpdateDashboard(){
+    try{
+      if(typeof updateDashboard !== 'function') return;
+      if(updateDashboard.__fm_wrapped) return;
+
+      const orig = updateDashboard;
+      const wrapped = function(){
+        const r = orig.apply(this, arguments);
+        try{ updateFishingGuide(); }catch(_){}
+        return r;
+      };
+      wrapped.__fm_wrapped = true;
+      updateDashboard = wrapped;
+    }catch(_){}
+  }
+
+  // Init: wrap and run once after load + after possible async restores
+  if(document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', ()=>{
+      wrapUpdateDashboard();
+      setTimeout(()=>{ try{ updateFishingGuide(); }catch(_){} }, 350);
+      setTimeout(()=>{ try{ updateFishingGuide(); }catch(_){} }, 900);
+    });
+  }else{
+    wrapUpdateDashboard();
+    setTimeout(()=>{ try{ updateFishingGuide(); }catch(_){} }, 350);
+    setTimeout(()=>{ try{ updateFishingGuide(); }catch(_){} }, 900);
+  }
+})();
+ /* End Fishing Guide Opportunity Logic */
+
