@@ -648,25 +648,29 @@ function setupShareButton(){
 
   if(dropdown && !dropdown.dataset.bound){
     dropdown.dataset.bound = '1';
-    dropdown.querySelectorAll('button.menu-item[data-share]').forEach(el=>{
-      el.addEventListener('click', (e)=>{
-        e.preventDefault();
-        e.stopPropagation();
-        closeMenu();
-        const mode = el.getAttribute('data-share');
-        const loc = el.getAttribute('data-loc') || '';
-        try{
-          if(mode === 'backup'){
-            downloadBackupJSON();
-            return;
-          }
-          if(mode === 'location' && loc) downloadShareImage({ location: loc });
-          else downloadShareImage();
-        }catch(err){
-          console.error('Share failed', err);
-          alert('Could not complete that action.');
+
+    // Event delegation so dynamically generated location items work (VIP/Main)
+    dropdown.addEventListener('click', (e)=>{
+      const btnEl = e.target && e.target.closest ? e.target.closest('button.menu-item[data-share]') : null;
+      if(!btnEl || !dropdown.contains(btnEl)) return;
+
+      e.preventDefault();
+      e.stopPropagation();
+      closeMenu();
+
+      const mode = btnEl.getAttribute('data-share');
+      const loc = btnEl.getAttribute('data-loc') || '';
+      try{
+        if(mode === 'backup'){
+          downloadBackupJSON();
+          return;
         }
-      });
+        if(mode === 'location' && loc) downloadShareImage({ location: loc });
+        else downloadShareImage();
+      }catch(err){
+        console.error('Share failed', err);
+        alert('Could not complete that action.');
+      }
     });
   }
 }
@@ -4796,7 +4800,9 @@ function applyModeUI(mode){
     const isVip = (mode === 'vip');
     document.documentElement.classList.toggle('vip-mode', isVip);
 
-    const mainBtn = document.getElementById('modeMainBtn');
+    
+    try{ rebuildShareLocations(); }catch(_){}
+const mainBtn = document.getElementById('modeMainBtn');
     const vipBtn  = document.getElementById('modeVipBtn');
     if(mainBtn) mainBtn.classList.toggle('active', !isVip);
     if(vipBtn)  vipBtn.classList.toggle('active',  isVip);
@@ -4817,6 +4823,7 @@ function setMode(mode){
     const m = (mode || 'main').toLowerCase() === 'vip' ? 'vip' : 'main';
     localStorage.setItem(MODE_KEY, m);
     applyModeUI(m);
+    try{ rebuildShareLocations(); }catch(_){}
     syncActiveCachesToMode();
     
     try{ populateLocationOptions(); }catch(_){}
@@ -5223,7 +5230,13 @@ function downloadShareImage(opts){
     a.href = c.toDataURL('image/png');
     const isSeason = (isSeasonMode && isSeasonMode());
     const prefix = isSeason ? 'FishMetrics_Season_' : 'FishMetrics_AllTime_';
-    a.download = safeLoc ? (prefix + safeLoc + '_Share.png') : (prefix + 'Share.png');
+
+    // Distinguish VIP overall cards from Main overall cards (location cards already include the map name)
+    const isVip = !!(document && document.documentElement && document.documentElement.classList.contains('vip-mode'));
+    a.download = safeLoc
+      ? (prefix + safeLoc + '_Share.png')
+      : (prefix + (isVip ? 'VIP_' : '') + 'Share.png');
+
     document.body.appendChild(a);
     a.click();
     a.remove();
@@ -8277,3 +8290,27 @@ try{
 })();
  /* End Fishing Guide Opportunity Logic */
 
+
+
+
+function rebuildShareLocations(){
+  const container = document.getElementById('dynamicShareLocations');
+  if(!container || typeof getLocationsData !== 'function') return;
+
+  container.innerHTML = '';
+
+  const locations = Object.keys(getLocationsData() || {});
+
+  locations.forEach(loc => {
+    const btn = document.createElement('button');
+    btn.className = 'menu-item';
+    btn.type = 'button';
+    btn.setAttribute('role','menuitem');
+    btn.setAttribute('data-share','location');
+    btn.setAttribute('data-loc', loc);
+    btn.textContent = loc;
+    container.appendChild(btn);
+  });
+}
+
+document.addEventListener('DOMContentLoaded', rebuildShareLocations);
