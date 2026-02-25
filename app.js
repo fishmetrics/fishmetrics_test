@@ -4137,7 +4137,7 @@ function getSeasonImprovementTargets(allFish, category, limit=10){
       const __isVipFI = (typeof isVipModeActive==='function') ? isVipModeActive() : false;
       const __isVipAlltimeFI = __isVipFI && !document.body.classList.contains('season-active');
       const eliteNames = __isVipAlltimeFI
-        ? ['magnetfin','yellow submarinecod','striped guitarfish','glovefish','stale deadfish','bomberfish']
+        ? ['magnetfin','yellow submarinecod','stringed guitarfish','fingered glovefish','stale deadfish','bomberfish']
         : ['goldfish','bull shark','king salmon','tiger shark','bull trout','scottish salmon'];
       const eliteMap = new Map(allFish.map(f=>[f.name.toLowerCase(), {points:f.points, stars:f.stars}]));
       const eliteList = eliteNames.map(n=>{
@@ -4157,7 +4157,11 @@ function getSeasonImprovementTargets(allFish, category, limit=10){
             y.ticks.autoSkip = true;
           }
         }catch(_){ }
-        eliteEpicsChart.data.labels = eliteList.map(f => __wrapWordsFearsome(toTitleCase(f.name), 10));
+        eliteEpicsChart.data.labels = eliteList.map(f => {
+          const nm = String(f.name||'');
+          const label = (__isVipAlltimeFI && nm.toLowerCase()==='fingered glovefish') ? 'Fingered Glovefish' : toTitleCase(nm);
+          return __wrapWordsFearsome(label, 10);
+        });
         eliteEpicsChart.data.datasets[0].data = eliteList.map(f=>f.value);
         safeUpdate(eliteEpicsChart);
       }
