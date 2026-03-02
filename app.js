@@ -94,7 +94,9 @@ const FISH_SEASONALITY = {
   "zungaro": { inSeasonMonths: [5, 6, 7, 8, 9, 10, 11] },
 };
 
-const OOS_MAX_POINTS = { Common:357, Rare:476, Epic:596 };
+// NOTE: OOS caps are independent of the global SOFT_CAP_RATIO.
+// Epic cap is 595 (not 596).
+const OOS_MAX_POINTS = { Common:357, Rare:476, Epic:595 };
 
 // Aliases to map correct fish names -> seasonality keys (keeps seasonality table as-is).
 // Use this only for seasonality lookup.
@@ -3760,6 +3762,9 @@ try{
   if(pct4El) pct4El.textContent = totalCaught ? `${(100*(star4)/totalCaught).toFixed(1)}%` : '0.0%';
   if(pct5El) pct5El.textContent = totalCaught ? `${(100*star5/totalCaught).toFixed(1)}%` : '0.0%';
 
+  try{ renderKpiBadges({ totalPoints, pct4: (totalCaught ? (100*(star4)/totalCaught) : 0), pct5: (totalCaught ? (100*star5/totalCaught) : 0) }); }catch(_){}
+
+
   // Star distribution (exact 2★–5★, normalized within 2–5★)
   try{
     renderStarDistributionBar(totalCaught, star1, star2, star3, star4, star5, oosStar1, oosStar2, oosStar3, oosStar4, oosStar5);
@@ -4513,33 +4518,67 @@ async function autoRollSeasonMonthly(){
     return;
   }
 
-  // If month changed, auto-archive the prior month (if there is any season data), then reset season records.
+  // If month changed, archive BOTH Main + VIP season stores (if they have any data), then reset BOTH.
+  // This avoids mode-order bugs (opening Main first would otherwise prevent VIP rollover, and vice-versa).
   if(storedMonth !== currentMonth){
+    let mainSnap = null;
+    let vipSnap = null;
     try{
-      const hadData = _countBackupRecords(seasonRecordsByLocation || {}) > 0;
-      // Temporarily set active season id to storedMonth so snapshot is labeled correctly
-      try{ localStorage.setItem('fm_active_season_id', storedMonth); }catch(_){}
-      if(hadData){
-        try{ archiveSeasonSnapshot(); }catch(_){}
+      const mainSeason = await idbReadAllRecordsOnly(IDB_STORE_SEASON);
+      const vipSeason  = await idbReadAllRecordsOnly(IDB_STORE_SEASON_VIP);
+      const hadMain = _countBackupRecords(mainSeason || {}) > 0;
+      const hadVip  = _countBackupRecords(vipSeason  || {}) > 0;
+
+      if(hadMain){
+        try{ mainSnap = _buildSeasonArchiveSnapshotFrom(mainSeason, LOCATIONS, 'MAIN', storedMonth); }catch(_){ mainSnap = null; }
+      }
+      if(hadVip){
+        try{ vipSnap = _buildSeasonArchiveSnapshotFrom(vipSeason, LOCATIONS_VIP, 'VIP', storedMonth); }catch(_){ vipSnap = null; }
+      }
+
+      if(mainSnap || vipSnap){
+        const listKey = "fishmetrics_season_archives_v1";
+        let list = [];
+        try{ list = JSON.parse(localStorage.getItem(listKey) || "[]"); }catch(_){ list = []; }
+        if(mainSnap){
+          list.unshift({ seasonId: mainSnap.season.seasonId, exportedAt: mainSnap.exportedAt });
+          try{ localStorage.setItem(`fishmetrics_season_archive_${mainSnap.season.seasonId}`, JSON.stringify(mainSnap)); }catch(_){}
+        }
+        if(vipSnap){
+          list.unshift({ seasonId: vipSnap.season.seasonId, exportedAt: vipSnap.exportedAt });
+          try{ localStorage.setItem(`fishmetrics_season_archive_${vipSnap.season.seasonId}`, JSON.stringify(vipSnap)); }catch(_){}
+        }
+        try{ localStorage.setItem(listKey, JSON.stringify(list)); }catch(_){}
+
+        const bundle = {
+          schemaVersion: "season-archive-bundle-v1",
+          exportedAt: (mainSnap && mainSnap.exportedAt) || (vipSnap && vipSnap.exportedAt) || new Date().toISOString(),
+          app: { name: "FishMetrics", version: "v1.4.5" },
+          month: storedMonth,
+          main: mainSnap,
+          vip: vipSnap
+        };
+        try{ _downloadJson(`FishMetrics_SeasonArchive_${storedMonth}.json`, bundle); }catch(_){}
+        try{ alert("Season archived ✅"); }catch(_){}
       }
     }catch(_){}
 
-    // Reset season records for the new month
-    seasonRecordsByLocation = {};
-    try{ await saveSeasonRecords(seasonRecordsByLocation || {}); }catch(_){}
-    try{ localStorage.setItem('fishmetrics_season_records_v1', JSON.stringify(seasonRecordsByLocation || {})); }catch(_){}
+    try{ await idbSaveAllSeasonRecordsToStore(IDB_STORE_SEASON, {}); }catch(_){}
+    try{ await idbSaveAllSeasonRecordsToStore(IDB_STORE_SEASON_VIP, {}); }catch(_){}
 
-    // Set new month markers
+    seasonRecordsByLocation_main = {};
+    seasonRecordsByLocation_vip = {};
+    syncActiveCachesToMode();
+    try{ localStorage.setItem('fishmetrics_season_records_v1', JSON.stringify({})); }catch(_){}
+
     try{ localStorage.setItem('fm_season_month', currentMonth); }catch(_){}
     try{ localStorage.setItem('fm_active_season_id', currentMonth); }catch(_){}
 
-    // Refresh UI if needed
     try{ if(typeof renderTable === 'function') renderTable(); }catch(_){}
     try{ updateDashboard(); }catch(_){}
     try{ updateSeasonProgress(); }catch(_){}
     try{ updateSeasonUncaughtCount(); }catch(_){}
   }else{
-    // Ensure active season id matches current month
     try{ localStorage.setItem('fm_active_season_id', currentMonth); }catch(_){}
   }
 }
@@ -4700,6 +4739,112 @@ function _buildSeasonArchiveSnapshot(){
     // Back-compat: weights-only map (legacy)
     seasonRecordsByLocation: seasonRecordsFiltered,
     // Preferred: entries with weight + points
+    seasonEntriesByLocation: seasonEntriesFiltered
+  };
+}
+
+// Build a season archive snapshot for an explicit mode + record set.
+// Used by monthly auto-rollover so Main + VIP can be archived/reset together.
+function _buildSeasonArchiveSnapshotFrom(seasonRecordsInput, locationsData, modePrefix, month){
+  const now = new Date();
+  const safeMonth = String(month || '').slice(0,7);
+  const seasonId = `${String(modePrefix || 'MAIN').toUpperCase()}-${safeMonth}`;
+  const startedAt = `${safeMonth}-01`;
+
+  const fishPoints = [];
+  const seasonRecordsFiltered = {};
+  const seasonEntriesFiltered = {};
+  const counts = { Common:0, Rare:0, Epic:0, Legendary:0 };
+  let totalSeasonPoints = 0;
+  const bestByCategory = { Common:null, Rare:null, Epic:null, Legendary:null };
+  const lowestByCategory = { Common:null, Rare:null, Epic:null, Legendary:null };
+
+  try{
+    for(const loc of Object.keys(seasonRecordsInput || {})){
+      const recs = seasonRecordsInput[loc] || {};
+      const fishLookup = new Map(((locationsData && locationsData[loc]) ? locationsData[loc] : []).map(f=>[String(f.name).toLowerCase(), f]));
+      for(const fishName of Object.keys(recs)){
+        const rawStr = recs[fishName];
+        if(rawStr === "" || rawStr == null) continue;
+
+        const f = fishLookup.get(String(fishName).toLowerCase());
+        if(!f) continue;
+
+        const w = parseStoredWeightLbs(rawStr);
+        if(!Number.isFinite(w) || w < f.min || w > f.max) continue;
+
+        // Compute points/stars (same as standard season archive)
+        const pts = calculatePoints(w, f);
+        const rawPts = (typeof calculatePointsRaw === 'function') ? calculatePointsRaw(w, f) : pts;
+        const stars = calculateStars(f.category, rawPts);
+
+        fishPoints.push({
+          name: f.name,
+          location: loc,
+          category: f.category,
+          weight: String(rawStr),
+          points: pts,
+          rawPoints: Number(rawPts),
+          stars
+        });
+
+        // filtered records: preserve canonical season record shape (name -> weight string)
+        if(!seasonRecordsFiltered[loc]) seasonRecordsFiltered[loc] = {};
+        seasonRecordsFiltered[loc][f.name] = String(rawStr);
+
+        // filtered entries: include weight + points for review
+        if(!seasonEntriesFiltered[loc]) seasonEntriesFiltered[loc] = {};
+        seasonEntriesFiltered[loc][f.name] = { weight: String(rawStr), points: pts, rawPoints: Number(rawPts), stars };
+
+        totalSeasonPoints += pts;
+        if(counts[f.category] !== undefined) counts[f.category] += 1;
+
+        const prev = bestByCategory[f.category];
+        if(!prev || pts > prev.points){
+          bestByCategory[f.category] = { name: f.name, points: pts, location: loc };
+        }
+        const low = lowestByCategory[f.category];
+        if(!low || pts < low.points){
+          lowestByCategory[f.category] = { name: f.name, points: pts, location: loc };
+        }
+      }
+    }
+  }catch(_){ }
+
+  // stable sort (optional)
+  try{ fishPoints.sort((a,b)=> (b.points - a.points) || a.name.localeCompare(b.name)); }catch(_){}
+
+  // build KPI object without zeros/nulls
+  const kpis = {};
+  if(Number.isFinite(totalSeasonPoints) && totalSeasonPoints > 0) kpis.totalSeasonPoints = totalSeasonPoints;
+
+  const countsOut = {};
+  for(const k of Object.keys(counts)){ if(counts[k] > 0) countsOut[k] = counts[k]; }
+  if(Object.keys(countsOut).length) kpis.counts = countsOut;
+
+  const bestOut = {};
+  for(const k of Object.keys(bestByCategory)){ if(bestByCategory[k]) bestOut[k] = bestByCategory[k]; }
+  if(Object.keys(bestOut).length) kpis.bestByCategory = bestOut;
+
+  const lowestOut = {};
+  for(const k of Object.keys(lowestByCategory)){ if(lowestByCategory[k]) lowestOut[k] = lowestByCategory[k]; }
+  if(Object.keys(lowestOut).length) kpis.lowestByCategory = lowestOut;
+
+  return {
+    schemaVersion: "season-archive-v2",
+    exportedAt: now.toISOString(),
+    app: { name: "FishMetrics", version: "v1.4.5" },
+    season: { seasonId, startedAt, month: safeMonth },
+    rules: {
+      oosCaps: { Common: 357, Rare: 476, Epic: 595 },
+      legendaryAlwaysInSeason: true,
+      oosExcludedFromRanges: true,
+      oosExcludedFromImprovementTargets: true,
+      starTierNoRoundUpPromotion: true
+    },
+    kpis,
+    fishPoints,
+    seasonRecordsByLocation: seasonRecordsFiltered,
     seasonEntriesByLocation: seasonEntriesFiltered
   };
 }
@@ -7527,6 +7672,19 @@ try{
     try{
       const panel = document.getElementById('companionPanel');
       if(!panel) return;
+
+      // Mobile: keep the companion panel fully within the viewport.
+      // Transform-based nudges (and saved drag positions) can still leave it spilling off-screen
+      // during responsive relayout, so clamp using left/right gutters.
+      if (window.innerWidth <= 820){
+        panel.style.transform = 'none';
+        panel.style.left = '12px';
+        panel.style.right = '12px';
+        panel.style.width = 'auto';
+        panel.style.maxWidth = 'calc(100vw - 24px)';
+        panel.style.boxSizing = 'border-box';
+        return;
+      }
       const rect = panel.getBoundingClientRect();
       const pad = 10;
 
@@ -7881,6 +8039,17 @@ try{
     try{
       const panel = document.getElementById('companionPanel');
       if(!panel) return;
+
+      // Mobile: force within viewport gutters.
+      if (window.innerWidth <= 820){
+        panel.style.transform = 'none';
+        panel.style.left = '12px';
+        panel.style.right = '12px';
+        panel.style.width = 'auto';
+        panel.style.maxWidth = 'calc(100vw - 24px)';
+        panel.style.boxSizing = 'border-box';
+        return;
+      }
       const rect = panel.getBoundingClientRect();
       const pad = 10;
 
@@ -8318,3 +8487,191 @@ function rebuildShareLocations(){
 }
 
 document.addEventListener('DOMContentLoaded', rebuildShareLocations);
+
+
+
+function _fmBadgeTier(val, t1, t2, t3){
+  if(val >= t3) return 3;
+  if(val >= t2) return 2;
+  if(val >= t1) return 1;
+  return 0;
+}
+
+function _fmCrownSvg(tier){
+  // tier 1 = outline; tier 2 = filled; tier 3 = filled + dots on tips
+  const fill = (tier >= 2) ? 'currentColor' : 'none';
+  const fillOpacity = (tier >= 2) ? '0.22' : '0';
+  const dots = (tier >= 3) ? `
+    <circle cx="6.6" cy="6.2" r="1.3" fill="currentColor" opacity="0.95"/>
+    <circle cx="12" cy="4.2" r="1.3" fill="currentColor" opacity="0.95"/>
+    <circle cx="17.4" cy="6.2" r="1.3" fill="currentColor" opacity="0.95"/>
+  ` : '';
+  return `
+  <svg class="crown" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+    <path d="M3.5 9.8L7.2 6.7L12 3.7L16.8 7.1L20.5 9.1L19.2 19.2H4.8L3.5 9.8Z"
+          stroke="currentColor" stroke-width="2.2" stroke-linejoin="round" />
+    <path d="M4.8 18.7H19.2" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
+    <path d="M3.5 9.8L7.2 6.7L12 3.7L16.8 7.1L20.5 9.1"
+          fill="${fill}" fill-opacity="${fillOpacity}"/>
+    ${dots}
+  </svg>`;
+}
+
+function renderKpiBadges(kpis){
+  try{
+    // Show in all views (Main/VIP, Season/All-time).
+    const isVip = (typeof isVipModeActive==='function') ? isVipModeActive() : false;
+    const isSeason = (typeof isSeasonMode==='function') ? isSeasonMode() : document.body.classList.contains('season-active');
+    const sPoints = document.getElementById('badgeStampPoints');
+    const s4 = document.getElementById('badgeStamp4');
+    const s5 = document.getElementById('badgeStamp5');
+    if(!sPoints || !s4 || !s5) return;
+
+    // Respect dashboard KPI toggles (so crowns match what's shown).
+    const includeLegendary = (typeof includeLegendaryDashboard !== 'undefined') ? !!includeLegendaryDashboard : true;
+    const includeOOS = (typeof includeOOSSeasonDashboard !== 'undefined') ? !!includeOOSSeasonDashboard : true;
+
+    const totalPoints = Number(kpis?.totalPoints || 0);
+    const pct4 = Number(kpis?.pct4 || 0);
+    const pct5 = Number(kpis?.pct5 || 0);
+
+    function fmtInt(n){
+      try{ return Number(n||0).toLocaleString(undefined, { maximumFractionDigits: 0 }); }catch(_){ return String(Math.round(Number(n||0)||0)); }
+    }
+
+    function normCat2(cat){
+      const c = String(cat||'').toLowerCase();
+      if(c.includes('legend')) return 'Legendary';
+      if(c.includes('epic')) return 'Epic';
+      if(c.includes('rare')) return 'Rare';
+      return 'Common';
+    }
+
+    function _maxPointsForMeta(meta, now){
+      try{
+        const cat = normCat2(meta && meta.category);
+        if(!includeLegendary && cat === 'Legendary') return 0;
+
+        const soft = (typeof SOFT_CAP_RATIO === 'number') ? SOFT_CAP_RATIO : 0.945;
+        // IMPORTANT: crowns should use the same *category* max model as the rest of the app
+        // (CATEGORY_MIN_POINTS * 2), not any per-fish variance. This also avoids any timing/
+        // helper-availability issues.
+        const baseMin = (typeof CATEGORY_MIN_POINTS !== 'undefined' && CATEGORY_MIN_POINTS)
+          ? (CATEGORY_MIN_POINTS[cat] || 0)
+          : 0;
+        const baseMax = baseMin * 2;
+        if(cat === 'Legendary'){
+          return Math.round(baseMax * soft);
+        }
+
+        // Season view: optionally exclude OOS fish entirely.
+        if(isSeason && !includeOOS){
+          const inSeason = isVip ? true : (typeof isFishInSeason === 'function' ? isFishInSeason(meta && meta.name, now) : true);
+          if(!inSeason) return 0;
+          return Math.round(baseMax * soft);
+        }
+
+        // Season view with OOS included: cap OOS fish by type.
+        if(isSeason && includeOOS){
+          const inSeason = isVip ? true : (typeof isFishInSeason === 'function' ? isFishInSeason(meta && meta.name, now) : true);
+          if(inSeason) return Math.round(baseMax * soft);
+          const cap = (typeof OOS_MAX_POINTS !== 'undefined') ? (OOS_MAX_POINTS[cat] ?? null) : null;
+          return Number(cap || 0);
+        }
+
+        // All-time: always soft-capped.
+        return Math.round(baseMax * soft);
+      }catch(_){ return 0; }
+    }
+
+    function computeMaxPointsForView(){
+      const now = new Date();
+      let sum = 0;
+      try{
+        const locationsObj = (typeof getLocations === 'function')
+          ? getLocations()
+          : (isVip ? (typeof LOCATIONS_VIP !== 'undefined' ? LOCATIONS_VIP : {}) : (typeof LOCATIONS !== 'undefined' ? LOCATIONS : {}));
+        Object.keys(locationsObj || {}).forEach(loc=>{
+          (locationsObj[loc] || []).forEach(f=>{
+            if(!f) return;
+            // Ensure location exists on meta (some helpers expect it).
+            const meta = (f && typeof f === 'object') ? ({...f, location: loc}) : f;
+            sum += _maxPointsForMeta(meta, now);
+          });
+        });
+      }catch(_){ sum = 0; }
+      return sum;
+    }
+
+    const maxPoints = computeMaxPointsForView();
+    const pctPoints = maxPoints > 0 ? (totalPoints / maxPoints) * 100 : 0;
+
+    // Thresholds (percent-based)
+    const THR = isSeason ? {
+      points: [60,75,85],
+      pct4: [25,50,70],
+      pct5: [10,20,35]
+    } : {
+      points: [75,85,91],
+      pct4: [45,65,76],
+      pct5: [15,25,36]
+    };
+
+    const tPoints = _fmBadgeTier(pctPoints, THR.points[0], THR.points[1], THR.points[2]);
+    const t4 = _fmBadgeTier(pct4, THR.pct4[0], THR.pct4[1], THR.pct4[2]);
+    const t5 = _fmBadgeTier(pct5, THR.pct5[0], THR.pct5[1], THR.pct5[2]);
+
+    const setStamp = (el, cls, tier, kind) => {
+      if(!tier){
+        el.style.display = 'none';
+        el.innerHTML = '';
+        el.removeAttribute('title');
+        return;
+      }
+      el.className = 'kpi-stamp ' + cls;
+      el.innerHTML = _fmCrownSvg(tier);
+      el.style.display = 'inline-flex';
+
+      // Tooltip text (Main -> All-time)
+      let t = '';
+      if(kind === 'points'){
+        const pctThr = tier===1 ? THR.points[0] : (tier===2 ? THR.points[1] : THR.points[2]);
+        const ptsThr = maxPoints > 0 ? Math.round(maxPoints * (pctThr/100)) : 0;
+        const scope = isSeason ? 'Season' : 'All-time';
+        t = `Points Crown — Tier ${tier} (≥ ${pctThr}% ${scope} Max: ${fmtInt(ptsThr)} pts)`;
+      }else if(kind === 'pct4'){
+        const pctThr = tier===1 ? THR.pct4[0] : (tier===2 ? THR.pct4[1] : THR.pct4[2]);
+        const scope = isSeason ? 'Season' : 'All-time';
+        t = `4★ Crown — Tier ${tier} (≥ ${pctThr}% ${scope} 4★ Rate)`;
+      }else if(kind === 'pct5'){
+        const pctThr = tier===1 ? THR.pct5[0] : (tier===2 ? THR.pct5[1] : THR.pct5[2]);
+        const scope = isSeason ? 'Season' : 'All-time';
+        t = `5★ Crown — Tier ${tier} (≥ ${pctThr}% ${scope} 5★ Rate)`;
+      }
+      if(t) el.title = t;
+    };
+
+    setStamp(sPoints, 'gold', tPoints, 'points');
+    setStamp(s4, 'blue', t4, 'pct4');
+    setStamp(s5, 'purple', t5, 'pct5');
+  }catch(_){}
+}
+
+
+
+/* --- PNG Crown Tier Override (safe) --- */
+(function(){
+  function tierSrc(tier){
+    if(tier === 1) return 'crown_t1.png';
+    if(tier === 2) return 'crown_t2.png';
+    if(tier === 3) return 'crown_t3.png';
+    return 'crown_t1.png';
+  }
+  window._fmCrownSvg = function(tier){
+    return '<img class="crown-img" src="' + tierSrc(tier) + '" alt="" />';
+  };
+})();
+
+
+
+

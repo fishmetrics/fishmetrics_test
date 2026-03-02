@@ -237,7 +237,7 @@ html.vip-mode .mode-toggle .mode-btn.active{
 .legend-item.slicer{
   cursor:pointer;
   user-select:none;
-  padding:6px 8px;
+  padding:7px 9px;
   border-radius:12px;
   border:1px solid rgba(255,255,255,.10);
   background:rgba(255,255,255,.04);
@@ -2061,7 +2061,7 @@ input[type=number] {
 .toggle{ display:flex; align-items:center; gap:10px; cursor:pointer; user-select:none; }
 .toggle input{ display:none; }
 .toggle .slider{
-  width:42px; height:22px; border-radius:22px;
+  width:42px; height:26px; border-radius:22px;
   background: rgba(255,255,255,0.22);
   position: relative;
 }
@@ -2289,7 +2289,7 @@ body.season-active .dash-controls{
 /* Season banner uncaught counter */
 .season-uncaught{
   font-size: 13px;
-  opacity: 0.85;
+  opacity: 0.9;
   margin-left: 10px;
 }
 
@@ -2856,7 +2856,7 @@ body.season-active {
 .focus-gap-head{
   border-top: none;
   padding-top: 0;
-  opacity: 0.85;
+  opacity: 0.9;
   font-weight: 600;
 }
 .focus-gap-fish{
@@ -3819,7 +3819,7 @@ button.disabled{ opacity: 0.55; cursor: not-allowed; }
 }
 .ct-secondary-sort-label{
   font-size: 12px;
-  opacity: 0.85;
+  opacity: 0.9;
 }
 #ctSecondarySortSelect{
   font-size: 12px;
@@ -3895,7 +3895,7 @@ button.disabled{ opacity: 0.55; cursor: not-allowed; }
   line-height: 1;
   cursor: pointer;
   padding: 0 6px;
-  opacity: 0.85;
+  opacity: 0.9;
 }
 .fish-search-clear-btn:hover{
   opacity: 1;
@@ -4237,7 +4237,7 @@ html.vip-mode #homeBtn, html.vip-mode #menuBtn{
 /* --- Header icon micro‑interactions (enhanced but still safe) --- */
 .header-menu-wrap,
 #homeBtn.home-left{
-  opacity: 0.85;
+  opacity: 0.9;
   transition: opacity 0.18s ease, transform 0.18s ease, filter 0.18s ease;
 }
 
@@ -4465,6 +4465,17 @@ html.vip-mode body:not(.season-active) .panel:has(#invisiblesChart){
     margin: 10px 0 0 0;
     right: auto;
     top: auto;
+    transform: none; /* prevent negative offset from pushing panel off-screen on mobile */
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  /* ensure header contents don't force horizontal overflow */
+  #companionPanel.panel .panel-title{
+    padding-right: 70px; /* room for reset + dismiss buttons */
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 }
 
@@ -4476,9 +4487,40 @@ html.vip-mode body:not(.season-active) .panel:has(#invisiblesChart){
 }
 
 
-/* Subtle floating offset tweak */
-.companion-panel{
-  transform: translateX(-12px);   /* slight misalignment for floating feel */
+/* Subtle floating offset tweak (desktop/tablet only) */
+@media (min-width: 821px){
+  .companion-panel{
+    transform: translateX(-12px);   /* slight misalignment for floating feel */
+  }
+}
+
+/* Mobile hardening: prevent the Fishing Guide from forcing layout width */
+@media (max-width: 820px){
+  .companion-panel{
+    transform: none !important;
+    min-width: 0 !important;
+    width: auto !important;
+    max-width: calc(100vw - 24px) !important;
+  }
+
+  /* Allow wrapping so long recommendation strings don't expand the page */
+  #companionRows .companion-row{
+    white-space: normal !important;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  #companionRows .companion-row .label,
+  #companionRows .companion-row .value{
+    white-space: normal !important;
+  }
+  #companionRows .companion-row .label{
+    flex: 1 1 48%;
+  }
+  #companionRows .companion-row .value{
+    flex: 1 1 48%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
 }
 
 
@@ -4500,7 +4542,7 @@ html.vip-mode body:not(.season-active) .panel:has(#invisiblesChart){
 
 .companion-restore-fixed .restore-link{
   cursor: pointer;
-  opacity: 0.85;
+  opacity: 0.9;
   user-select: none;
 }
 
@@ -4530,7 +4572,7 @@ html.vip-mode body:not(.season-active) .panel:has(#invisiblesChart){
 }
 
 .companion-restore-fixed .restore-link:hover{
-  opacity: 0.85;
+  opacity: 0.9;
 }
 
 
@@ -4589,4 +4631,127 @@ html.vip-mode body:not(.season-active) .panel:has(#invisiblesChart){
   background: rgba(20,28,40,0.85);
   color: white;
   box-shadow: 0 8px 24px rgba(0,0,0,0.35);
+}
+
+/* KPI Badges (Main -> All-time only) */
+.kpi-badges{
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+  align-items:center;
+  justify-content:flex-start;
+  margin-top:10px;
+  margin-bottom:6px;
+}
+.kpi-badge{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  padding:6px 10px;
+  border-radius:999px;
+  background: rgba(255,255,255,.06);
+  border: 1px solid rgba(255,255,255,.10);
+  box-shadow: 0 6px 16px rgba(0,0,0,.35) inset;
+  user-select:none;
+}
+.kpi-badge .crown{
+  width:26px;
+  height:26px;
+  filter: drop-shadow(0 0 4px currentColor);
+}
+.kpi-badge .label{
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial;
+  font-weight: 750;
+  font-size: 12px;
+  letter-spacing: .3px;
+  opacity:.95;
+}
+.kpi-badge.gold{ color: rgba(255,196,72,.98); }
+.kpi-badge.blue{ color: rgba(120,220,255,.98); }
+.kpi-badge.purple{ color: rgba(176,120,255,.98); }
+
+/* KPI corner stamps */
+.kpis .kpi{ position: relative; overflow: visible; }
+
+.kpi-stamp{
+  position:absolute;
+  top:10px;
+  right:10px;
+  display:none;
+  align-items:center;
+  justify-content:center;
+  gap:6px;
+  padding:7px 9px;
+  border-radius: 999px;
+  background: rgba(255,255,255,.05);
+  border: 1px solid rgba(255,255,255,.12);
+  box-shadow: 0 10px 22px rgba(0,0,0,.35);
+  transform: rotate(-7deg);
+  transform-origin: top right;
+}
+
+.kpi-stamp .crown{
+  width:20px;
+  height:20px;
+  filter: drop-shadow(0 0 4px currentColor);
+}
+
+.kpi-stamp .tier{
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial;
+  font-weight: 800;
+  font-size: 12px;
+  letter-spacing: .2px;
+  opacity:.95;
+}
+
+.kpi-stamp.gold{ color: rgba(255,196,72,.98); }
+.kpi-stamp.blue{ color: rgba(120,220,255,.98); }
+.kpi-stamp.purple{ color: rgba(176,120,255,.98); }
+
+@media (max-width: 520px){
+  .kpi-stamp{ top:8px; right:8px; padding:5px 7px; }
+  .kpi-stamp .crown{ width:18px; height:18px; }
+  .kpi-stamp .tier{ font-size: 11px; }
+}
+
+.kpi-stamp .tier{ display:none; }
+
+/* One-color KPI crowns (violet-white) */
+.kpi-stamp.gold, .kpi-stamp.blue, .kpi-stamp.purple{
+  color: rgba(196, 176, 255, .98);
+}
+.kpi-stamp .crown{
+  filter: drop-shadow(0 0 5px rgba(196,176,255,.35));
+}
+
+/* --- Yellow Crown PNG Styling --- */
+.crown-img{
+  width:26px;
+  height:26px;
+  object-fit:contain;
+  transform: rotate(40deg);
+  filter: drop-shadow(0 0 6px rgba(255,210,60,.45));
+}
+
+/* Ensure stamp container not rotated */
+.kpi-stamp{
+  transform: none !important;
+}
+
+/* --- Perceptual scaling by tier --- */
+.crown-img[src*="crown_t1"]{
+  transform: rotate(40deg) scale(1.00);
+}
+
+.crown-img[src*="crown_t2"]{
+  transform: rotate(40deg) scale(1.10);
+}
+
+.crown-img[src*="crown_t3"]{
+  transform: rotate(40deg) scale(1.12);
+}
+
+/* --- Tier 1 slight opacity reduction --- */
+.crown-img[src*="crown_t1"]{
+  opacity: 0.9;
 }

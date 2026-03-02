@@ -37,8 +37,8 @@
     }
 
     .card{margin:0 auto;
-      width:min(980px, 100%);
-      border-radius:24px;
+      width:min(1120px, 94vw);
+      border-radius: 28px;
       background: linear-gradient(180deg, rgba(255,255,255,.07), rgba(255,255,255,.03));
       border:1px solid var(--border);
       box-shadow:var(--shadow);
@@ -50,7 +50,7 @@
       align-items:center;
       justify-content:space-between;
       gap:16px;
-      padding:26px 24px 14px;
+      padding: 38px 36px 18px;
     }
 
     .brand{flex-direction:column;justify-content:center;text-align:center;
@@ -73,8 +73,8 @@
       margin:0;
       font-family: "Orbitron", ui-sans-serif, system-ui;
       font-weight:800;
-      letter-spacing:.4px;
-      font-size:28px;
+      letter-spacing:1.5px;
+      font-size:40px;
       line-height:1.05;
       text-transform:uppercase;
     }
@@ -87,21 +87,21 @@
     }
 
     .main{
-      padding: 6px 24px 22px;
+      padding: 12px 36px 34px;
       display:grid;
       gap:18px;
     }
 
     .hook{
       margin:0;
-      font-size:20px;
-      line-height:1.35;
+      font-size: 22px;
+      line-height:1.5;
     }
     .hook b{ color:var(--accent); }
 
     .ctaRow{justify-content:center;
       display:flex;
-      gap:12px;
+      gap:34px;
       flex-wrap:wrap;
       align-items:center;
     }
@@ -111,9 +111,9 @@
       border:0;
       cursor:pointer;
       border-radius:14px;
-      padding:12px 18px;
+      padding: 14px 24px;
       font-weight:700;
-      font-size:16px;
+      font-size: 17px;
       background: linear-gradient(180deg, #5fb2ff, #3d8cff);
       color:#081425;
       box-shadow: 0 12px 28px rgba(79,163,255,.35);
@@ -171,13 +171,23 @@
     }
 
     @media (max-width: 780px){
-      .top{ padding:22px 18px 10px; }
+      .top{ padding:26px 18px 10px; }
       .main{ padding: 6px 18px 18px; }
       .bullets{ grid-template-columns: 1fr; }
-      .hook{ font-size:18px; }
-      .name h1{ font-size:26px; }
+      .hook{ font-size:22px; }
+      .name h1{ font-size:40px; }
       .logo{width:42px;height:42px;border:none;background:none;box-shadow:none;display:flex;align-items:center;justify-content:center;margin-bottom:6px;}
     }
+
+    @media (max-width: 420px){
+      .top{ padding:22px 16px 10px; }
+      .main{ padding: 10px 16px 18px; }
+      .name h1{ font-size:33px; letter-spacing:1px; }
+      .hook{ font-size:20px; line-height:1.45; }
+      .ctaRow{ gap:22px; }
+    }
+
+
   
     /* Landing overrides (v6) */
     .brand{gap:8px;}
@@ -205,9 +215,9 @@
     }
 
     .hook{
-      font-size: 16px;
+      font-size: 22px;
       opacity: 0.9;
-      margin-top: 8px;
+      margin-top: 12px;
     }
 
     .ctaRow{
@@ -353,7 +363,7 @@ h1{
     </div>
 
     <div class="main">
-      <p class="hook">Track, compare, and overanalyze your CotD fishing career.</p>
+      <p class="hook">Track, plan, and overanalyze your CotD fishing career.</p>
 
       <div class="ctaRow">
         <a class="btn" href="app.html" aria-label="Enter FishMetrics">Enter Main</a>

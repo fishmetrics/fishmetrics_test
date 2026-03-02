@@ -168,14 +168,17 @@
 <div class="kpi">
 <div class="kpi-label">Total Points</div>
 <div class="kpi-value" id="totalPoints">0</div>
+<div class="kpi-stamp" id="badgeStampPoints" aria-hidden="true"></div>
 </div>
 <div class="kpi">
 <div class="kpi-label">4 Star Catches</div>
 <div class="kpi-value" id="pct4">0.0%</div>
+<div class="kpi-stamp" id="badgeStamp4" aria-hidden="true"></div>
 </div>
 <div class="kpi">
 <div class="kpi-label">5 Star Catches</div>
 <div class="kpi-value" id="pct5">0.0%</div>
+<div class="kpi-stamp" id="badgeStamp5" aria-hidden="true"></div>
 </div>
 <div class="kpi best-map">
 <div class="kpi-label">Best Map</div>
@@ -366,11 +369,7 @@
 
       <p class="ack-wrapper">
         <span class="instr-text">
-          <strong>Welcome to FishMetrics.</strong>
-          First things first: this isn't a scientific measure of any fisherperson's skills, so shouldn't be taken too seriously.
-          If you like playing with numbers like I do, keeping tabs on your CotD fishing career, or casually comparing stats
-          with friends and clanmates, FishMetrics is for you.
-           Enjoy!
+          <b>FishMetrics</b> — a companion for players who like to track, plan, and analyze their CotD fishing career. It’s not a scientific skill rating, but a structured way to explore your stats and progression. If you enjoy playing with numbers or comparing stats with friends and clanmates, you’re in the right place.
         </span>
       </p>
 
@@ -449,7 +448,7 @@
 
 <hr class="instr-divider">
 
-<p class="ack-wrapper"><span class="ack-heading"><strong>Acknowledgements</strong></span></p>
+<p class="ack-wrapper"><span class="ack-heading"><strong>Acknowledgements</span></p>
 <span class="ack-text">
           A huge thank you to everyone — my super awesome clanmates at
           <a class="ack-discord" href="https://discord.gg/Dp3tk2aQqb" target="_blank" rel="noopener" title="Visit us on Discord">
@@ -497,8 +496,8 @@ Not affiliated with any company or organization of a similar name.</div>
 <label class="location-select">
             Location:
             <select id="locationSelect"></select>
-<span class="total-fish">Total Fish: <strong id="totalFishCount"></strong></span>
-<span class="total-fish total-fish-all">All Locations: <strong id="totalFishCountAll"></strong></span>
+<span class="total-fish">Total Fish: <strong id="totalFishCount"></span>
+<span class="total-fish total-fish-all">All Locations: <strong id="totalFishCountAll"></span>
 </label>
 </div>
 <div class="table-scroll" aria-label="Records table scroll region">
