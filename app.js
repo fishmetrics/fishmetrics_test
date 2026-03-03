@@ -4569,6 +4569,15 @@ async function autoRollSeasonMonthly(){
     seasonRecordsByLocation_main = {};
     seasonRecordsByLocation_vip = {};
     syncActiveCachesToMode();
+
+    // If Focus Mode is currently open, refresh immediately so the UI does not
+    // show chips/rows from the other mode.
+    try{
+      const fv = document.getElementById('focusView');
+      if(fv && fv.classList.contains('active') && typeof window.refreshFocusTab === 'function'){
+        window.refreshFocusTab();
+      }
+    }catch(_){ }
     try{ localStorage.setItem('fishmetrics_season_records_v1', JSON.stringify({})); }catch(_){}
 
     try{ localStorage.setItem('fm_season_month', currentMonth); }catch(_){}
@@ -4982,6 +4991,15 @@ function setMode(mode){
       try{ if(typeof updateDashboard==='function') updateDashboard(); }catch(_){ }
       try{ if(typeof updateSeasonProgress==='function') updateSeasonProgress(); }catch(_){ }
       try{ if(typeof updateSeasonBannerHeader==='function') updateSeasonBannerHeader(); }catch(_){ }
+
+      // If Focus Mode is currently open, refresh it so the chip list and gap table
+      // re-render from the correct (Main vs VIP) focus list.
+      try{
+        const fv = document.getElementById('focusView');
+        if(fv && fv.classList.contains('active') && typeof window.refreshFocusTab === 'function'){
+          window.refreshFocusTab();
+        }
+      }catch(_){ }
 
       try{ if(typeof renderAll==='function') renderAll(); }catch(_){ }
     });
@@ -6871,17 +6889,28 @@ function _addMonths(date, months){
 
   const focusItems = []; // { key, loc, name }
   const MAX_FOCUS_ITEMS = 10;
+  // Persist focus selections separately for Main vs VIP to prevent cross-mode bleed.
+  function _focusModeKey(){
+    try{
+      return (typeof isVipModeActive === 'function' && isVipModeActive()) ? 'vip' : 'main';
+    }catch(_){
+      return 'main';
+    }
+  }
+  function _focusLsKey(){
+    return `focusItemsAlltime_${_focusModeKey()}`;
+  }
+  let _focusLastMode = _focusModeKey();
 
-  const FOCUS_LS_KEY = "focusItemsAlltime";
   function saveFocusItems(){
     try{
       const payload = focusItems.map(x => ({ loc: x.loc, name: x.name }));
-      localStorage.setItem(FOCUS_LS_KEY, JSON.stringify(payload));
+      localStorage.setItem(_focusLsKey(), JSON.stringify(payload));
     }catch(_){}
   }
   function loadFocusItems(){
     try{
-      const raw = localStorage.getItem(FOCUS_LS_KEY) ?? "[]";
+      const raw = localStorage.getItem(_focusLsKey()) ?? "[]";
       const arr = JSON.parse(raw);
       if(!Array.isArray(arr)) return;
       const seen = new Set();
@@ -6890,6 +6919,12 @@ function _addMonths(date, months){
         const loc = it.loc;
         const name = it.name;
         if(typeof isFishInSeason === "function" && !isFishInSeason(name)) continue; // keep list "in-season" only
+        // Ensure fish exists in the active mode dataset (Main vs VIP).
+        try{
+          const ld = (typeof getLocationsData === "function") ? getLocationsData() : null;
+          const list = (ld && ld[loc]) ? ld[loc] : [];
+          if(!list || !list.some(f => String(f.name) === String(name))) continue;
+        }catch(_){ }
         const key = `${loc}||${name}`;
         if(seen.has(key)) continue;
         if(focusItems.length >= MAX_FOCUS_ITEMS) break;
@@ -7056,6 +7091,38 @@ function _addMonths(date, months){
 
   // Refresh hook: recompute gaps/progress using latest stored records
   window.refreshFocusTab = function(){
+    // If user toggled Main/VIP while Focus mode is active, swap list.
+    const m = _focusModeKey();
+    if(m !== _focusLastMode){
+      _focusLastMode = m;
+      focusItems.splice(0, focusItems.length);
+      try{ loadFocusItems(); }catch(_){ }
+      // Render the chips list for the newly active mode.
+      try{ renderList(); }catch(_){ }
+
+      // Also hard-reset the picker UI so we don't show stale "matching fish in ..." hints
+      // from the previous mode (some locations exist in both modes).
+      try{
+        if(locSel){
+          // Clear selection before repopulateFocusLocations() so it can't restore a shared location.
+          locSel.value = '';
+          locSel.selectedIndex = 0;
+        }
+        if(typeof resetSelect === 'function'){
+          resetSelect(catSel, 'Select…');
+          resetSelect(fishSel, 'Select…');
+        }else{
+          // Fallback: minimal reset
+          if(catSel){ catSel.value = ''; }
+          if(fishSel){ fishSel.value = ''; }
+        }
+        if(catSel) catSel.disabled = true;
+        if(fishSel) fishSel.disabled = true;
+        setAddVisible(false);
+        setAddEnabled(false);
+        setHint('Pick a location to begin.');
+      }catch(_){ }
+    }
     try{ repopulateFocusLocations(); }catch(_){ }
     try{ renderGaps(); }catch(_){ }
   };
