@@ -4553,7 +4553,7 @@ async function autoRollSeasonMonthly(){
         const bundle = {
           schemaVersion: "season-archive-bundle-v1",
           exportedAt: (mainSnap && mainSnap.exportedAt) || (vipSnap && vipSnap.exportedAt) || new Date().toISOString(),
-          app: { name: "FishMetrics", version: "v1.4.5" },
+          app: { name: "FishMetrics", version: "v1.5" },
           month: storedMonth,
           main: mainSnap,
           vip: vipSnap
@@ -4734,7 +4734,7 @@ function _buildSeasonArchiveSnapshot(){
   return {
     schemaVersion: "season-archive-v2",
     exportedAt: now.toISOString(),
-    app: { name: "FishMetrics", version: "v1.4.5" },
+    app: { name: "FishMetrics", version: "v1.5" },
     season: { seasonId, startedAt, month },
     rules: {
       oosCaps: { Common: 357, Rare: 476, Epic: 595 },
@@ -4842,7 +4842,7 @@ function _buildSeasonArchiveSnapshotFrom(seasonRecordsInput, locationsData, mode
   return {
     schemaVersion: "season-archive-v2",
     exportedAt: now.toISOString(),
-    app: { name: "FishMetrics", version: "v1.4.5" },
+    app: { name: "FishMetrics", version: "v1.5" },
     season: { seasonId, startedAt, month: safeMonth },
     rules: {
       oosCaps: { Common: 357, Rare: 476, Epic: 595 },
@@ -5320,9 +5320,9 @@ function generateShareImage(opts){
   drawLabel('Total points', pad+colW+gap+26, topY+labelYOff);
   drawValue((k.totalPoints ? k.totalPoints.toFixed(0) : '0'), pad+colW+gap+26, topY+valueYOff, 900, 52);
 
-  // 3) % 4★ catches
+  // 3) % 4★+ catches
   card(pad, y2, colW, rowH);
-  drawLabel('% 4★ catches', pad+26, y2+labelYOff);
+  drawLabel('% 4★+ catches', pad+26, y2+labelYOff);
   drawValue(k.pct4.toFixed(1) + '%', pad+26, y2+valueYOff, 900, 56);
 
   // 4) % 5★ catches
@@ -8679,13 +8679,13 @@ function renderKpiBadges(kpis){
       pct4: [25,50,70],
       pct5: [10,20,35]
     } : {
-      points: [75,85,91],
-      pct4: [45,65,76],
-      pct5: [15,25,36]
+      points: [75,85,90],
+      pct4: [45,65,75],
+      pct5: [15,25,35]
     };
 
     const tPoints = _fmBadgeTier(pctPoints, THR.points[0], THR.points[1], THR.points[2]);
-    const t4 = _fmBadgeTier(pct4, THR.pct4[0], THR.pct4[1], THR.pct4[2]);
+    const t4 = _fmBadgeTier((pct4 + pct5), THR.pct4[0], THR.pct4[1], THR.pct4[2]);
     const t5 = _fmBadgeTier(pct5, THR.pct5[0], THR.pct5[1], THR.pct5[2]);
 
     const setStamp = (el, cls, tier, kind) => {
@@ -8699,21 +8699,57 @@ function renderKpiBadges(kpis){
       el.innerHTML = _fmCrownSvg(tier);
       el.style.display = 'inline-flex';
 
-      // Tooltip text (Main -> All-time)
-      let t = '';
+      let currPct = 0, nextPct = null, label = '', metricLabel = '', ptsThr = 0, currentVal = 0;
+      const scope = isSeason ? 'Season' : 'All-time';
+      const fmtPctGap = (n) => {
+        const v = Math.max(0, Number(n || 0));
+        return (Math.round(v * 10) / 10).toFixed(1).replace(/\.0$/, '');
+      };
       if(kind === 'points'){
-        const pctThr = tier===1 ? THR.points[0] : (tier===2 ? THR.points[1] : THR.points[2]);
-        const ptsThr = maxPoints > 0 ? Math.round(maxPoints * (pctThr/100)) : 0;
-        const scope = isSeason ? 'Season' : 'All-time';
-        t = `Points Crown — Tier ${tier} (≥ ${pctThr}% ${scope} Max: ${fmtInt(ptsThr)} pts)`;
+        currPct = tier===1 ? THR.points[0] : (tier===2 ? THR.points[1] : THR.points[2]);
+        nextPct = tier===1 ? THR.points[1] : (tier===2 ? THR.points[2] : null);
+        label = 'Points Crown';
+        metricLabel = `${scope} Max`;
+        currentVal = pctPoints;
       }else if(kind === 'pct4'){
-        const pctThr = tier===1 ? THR.pct4[0] : (tier===2 ? THR.pct4[1] : THR.pct4[2]);
-        const scope = isSeason ? 'Season' : 'All-time';
-        t = `4★ Crown — Tier ${tier} (≥ ${pctThr}% ${scope} 4★ Rate)`;
+        currPct = tier===1 ? THR.pct4[0] : (tier===2 ? THR.pct4[1] : THR.pct4[2]);
+        nextPct = tier===1 ? THR.pct4[1] : (tier===2 ? THR.pct4[2] : null);
+        label = '4★ Crown';
+        metricLabel = `${scope} 4*+ catches`;
+        currentVal = pct4;
       }else if(kind === 'pct5'){
-        const pctThr = tier===1 ? THR.pct5[0] : (tier===2 ? THR.pct5[1] : THR.pct5[2]);
-        const scope = isSeason ? 'Season' : 'All-time';
-        t = `5★ Crown — Tier ${tier} (≥ ${pctThr}% ${scope} 5★ Rate)`;
+        currPct = tier===1 ? THR.pct5[0] : (tier===2 ? THR.pct5[1] : THR.pct5[2]);
+        nextPct = tier===1 ? THR.pct5[1] : (tier===2 ? THR.pct5[2] : null);
+        label = '5★ Crown';
+        metricLabel = `${scope} 5* catches`;
+        currentVal = pct5;
+      }
+
+      let t = '';
+      if(nextPct != null){
+        const pctGap = fmtPctGap(nextPct - currentVal);
+        if(kind === 'points'){
+          ptsThr = maxPoints > 0 ? Math.ceil(maxPoints * (nextPct/100)) : 0;
+          const ptsGap = Math.max(0, ptsThr - Math.round(totalPoints));
+          t = `${label} — Tier ${tier} unlocked.
+Next: Tier ${tier+1} at ${nextPct}% ${metricLabel} (${fmtInt(ptsThr)} pts).
+${pctGap}% / ${fmtInt(ptsGap)} pts to go.`;
+        }else{
+          t = `${label} — Tier ${tier} unlocked.
+Next: Tier ${tier+1} at ${nextPct}% ${metricLabel}.
+${pctGap}% to go.`;
+        }
+      }else{
+        if(kind === 'points'){
+          ptsThr = maxPoints > 0 ? Math.ceil(maxPoints * (currPct/100)) : 0;
+          t = `${label} — Tier ${tier} unlocked.
+Top tier achieved.
+Requirement: ${currPct}% ${metricLabel} (${fmtInt(ptsThr)} pts).`;
+        }else{
+          t = `${label} — Tier ${tier} unlocked.
+Top tier achieved.
+Requirement: ${currPct}% ${metricLabel}.`;
+        }
       }
       if(t) el.title = t;
     };
