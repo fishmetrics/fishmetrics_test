@@ -506,28 +506,28 @@ const LOCATIONS_VIP = {
     { name:"nightmary", category:"Legendary", min:440.92, max:1102.31 }
   ],
   "Nuclear Plant": [
-    { name:"AppleGill", category:"Common", min:0.44, max:4.41 },
+    { name:"Applegill", category:"Common", min:0.44, max:4.41 },
     { name:"Bat-eel", category:"Common", min:2.2, max:8.82 },
     { name:"Bottlefin", category:"Common", min:2.2, max:6.61 },
-    { name:"BreadnButterjaw", category:"Common", min:4.41, max:8.82 },
+    { name:"Bread'N'Butterjaw", category:"Common", min:4.41, max:8.82 },
     { name:"Bulpgill", category:"Common", min:0.22, max:4.41 },
     { name:"Carrotfin", category:"Common", min:3.3, max:11.02 },
     { name:"Double Troutot", category:"Common", min:4.41, max:15.34 },
     { name:"Forknose", category:"Common", min:2.2, max:13.22 },
     { name:"Geigerfin", category:"Common", min:17.64, max:37.48 },
-    { name:"Irradiated Cutfin", category:"Common", min:11.02, max:22.04 },
+    { name:"Irradiatedcutfin", category:"Common", min:11.02, max:22.04 },
     { name:"Knifetail", category:"Common", min:2.2, max:6.61 },
     { name:"Oniongill", category:"Common", min:1.1, max:8.82 },
     { name:"Potatofin", category:"Common", min:4.41, max:13.63 },
-    { name:"RocknRollKingjaw", category:"Common", min:4.41, max:19.84 },
+    { name:"Rock'N'Rollkingjaw", category:"Common", min:4.41, max:19.84 },
     { name:"Rug-ball-swimmer", category:"Common", min:2.2, max:11.02 },
     { name:"Sausagetail", category:"Common", min:4.41, max:15.43 },
     { name:"Trianglegill", category:"Common", min:1.1, max:6.61 },
     { name:"Footsalmon", category:"Rare", min:11.02, max:26.46 },
     { name:"Magnetfin", category:"Rare", min:6.61, max:44.09 },
-    { name:"Yellow Submarinecod", category:"Rare", min:33.07, max:198.42 },
+    { name:"Yellowsubmarinecod", category:"Rare", min:33.07, max:198.42 },
     { name:"Devil Mutanoid", category:"Epic", min:11.02, max:33.07 },
-    { name:"Giant Busbass", category:"Epic", min:220.46, max:661.39 }
+    { name:"Giantbusbass", category:"Epic", min:220.46, max:661.39 }
   ]
 };
 // Season Log Records should follow the in-game ordering (UI-only).
@@ -545,7 +545,7 @@ const SEASON_GAME_ORDER = {
   "amazon": ["amazon pellona", "peacock bass", "tucunare", "corvina", "jatuarana", "redtail catfish", "tiger sorubim", "redhook myleus", "pacu", "zungaro", "curimbata", "lambari", "giant trahira", "redeye piranha", "red piranha", "speckled pavon", "freshwater barracuda", "bicuda", "arowana", "amazon puffer", "pirapitinga", "electric eel", "flatwhiskered catfish", "lau lau", "rock bacu", "payara", "cachama", "arapaima", "boiuna"]
 ,
   "chemical plant": ["glowfish", "raspberryfish", "wicked carp", "crystal fin", "zombifin", "flatjaw", "spotted windchaser", "glow puffball", "cthulhu carp", "nylonfish", "luminator", "telebass", "long sparker", "rotting deadfish", "phosphorite", "fireborn scales", "burned potfish", "bubblefin", "silvered amelinium", "fish-eye", "teapotfish", "anvilfish", "chupakabrafish", "slimesnail", "wheelreef", "barreltail", "toxic salmon", "anchorscale", "bottlegill", "cantrout", "uranium eel", "bootfish", "flipper sneaker", "graterfin", "mailfish", "toxic puffer", "plant waterer", "gnawfish", "rusty mutang", "biterfish", "zombie genius", "stale deadfish", "stringed guitarfish", "banjoplayer", "cuddlyfish", "bomberfish", "soccerfish", "brainfish", "sawfish", "bonebite", "gasmist swimmer", "guitarfin", "swagfish", "fingered glovefish", "round tubefish", "polish spudfish", "seahorse abomination", "ribbed bonefish", "nightmary"],
-  "nuclear plant": []
+  "nuclear plant": ["Oniongill", "Rock'N'Rollkingjaw", "Rug-ball-swimmer", "Irradiatedcutfin", "Geigerfin", "Forknose", "Double Troutot", "Carrotfin", "Knifetail", "Trianglegill", "Bat-eel", "Applegill", "Sausagetail", "Bread'N'Butterjaw", "Bottlefin", "Potatofin", "Bulpgill", "Footsalmon", "Magnetfin", "Yellowsubmarinecod", "Giantbusbass", "Devil Mutanoid"]
 };
 
 
@@ -1056,7 +1056,7 @@ function populateLocationOptions(){
   locationSelect.innerHTML = "";
 
   // Combined view
-  const allCount = Object.values(LOCATIONS).reduce((sum,arr)=>sum+arr.length,0);
+  const allCount = Object.values(getLocationsData() || {}).reduce((sum,arr)=>sum + (Array.isArray(arr) ? arr.length : 0),0);
   const allOpt = document.createElement("option");
   allOpt.value = "__ALL__";
   allOpt.textContent = `All Locations (${allCount})`;
