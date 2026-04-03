@@ -4985,34 +4985,10 @@ body.planner-open .sidebar{ opacity:.86; }
   flex:1 1 auto;
 }
 .planner-breadcrumb-link{
-  appearance:none;
-  -webkit-appearance:none;
-  background:transparent;
-  border:none;
-  box-shadow:none;
-  outline:none;
   color:#ffe08a;
   font:inherit;
   font-weight:800;
   padding:0;
-  margin:0;
-  border-radius:0;
-  line-height:1.2;
-  cursor:pointer;
-}
-.planner-breadcrumb-link:hover{
-  color:#fff0ad;
-  background:transparent;
-  border:none;
-  box-shadow:none;
-}
-.planner-breadcrumb-link:focus,
-.planner-breadcrumb-link:focus-visible,
-.planner-breadcrumb-link:active{
-  background:transparent;
-  border:none;
-  box-shadow:none;
-  outline:none;
 }
 .planner-breadcrumb-sep,
 .planner-breadcrumb-current{
@@ -5121,13 +5097,10 @@ body.planner-open .sidebar{ opacity:.86; }
   box-shadow:0 0 0 1px rgba(255,216,97,.16) inset;
 }
 .planner-kpi-grid{ display:grid; grid-template-columns:1fr 1fr; gap:14px; }
-.planner-kpi-grid--lure-current{ grid-template-columns:repeat(3, minmax(0, 1fr)); }
 .planner-kpi-card{ padding:18px; }
 .planner-kpi-label{ color:rgba(255,255,255,.72); font-size:12px; letter-spacing:1.8px; text-transform:uppercase; margin-bottom:8px; }
 .planner-kpi-value{ color:#fff; font-size:20px; font-weight:900; }
-.planner-table-card{ overflow:hidden; flex:0 0 auto; }
-.planner-table-card .planner-table-bar{ border-top-left-radius:22px; border-top-right-radius:22px; }
-.planner-table-card .planner-table-wrap{ border-bottom-left-radius:22px; border-bottom-right-radius:22px; }
+.planner-table-card{ overflow:visible; flex:0 0 auto; }
 .planner-table-bar{
   display:flex; align-items:center; justify-content:space-between; gap:14px;
   padding:16px 18px; border-bottom:1px solid rgba(255,255,255,.08);
@@ -5147,30 +5120,6 @@ body.planner-open .sidebar{ opacity:.86; }
 .planner-lure-fish{ font-weight:700; }
 .planner-lure-num{ font-weight:800; }
 .planner-lure-gold{ color:#f4d065; }
-
-.planner-action-cell{ text-align:center !important; }
-.planner-action-btn{
-  appearance:none;
-  -webkit-appearance:none;
-  display:inline-flex;
-  align-items:center;
-  justify-content:center;
-  min-width:88px;
-  min-height:34px;
-  padding:0 14px;
-  border-radius:999px;
-  border:1px solid rgba(255,255,255,.16);
-  background:linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.04));
-  color:rgba(255,255,255,.94);
-  font:inherit;
-  font-size:12px;
-  font-weight:900;
-  letter-spacing:.6px;
-  cursor:pointer;
-  white-space:nowrap;
-}
-.planner-action-btn:hover{ color:#fff3b7; border-color:rgba(255,216,97,.45); }
-.planner-action-btn-danger{ color:#fff; }
 .planner-level-input{ width:76px; }
 .planner-fish-input{ width:110px; }
 .planner-input::-webkit-outer-spin-button,
@@ -5830,48 +5779,4 @@ body.planner-page-active .planner-drawer-body{
 .planner-tooltip:hover::after{
   opacity: 1;
   transform: translateY(0);
-}
-/* XP Tracker action column fix */
-.planner-xp-table th:last-child,
-.planner-xp-table td:last-child{
-  width: 140px;
-  min-width: 140px;
-  text-align: center !important;
-}
-.planner-xp-table .planner-action-cell{
-  text-align: center !important;
-  vertical-align: middle;
-  padding-left: 12px;
-  padding-right: 12px;
-}
-.planner-xp-table .planner-action-btn{
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  margin: 0 auto;
-}
-
-/* Lure Cost Calculator equal-width columns */
-.planner-lure-calc-table{
-  table-layout: fixed;
-  min-width: 0;
-}
-.planner-lure-calc-table th,
-.planner-lure-calc-table td{
-  width: 20%;
-  text-align: center;
-}
-.planner-lure-calc-table th:first-child,
-.planner-lure-calc-table td:first-child{
-  min-width: 0 !important;
-}
-.planner-lure-calc-table .planner-select,
-.planner-lure-calc-table .planner-input{
-  width: 100%;
-  max-width: 100%;
-  box-sizing: border-box;
-  margin: 0;
-}
-.planner-lure-calc-table .planner-lure-num{
-  text-align: center;
 }

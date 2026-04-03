@@ -8981,6 +8981,7 @@ Requirement: ${currPct}% ${metricLabel}.`;
     targetValues: Object.create(null),
     lureCalcFrom: 0,
     lureCalcTo: 0,
+    lureCalcFishInHand: 0,
     seasonScope: 'MAIN',
     seasonMonth: 3,
     seasonMap: 'ALL_MAIN',
@@ -9019,6 +9020,7 @@ Requirement: ${currPct}% ${metricLabel}.`;
       targetValues: Object.assign({}, plannerState.targetValues || {}),
       lureCalcFrom: plannerState.lureCalcFrom,
       lureCalcTo: plannerState.lureCalcTo,
+      lureCalcFishInHand: plannerState.lureCalcFishInHand,
       seasonScope: plannerState.seasonScope,
       seasonMonth: plannerState.seasonMonth,
       seasonMap: plannerState.seasonMap,
@@ -9181,17 +9183,18 @@ function getPlannerSelectedRows(){
   return getPlannerRows().filter((row) => selected.has(keyForRow(row)));
 }
 
-function openPlannerNoticeModal(message){
+function openPlannerNoticeModal(message, title){
   try{
     const existing = document.getElementById('plannerNoticeModal');
     if(existing) existing.remove();
   }catch(_){}
+  const safeTitle = String(title || 'Notice');
   const modal = document.createElement('div');
   modal.id = 'plannerNoticeModal';
   modal.className = 'planner-modal-backdrop';
   modal.innerHTML = `
-    <div class="planner-modal-card planner-modal-card--notice" role="dialog" aria-modal="true">
-      <div class="planner-modal-title">Notice</div>
+    <div class="planner-modal-card planner-modal-card--notice" role="dialog" aria-modal="true" aria-labelledby="plannerNoticeTitle">
+      <div id="plannerNoticeTitle" class="planner-modal-title">${escapeHtml(safeTitle)}</div>
       <div class="planner-modal-copy">${escapeHtml(String(message || ''))}</div>
       <div class="planner-modal-actions">
         <button type="button" class="planner-pill active" data-planner-notice-ok="1">OK</button>
@@ -9250,6 +9253,7 @@ function ensureValidPlannerActiveSet(){
     plannerState.targetValues = sanitizePlannerRowMap(saved.targetValues, 'TARGET');
     plannerState.lureCalcFrom = clampLevel(saved.lureCalcFrom, 0);
     plannerState.lureCalcTo = clampTargetLureLevel(saved.lureCalcTo, plannerState.lureCalcFrom);
+    plannerState.lureCalcFishInHand = clampFishInHand(saved.lureCalcFishInHand);
     plannerState.seasonScope = ['MAIN','VIP'].includes(saved.seasonScope) ? saved.seasonScope : plannerState.seasonScope;
     const sm = Number(saved.seasonMonth);
     plannerState.seasonMonth = Number.isFinite(sm) ? Math.max(1, Math.min(12, Math.round(sm))) : plannerState.seasonMonth;
@@ -9332,6 +9336,33 @@ function ensureValidPlannerActiveSet(){
     const num = Number(value);
     if(!Number.isFinite(num)) return 0;
     return Math.max(0, Math.round(num));
+  }
+
+
+  function getLureCalcPathState(start, target, fishInHand){
+    const from = clampLevel(start, 0);
+    const to = clampTargetLureLevel(target, from);
+    let remainingFishInHand = clampFishInHand(fishInHand);
+    let remainingFishNeeded = 0;
+    let remainingGoldNeeded = 0;
+    for(let nextLevel = from + 1; nextLevel <= to; nextLevel += 1){
+      const stepFish = diffLookup(nextLevel - 1, nextLevel, FISH_FROM_ONE);
+      const stepGold = diffLookup(nextLevel - 1, nextLevel, GOLD_FROM_ONE);
+      if(remainingFishInHand >= stepFish){
+        remainingFishInHand -= stepFish;
+        continue;
+      }
+      remainingFishNeeded += Math.max(0, stepFish - remainingFishInHand);
+      remainingFishInHand = 0;
+      remainingGoldNeeded += stepGold;
+    }
+    return {
+      from,
+      to,
+      fishInHand: clampFishInHand(fishInHand),
+      fishNeeded: remainingFishNeeded,
+      goldNeeded: remainingGoldNeeded
+    };
   }
 
   function todayISODate(){
@@ -10160,9 +10191,14 @@ function getFilteredPlannerRows(){
   }
 
   function plannerModuleNav(currentLabel){
+    const label = escapeHtml(String(currentLabel || 'Planner'));
     return `
       <div class="planner-module-nav">
-        
+        <div class="planner-breadcrumbs" aria-label="Planner breadcrumb">
+          <button type="button" class="planner-breadcrumb-link" data-planner-home="1">Planner Home</button>
+          <span class="planner-breadcrumb-sep" aria-hidden="true">&gt;</span>
+          <span class="planner-breadcrumb-current">${label}</span>
+        </div>
       </div>`;
   }
 
@@ -10271,9 +10307,10 @@ function getFilteredPlannerRows(){
           </div>
         </div>
       </section>
-      <section class="planner-kpi-grid">
+      <section class="planner-kpi-grid${isCurrent ? ' planner-kpi-grid--lure-current' : ''}">
         ${isCurrent
-          ? `<article class="planner-kpi-card"><div class="planner-kpi-label">Closest to Upgrade</div><div class="planner-kpi-value">${currentKpis && currentKpis.closest ? escapeHtml(toTitleCase(currentKpis.closest.row.name)) : '—'}</div><div class="planner-lure-meta">${currentKpis && currentKpis.closest ? `${escapeHtml(currentKpis.closest.row.location)} • ${escapeHtml(currentKpis.closest.row.category)} • ${fmtInt(currentKpis.closest.nextFishNeeded)} fish to Lv. ${fmtInt(currentKpis.closest.nextLevel)}` : '—'}</div></article>
+          ? `<article class="planner-kpi-card"><div class="planner-kpi-label">Total Gold Needed</div><div class="planner-kpi-value">${fmtInt(totalGoldNeeded)}</div><div class="planner-lure-meta">Across shown fish</div></article>
+             <article class="planner-kpi-card"><div class="planner-kpi-label">Closest to Upgrade</div><div class="planner-kpi-value">${currentKpis && currentKpis.closest ? escapeHtml(toTitleCase(currentKpis.closest.row.name)) : '—'}</div><div class="planner-lure-meta">${currentKpis && currentKpis.closest ? `${escapeHtml(currentKpis.closest.row.location)} • ${escapeHtml(currentKpis.closest.row.category)} • ${fmtInt(currentKpis.closest.nextFishNeeded)} fish to Lv. ${fmtInt(currentKpis.closest.nextLevel)}` : '—'}</div></article>
              <article class="planner-kpi-card"><div class="planner-kpi-label">Cheapest to Upgrade</div><div class="planner-kpi-value">${currentKpis && currentKpis.cheapest ? escapeHtml(toTitleCase(currentKpis.cheapest.row.name)) : '—'}</div><div class="planner-lure-meta">${currentKpis && currentKpis.cheapest ? `${escapeHtml(currentKpis.cheapest.row.location)} • ${escapeHtml(currentKpis.cheapest.row.category)} • ${fmtInt(currentKpis.cheapest.nextGoldNeeded)} gold to Lv. ${fmtInt(currentKpis.cheapest.nextLevel)}` : '—'}</div></article>`
           : `<article class="planner-kpi-card"><div class="planner-kpi-label">Total Fish Needed</div><div class="planner-kpi-value">${fmtInt(totalFishNeeded)}</div></article>
              <article class="planner-kpi-card"><div class="planner-kpi-label">Total Gold Needed</div><div class="planner-kpi-value">${fmtInt(totalGoldNeeded)}</div></article>`}
@@ -10308,10 +10345,13 @@ function getFilteredPlannerRows(){
     if(!shell.body) return;
     const from = clampLevel(plannerState.lureCalcFrom, 0);
     const to = clampTargetLureLevel(plannerState.lureCalcTo, from);
+    const fishInHand = clampFishInHand(plannerState.lureCalcFishInHand);
     plannerState.lureCalcFrom = from;
     plannerState.lureCalcTo = to;
-    const fishNeeded = diffLookup(from, to, FISH_FROM_ONE);
-    const goldNeeded = diffLookup(from, to, GOLD_FROM_ONE);
+    plannerState.lureCalcFishInHand = fishInHand;
+    const calc = getLureCalcPathState(from, to, fishInHand);
+    const fishNeeded = calc.fishNeeded;
+    const goldNeeded = calc.goldNeeded;
 
     shell.body.innerHTML = `
       ${plannerModuleNav('Lure Cost Calculator')}
@@ -10319,7 +10359,7 @@ function getFilteredPlannerRows(){
         <div class="planner-lure-head">
           <div class="planner-lure-title-wrap">
             <div class="planner-lure-title">Lure Cost Calculator</div>
-            <div class="planner-lure-copy">Calculate the fish and gold needed to upgrade your lure from one level to another.</div>
+            <div class="planner-lure-copy">Calculate the fish and gold still needed to upgrade your lure from one level to another. Fish in Hand is applied step by step across the upgrade path.</div>
           </div>
         </div>
 
@@ -10341,11 +10381,12 @@ function getFilteredPlannerRows(){
           <div class="planner-table-title">Upgrade Plan</div>
         </div>
         <div class="planner-table-wrap">
-          <table class="planner-table">
+          <table class="planner-table planner-lure-calc-table">
             <thead>
               <tr>
                 <th>From Lure</th>
                 <th>To Lure</th>
+                <th>Fish in Hand</th>
                 <th>Fish Needed</th>
                 <th>Gold Needed</th>
               </tr>
@@ -10354,6 +10395,7 @@ function getFilteredPlannerRows(){
               <tr>
                 <td><select id="plannerLureCalcFrom" class="planner-select planner-level-select">${plannerLevelOptions(0).map((lvl) => `<option value="${lvl}" ${lvl === from ? 'selected' : ''}>${lvl}</option>`).join('')}</select></td>
                 <td><select id="plannerLureCalcTo" class="planner-select planner-level-select">${plannerLevelOptions(from).map((lvl) => `<option value="${lvl}" ${lvl === to ? 'selected' : ''}>${lvl}</option>`).join('')}</select></td>
+                <td><input id="plannerLureCalcFishInHand" class="planner-input planner-fish-input" type="number" min="0" step="1" value="${escapeAttr(fishInHand)}"></td>
                 <td class="planner-lure-num">${fmtInt(fishNeeded)}</td>
                 <td class="planner-lure-num planner-lure-gold">${fmtInt(goldNeeded)}</td>
               </tr>
@@ -10372,14 +10414,35 @@ function getFilteredPlannerRows(){
     const xpTargetEl = body ? body.querySelector('#plannerXpTarget') : null;
     const xpDateEl = body ? body.querySelector('#plannerXpDate') : null;
     const xpValueEl = body ? body.querySelector('#plannerXpValue') : null;
-    plannerState.xpStart = clampXPValue(xpStartEl ? xpStartEl.value : plannerState.xpStart);
-    plannerState.xpTarget = clampXPValue(xpTargetEl ? xpTargetEl.value : plannerState.xpTarget);
-    plannerState.xpLogDate = normalizeISODate(xpDateEl ? xpDateEl.value : plannerState.xpLogDate) || todayISODate();
-    plannerState.xpLogValue = clampXPValue(xpValueEl ? xpValueEl.value : plannerState.xpLogValue);
-    const date = normalizeISODate(plannerState.xpLogDate) || todayISODate();
-    const xp = clampXPValue(plannerState.xpLogValue);
-    if(xp !== null){
-      plannerState.xpEntries = sanitizeXPEntries([].concat(plannerState.xpEntries || [], [{ date, xp }]));
+    const startXP = clampXPValue(xpStartEl ? xpStartEl.value : plannerState.xpStart);
+    const targetXP = clampXPValue(xpTargetEl ? xpTargetEl.value : plannerState.xpTarget);
+    const logDate = normalizeISODate(xpDateEl ? xpDateEl.value : plannerState.xpLogDate) || todayISODate();
+    const logXP = clampXPValue(xpValueEl ? xpValueEl.value : plannerState.xpLogValue);
+
+    plannerState.xpStart = startXP;
+    plannerState.xpTarget = targetXP;
+    plannerState.xpLogDate = logDate;
+    plannerState.xpLogValue = logXP;
+
+    const today = todayISODate();
+    if(logDate > today){
+      openPlannerNoticeModal('Date cannot be in the future.', 'XP Entry Not Saved');
+      if(xpDateEl) xpDateEl.focus();
+      return;
+    }
+    if(logXP !== null && targetXP !== null && logXP > targetXP){
+      openPlannerNoticeModal('Total XP cannot be greater than target XP.', 'XP Entry Not Saved');
+      if(xpValueEl) xpValueEl.focus();
+      return;
+    }
+    if(logXP !== null && startXP !== null && logXP < startXP){
+      openPlannerNoticeModal('Total XP cannot be less than starting XP.', 'XP Entry Not Saved');
+      if(xpValueEl) xpValueEl.focus();
+      return;
+    }
+
+    if(logXP !== null){
+      plannerState.xpEntries = sanitizeXPEntries([].concat(plannerState.xpEntries || [], [{ date: logDate, xp: logXP }]));
       if(!keepValue) plannerState.xpLogValue = null;
     }
     queuePlannerStateSave();
@@ -10402,7 +10465,7 @@ function getFilteredPlannerRows(){
           <td>${formatXPDate(entry.date)}</td>
           <td class="planner-lure-num">${fmtInt(entry.xp)}</td>
           <td class="planner-lure-num">${gain === null ? '—' : fmtInt(gain)}</td>
-          <td class="planner-lure-num"><button type="button" class="planner-back-btn" data-xp-delete-date="${escapeAttr(entry.date)}">Delete</button></td>
+          <td class="planner-lure-num planner-action-cell"><button type="button" class="planner-action-btn planner-action-btn-danger" data-xp-delete-date="${escapeAttr(entry.date)}">Delete</button></td>
         </tr>`;
     }).join('');
 
@@ -10430,11 +10493,11 @@ function getFilteredPlannerRows(){
           <div class="planner-control-row" style="display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:12px; align-items:end;">
             <label class="planner-map-control planner-map-control-inline" style="width:100%; min-width:0;">
               <span>Update date</span>
-              <input id="plannerXpDate" class="planner-input" type="date" value="${escapeAttr(plannerState.xpLogDate || todayISODate())}" style="width:100%; min-width:0;">
+              <input id="plannerXpDate" class="planner-input" type="date" max="${todayISODate()}" value="${escapeAttr(plannerState.xpLogDate || todayISODate())}" style="width:100%; min-width:0;">
             </label>
             <label class="planner-map-control planner-map-control-inline" style="width:100%; min-width:0; margin:0;">
               <span>Total XP</span>
-              <input id="plannerXpValue" class="planner-input" type="number" min="0" step="1" value="${plannerState.xpLogValue === null ? '' : escapeAttr(plannerState.xpLogValue)}" placeholder="Enter today's total XP" style="width:100%; min-width:0;">
+              <input id="plannerXpValue" class="planner-input" type="number" min="0" step="1" ${stats.targetXP === null ? '' : `max="${escapeAttr(stats.targetXP)}"`} value="${plannerState.xpLogValue === null ? '' : escapeAttr(plannerState.xpLogValue)}" placeholder="Enter today's total XP" style="width:100%; min-width:0;">
             </label>
           </div>
           <div class="planner-control-row planner-control-row-bottom">
@@ -10466,7 +10529,7 @@ function getFilteredPlannerRows(){
           <div class="planner-table-count">${fmtInt(stats.entries.length)} entries</div>
         </div>
         <div class="planner-table-wrap">
-          <table class="planner-table">
+          <table class="planner-table planner-xp-table">
             <thead>
               <tr>
                 <th>Date</th>
@@ -10751,6 +10814,16 @@ if(rowSelectBtn){
         commitXPTrackerUpdateFromInputs(body);
         return;
       }
+      const xpDeleteBtn = e.target.closest('[data-xp-delete-date]');
+      if(xpDeleteBtn){
+        const deleteDate = normalizeISODate(xpDeleteBtn.getAttribute('data-xp-delete-date'));
+        if(deleteDate){
+          plannerState.xpEntries = sanitizeXPEntries((plannerState.xpEntries || []).filter((entry) => normalizeISODate(entry && entry.date) !== deleteDate));
+          queuePlannerStateSave();
+          renderPlannerView();
+        }
+        return;
+      }
       const clearSearchBtn = e.target.closest('[data-planner-search-clear]');
       if(clearSearchBtn){
         plannerState.lureSearch = '';
@@ -10911,10 +10984,9 @@ if(rowSelectBtn){
         renderPlannerView();
         return;
       }
-      const xpDeleteBtn = e.target.closest('[data-xp-delete-date]');
-      if(xpDeleteBtn){
-        const date = normalizeISODate(xpDeleteBtn.getAttribute('data-xp-delete-date'));
-        plannerState.xpEntries = sanitizeXPEntries((plannerState.xpEntries || []).filter((entry) => String(entry.date) !== String(date)));
+      const lureCalcFishInput = e.target.closest('#plannerLureCalcFishInHand');
+      if(lureCalcFishInput){
+        plannerState.lureCalcFishInHand = clampFishInHand(lureCalcFishInput.value);
         queuePlannerStateSave();
         renderPlannerView();
         return;
