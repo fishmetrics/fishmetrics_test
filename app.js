@@ -6003,7 +6003,7 @@ function _countBackupUniqueCanonicalFish(obj){
         if(!s) continue; // don't count empty entries
         const key0=_canonKey(fishName);
         const COUNT_ONLY_ALIASES={
-          "sunfish":"ocean sunfish",
+          "ocean sunfish":"ocean sunfish",
           "bass tunacare":"tucunare",
           "rock flatgal":"rock flagtail",
           "saddled coral grouper":"black saddled coral grouper",
@@ -9984,7 +9984,6 @@ function getFilteredPlannerRows(){
               <tr>
                 <th>Location</th>
                 <th>Fish</th>
-                <th class="planner-time-head">Time</th>
                 <th>Category</th>
                 <th class="planner-sortable-head" data-season-sort="1">Season Status ${plannerState.seasonSort === 'STATUS_ASC' ? '▲' : '▼'}</th>
                 <th>Target Points</th>
@@ -9998,7 +9997,7 @@ function getFilteredPlannerRows(){
 
 
   const OOS_DAY_FISH_MAIN = new Set(["redear sunfish", "muskie", "goldfish", "bessie", "tripletail", "sierra mackerel", "jack crevalle", "broomtail grouper", "striped marlin", "whale shark", "atka mackerel", "capelin", "arctic greyling", "blue lingcod", "king salmon", "dusky flathead", "red emperor snapper", "albacore", "unicorn leatherjacket", "coral trout", "hoodwinker sunfish", "bunyip", "twaite shad", "three spined stickleback", "gudgeon", "roach", "european grayling", "scottish salmon", "red tail tiger catfish", "juliens golden prize carp", "amazon pellona", "jatuarana", "redeye piranha", "bicuda", "pirapitinga", "rock bacu", "payara", "boiuna"]);
-  const OOS_NIGHT_FISH_MAIN = new Set(["bonefish", "pacific footballfish", "brown trout", "walleye", "smallmouth bass", "flathead catfish", "longnose gar", "wahoo", "pacific sailfish", "cubera snapper", "nurse shark", "black marlin", "bull shark", "don pedro", "lancetfish", "sockeye salmon", "burbot", "bigmouth sculpin", "wolf eel", "sunfish", "shortfin mako shark", "carpet shark", "rock flagtail", "fingermark", "mangrove jack", "spotted handfish", "tiger shark", "northern pike", "vendace", "dace", "european smelt", "european eel", "common sturgeon", "pla kad thong", "rice eel", "marbled sand goby", "giant devil catfish", "yellow mystus", "wallago", "striped catfish", "mekong giant catfish", "tucunare", "curimbata", "redtail catfish", "tiger sorubim", "peacock bass", "speckled pavon", "arowana", "electric eel", "flatwhiskered catfish", "arapaima"]);
+  const OOS_NIGHT_FISH_MAIN = new Set(["bonefish", "pacific footballfish", "brown trout", "walleye", "smallmouth bass", "flathead catfish", "longnose gar", "wahoo", "pacific sailfish", "cubera snapper", "nurse shark", "black marlin", "bull shark", "don pedro", "lancetfish", "sockeye salmon", "burbot", "bigmouth sculpin", "wolf eel", "ocean sunfish", "shortfin mako shark", "carpet shark", "rock flagtail", "fingermark", "mangrove jack", "spotted handfish", "tiger shark", "northern pike", "vendace", "dace", "european smelt", "european eel", "common sturgeon", "pla kad thong", "rice eel", "marbled sand goby", "giant devil catfish", "yellow mystus", "wallago", "striped catfish", "mekong giant catfish", "tucunare", "curimbata", "redtail catfish", "tiger sorubim", "peacock bass", "speckled pavon", "arowana", "electric eel", "flatwhiskered catfish", "arapaima"]);
   const OOS_DAY_FISH_VIP = new Set(["teapotfish", "slimesnail"]);
   const OOS_NIGHT_FISH_VIP = new Set(["anchorscale", "fish-eye", "bonebite"]);
 
