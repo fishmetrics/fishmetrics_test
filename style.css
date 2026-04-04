@@ -5106,10 +5106,10 @@ body.planner-open .sidebar{ opacity:.86; }
   background:linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.04));
   color:rgba(255,255,255,.92);
   border-radius:12px;
-  min-height:34px;
-  padding:0 14px;
+  min-height:38px;
+  padding:0 18px;
   font:inherit;
-  font-size:12px;
+  font-size:13px;
   font-weight:900;
   letter-spacing:1px;
   cursor:pointer;
@@ -5133,6 +5133,31 @@ body.planner-open .sidebar{ opacity:.86; }
   padding:16px 18px; border-bottom:1px solid rgba(255,255,255,.08);
   background:linear-gradient(90deg, rgba(1,26,73,.9), rgba(2,35,97,.76));
 }
+
+.planner-table-mode-area{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:6px;
+  padding:18px 18px 14px;
+  background:linear-gradient(90deg, rgba(6,40,110,.82), rgba(8,52,138,.68));
+}
+.planner-pill-group--center{
+  display:inline-flex;
+  justify-content:center;
+  margin:0 auto;
+}
+.planner-subtle-copy--center{
+  text-align:center;
+  font-size:11px;
+  line-height:1.35;
+  color:rgba(255,255,255,.62);
+  max-width:360px;
+  margin:0 auto;
+}
+.planner-lure-readonly{ color:rgba(255,255,255,.88); }
+.planner-level-select:disabled{ opacity:.55; cursor:not-allowed; }
 .planner-table-title{ color:#fff; font-size:16px; font-weight:900; }
 .planner-table-count{ color:#f4d065; font-size:13px; font-weight:900; }
 .planner-table-wrap{ overflow-x:auto; overflow-y:visible; max-height:none; }
@@ -5281,6 +5306,18 @@ body.planner-open .sidebar{ opacity:.86; }
 }
 .planner-season-table .planner-lure-gold{
   color:#f4d065;
+}
+
+.planner-time-head,
+.planner-time-cell{
+  text-align:center !important;
+  width:72px;
+  min-width:72px;
+}
+.planner-time-cell{
+  font-size:16px;
+  letter-spacing:0;
+  white-space:nowrap;
 }
 @media (max-width: 980px){
   .planner-season-controls{

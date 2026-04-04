@@ -9054,9 +9054,8 @@ Requirement: ${currPct}% ${metricLabel}.`;
             fishInHand: clampFishInHand(row.fishInHand)
           };
         }else{
-          const start = clampCurrentLureLevel(row.start);
-          const target = clampTargetLureLevel(row.target, start);
-          out[key] = { start, target };
+          const target = clampTargetLureLevel(row.target, null);
+          out[key] = { target };
         }
       });
     }catch(_){ }
@@ -9607,14 +9606,24 @@ function getFilteredPlannerRows(){
 
   function getTargetCell(row){
     const key = keyForRow(row);
-    const saved = plannerState.targetValues[key] || { start: 0, target: 1 };
-    const start = clampCurrentLureLevel(saved.start);
-    const safeTarget = clampTargetLureLevel(saved.target, start);
+    const current = getCurrentCell(row);
+    const hasCurrentInput = current && current.start !== null;
+    const saved = plannerState.targetValues[key] || {};
+    const start = hasCurrentInput ? clampCurrentLureLevel(current.start) : 0;
+    const fishInHand = hasCurrentInput ? clampFishInHand(current.fishInHand) : 0;
+    const baseTarget = (saved && saved.target !== undefined && saved.target !== null)
+      ? saved.target
+      : start;
+    const safeTarget = clampTargetLureLevel(baseTarget, start);
+    const path = getLureCalcPathState(start, safeTarget, fishInHand);
     return {
+      hasStart: true,
+      hasCurrentInput,
       start,
+      fishInHand,
       target: safeTarget,
-      fishNeeded: diffLookup(start, safeTarget, FISH_FROM_ONE),
-      goldNeeded: diffLookup(start, safeTarget, GOLD_FROM_ONE)
+      fishNeeded: path.fishNeeded,
+      goldNeeded: path.goldNeeded
     };
   }
 
@@ -9975,6 +9984,7 @@ function getFilteredPlannerRows(){
               <tr>
                 <th>Location</th>
                 <th>Fish</th>
+                <th class="planner-time-head">Time</th>
                 <th>Category</th>
                 <th class="planner-sortable-head" data-season-sort="1">Season Status ${plannerState.seasonSort === 'STATUS_ASC' ? '▲' : '▼'}</th>
                 <th>Target Points</th>
@@ -9984,6 +9994,22 @@ function getFilteredPlannerRows(){
           </table>
         </div>
       </section>`;
+  }
+
+
+  const OOS_DAY_FISH_MAIN = new Set(["redear sunfish", "muskie", "goldfish", "bessie", "tripletail", "sierra mackerel", "jack crevalle", "broomtail grouper", "striped marlin", "whale shark", "atka mackerel", "capelin", "arctic greyling", "blue lingcod", "king salmon", "dusky flathead", "red emperor snapper", "albacore", "unicorn leatherjacket", "coral trout", "hoodwinker sunfish", "bunyip", "twaite shad", "three spined stickleback", "gudgeon", "roach", "european grayling", "scottish salmon", "red tail tiger catfish", "juliens golden prize carp", "amazon pellona", "jatuarana", "redeye piranha", "bicuda", "pirapitinga", "rock bacu", "payara", "boiuna"]);
+  const OOS_NIGHT_FISH_MAIN = new Set(["bonefish", "pacific footballfish", "brown trout", "walleye", "smallmouth bass", "flathead catfish", "longnose gar", "wahoo", "pacific sailfish", "cubera snapper", "nurse shark", "black marlin", "bull shark", "don pedro", "lancetfish", "sockeye salmon", "burbot", "bigmouth sculpin", "wolf eel", "sunfish", "shortfin mako shark", "carpet shark", "rock flagtail", "fingermark", "mangrove jack", "spotted handfish", "tiger shark", "northern pike", "vendace", "dace", "european smelt", "european eel", "common sturgeon", "pla kad thong", "rice eel", "marbled sand goby", "giant devil catfish", "yellow mystus", "wallago", "striped catfish", "mekong giant catfish", "tucunare", "curimbata", "redtail catfish", "tiger sorubim", "peacock bass", "speckled pavon", "arowana", "electric eel", "flatwhiskered catfish", "arapaima"]);
+  const OOS_DAY_FISH_VIP = new Set(["teapotfish", "slimesnail"]);
+  const OOS_NIGHT_FISH_VIP = new Set(["anchorscale", "fish-eye", "bonebite"]);
+
+  function getPlannerFishTimeInfo(fishName, scope){
+    const key = String(fishName || "").trim().toLowerCase();
+    if(!key) return { icon: "☀️🌙", label: "Day/Night" };
+    const daySet = scope === "VIP" ? OOS_DAY_FISH_VIP : OOS_DAY_FISH_MAIN;
+    const nightSet = scope === "VIP" ? OOS_NIGHT_FISH_VIP : OOS_NIGHT_FISH_MAIN;
+    if(daySet.has(key)) return { icon: "☀️", label: "Day" };
+    if(nightSet.has(key)) return { icon: "🌙", label: "Night" };
+    return { icon: "☀️🌙", label: "Day/Night" };
   }
 
 
@@ -10060,11 +10086,14 @@ function getFilteredPlannerRows(){
       if(plannerState.oosMap !== 'ALL_MAIN' && plannerState.oosMap !== 'ALL_VIP' && plannerState.oosMap !== location) return;
       (pool[location] || []).forEach((fish) => {
         const m = _oosMetricsForFish(fish, plannerState.oosScope, currentMonth);
+        const timeInfo = getPlannerFishTimeInfo(fish.name, plannerState.oosScope);
         rows.push({
           location,
           scope: plannerState.oosScope,
           name: fish.name,
           category: fish.category,
+          timeIcon: timeInfo.icon,
+          timeLabel: timeInfo.label,
           status: m.status,
           leavesIn: m.leavesIn,
           oosLength: m.oosLength
@@ -10133,6 +10162,7 @@ function getFilteredPlannerRows(){
         <tr>
           <td class="planner-lure-location-cell"><div class="planner-lure-primary">${escapeHtml(row.location)}</div><div class="planner-lure-meta">${escapeHtml(row.scope)}</div></td>
           <td><div class="planner-lure-fish">${escapeHtml(toTitleCase(row.name))}</div></td>
+          <td class="planner-time-cell" aria-label="${escapeAttr(row.timeLabel)}" title="${escapeAttr(row.timeLabel)}">${row.timeIcon}</td>
           <td><div class="planner-season-category">${escapeHtml(row.category)}</div></td>
           <td class="planner-lure-num">${row.leavesIn}${fire}</td>
           <td class="planner-lure-num">${row.oosLength}${warn}</td>
@@ -10178,6 +10208,7 @@ function getFilteredPlannerRows(){
               <tr>
                 <th>Location</th>
                 <th>Fish</th>
+                <th class="planner-time-head">Time</th>
                 <th>Category</th>
                 <th class="planner-sortable-head" data-oos-leaves-sort="1">Leaves In ${plannerState.oosLeavesSort === 'LEAVES_ASC' ? '▲' : '▼'}</th>
                 <th class="planner-sortable-head" data-oos-length-sort="1">OOS Length ${plannerState.oosLengthSort === 'LENGTH_ASC' ? '▲' : '▼'}</th>
@@ -10211,7 +10242,7 @@ function getFilteredPlannerRows(){
   function renderLurePlanner(){
     const shell = plannerShell();
     if(!shell.body) return;
-    plannerState.mode = 'CURRENT';
+    if(plannerState.mode !== 'CURRENT' && plannerState.mode !== 'TARGET') plannerState.mode = 'CURRENT';
     ensureValidMap();
     ensureValidPlannerActiveSet();
     syncPlannerCustomSelectionMode();
@@ -10242,16 +10273,18 @@ function getFilteredPlannerRows(){
           </tr>`;
       }
       const cell = getTargetCell(row);
-      totalFishNeeded += cell.fishNeeded;
-      totalGoldNeeded += cell.goldNeeded;
+      totalFishNeeded += Number(cell.fishNeeded || 0);
+      totalGoldNeeded += Number(cell.goldNeeded || 0);
       const isSelected = isPlannerFishSelected(row);
+      const targetOptions = plannerLevelOptions(cell.start);
       return `
         <tr>
           ${plannerState.lureCustomSelectionMode ? `<td class="planner-lure-select-cell"><button type="button" class="planner-row-select ${isSelected ? 'active' : ''}" data-planner-row-select="${escapeAttr(key)}" aria-label="${isSelected ? 'Deselect fish' : 'Select fish'}">${isSelected ? '✓' : '+'}</button></td>` : ''}
           <td class="planner-lure-location-cell"><div class="planner-lure-primary">${escapeHtml(row.location)}</div><div class="planner-lure-meta">${escapeHtml(row.scope)}</div></td>
           <td><div class="planner-lure-fish">${escapeHtml(toTitleCase(row.name))}</div></td>
-          <td><select class="planner-select planner-level-select" data-row-key="${escapeAttr(key)}" data-field="start">${plannerLevelOptions(0).map((lvl) => `<option value="${lvl}" ${lvl === cell.start ? 'selected' : ''}>${lvl}</option>`).join('')}</select></td>
-          <td><select class="planner-select planner-level-select" data-row-key="${escapeAttr(key)}" data-field="target">${plannerLevelOptions(Math.max(1, cell.start)).map((lvl) => `<option value="${lvl}" ${lvl === cell.target ? 'selected' : ''}>${lvl}</option>`).join('')}</select></td>
+          <td class="planner-lure-num planner-lure-readonly">${cell.start}</td>
+          <td class="planner-lure-num planner-lure-readonly">${fmtInt(cell.fishInHand)}</td>
+          <td><select class="planner-select planner-level-select" data-row-key="${escapeAttr(key)}" data-field="target">${targetOptions.map((lvl) => `<option value="${lvl}" ${lvl === cell.target ? 'selected' : ''}>${lvl}</option>`).join('')}</select></td>
           <td class="planner-lure-num">${fmtInt(cell.fishNeeded)}</td>
           <td class="planner-lure-num planner-lure-gold">${fmtInt(cell.goldNeeded)}</td>
         </tr>`;
@@ -10312,14 +10345,20 @@ function getFilteredPlannerRows(){
           ? `<article class="planner-kpi-card"><div class="planner-kpi-label">Total Gold Needed</div><div class="planner-kpi-value">${fmtInt(totalGoldNeeded)}</div><div class="planner-lure-meta">Across shown fish</div></article>
              <article class="planner-kpi-card"><div class="planner-kpi-label">Closest to Upgrade</div><div class="planner-kpi-value">${currentKpis && currentKpis.closest ? escapeHtml(toTitleCase(currentKpis.closest.row.name)) : '—'}</div><div class="planner-lure-meta">${currentKpis && currentKpis.closest ? `${escapeHtml(currentKpis.closest.row.location)} • ${escapeHtml(currentKpis.closest.row.category)} • ${fmtInt(currentKpis.closest.nextFishNeeded)} fish to Lv. ${fmtInt(currentKpis.closest.nextLevel)}` : '—'}</div></article>
              <article class="planner-kpi-card"><div class="planner-kpi-label">Cheapest to Upgrade</div><div class="planner-kpi-value">${currentKpis && currentKpis.cheapest ? escapeHtml(toTitleCase(currentKpis.cheapest.row.name)) : '—'}</div><div class="planner-lure-meta">${currentKpis && currentKpis.cheapest ? `${escapeHtml(currentKpis.cheapest.row.location)} • ${escapeHtml(currentKpis.cheapest.row.category)} • ${fmtInt(currentKpis.cheapest.nextGoldNeeded)} gold to Lv. ${fmtInt(currentKpis.cheapest.nextLevel)}` : '—'}</div></article>`
-          : `<article class="planner-kpi-card"><div class="planner-kpi-label">Total Fish Needed</div><div class="planner-kpi-value">${fmtInt(totalFishNeeded)}</div></article>
-             <article class="planner-kpi-card"><div class="planner-kpi-label">Total Gold Needed</div><div class="planner-kpi-value">${fmtInt(totalGoldNeeded)}</div></article>`}
+          : `<article class="planner-kpi-card"><div class="planner-kpi-label">Total Fish Needed</div><div class="planner-kpi-value">${fmtInt(totalFishNeeded)}</div><div class="planner-lure-meta">Across shown fish</div></article>
+             <article class="planner-kpi-card"><div class="planner-kpi-label">Total Gold Needed</div><div class="planner-kpi-value">${fmtInt(totalGoldNeeded)}</div><div class="planner-lure-meta">Across shown fish</div></article>`}
       </section>
 
       <section class="planner-table-card">
         <div class="planner-table-bar">
           <div class="planner-table-title">Lure Table</div>
           <div class="planner-table-count">${fmtInt(rows.length)} of ${fmtInt(allRows.length)} fish shown</div>
+        </div>
+        <div class="planner-table-mode-area">
+          <div class="planner-pill-group planner-pill-group--center" role="group" aria-label="Lure planner mode">
+            ${['CURRENT','TARGET'].map((mode) => `<button type="button" class="planner-pill ${plannerState.mode === mode ? 'active' : ''}" data-planner-mode="${mode}">${mode === 'CURRENT' ? 'Current' : 'Target'}</button>`).join('')}
+          </div>
+          <div class="planner-subtle-copy planner-subtle-copy--center">${isCurrent ? 'Shows your current upgrade position and next steps' : 'Set a target lure level using your Current mode data'}</div>
         </div>
         <div class="planner-table-wrap">
           <table class="planner-table${plannerState.lureCustomSelectionMode ? ' planner-table--select-mode' : ''}">
@@ -10328,10 +10367,14 @@ function getFilteredPlannerRows(){
                 ${plannerState.lureCustomSelectionMode ? '<th>Select</th>' : ''}
                 <th>Location</th>
                 <th>Fish</th>
-                <th>${isCurrent ? 'Current Lure' : 'From Lure'}</th>
-                <th>${isCurrent ? 'Fish in Hand' : 'To Lure'}</th>
-                <th>${isCurrent ? 'Reachable' : 'Fish Needed'}</th>
-                <th>Gold Needed</th>
+                <th>Current Lure</th>
+                <th>Fish in Hand</th>
+                ${isCurrent
+                  ? `<th>Reachable</th>
+                     <th>Gold Needed</th>`
+                  : `<th>Target Lure</th>
+                     <th>Fish Needed</th>
+                     <th>Gold Needed</th>`}
               </tr>
             </thead>
             <tbody>${bodyRows}</tbody>
@@ -11044,14 +11087,13 @@ if(rowSelectBtn){
           }
         }
       }else{
-        const next = Object.assign({ start: 0, target: 1 }, plannerState.targetValues[rowKey] || {});
-        if(field === 'start'){
-          next.start = clampCurrentLureLevel(fieldControl.value);
-          next.target = clampTargetLureLevel(next.target, next.start);
-        }else if(field === 'target'){
-          next.target = clampTargetLureLevel(fieldControl.value, next.start);
+        const current = Object.assign({ lure: null, fishInHand: 0 }, plannerState.currentValues[rowKey] || {});
+        const start = current.lure === null ? null : clampCurrentLureLevel(current.lure);
+        const next = Object.assign({ target: start === null ? 0 : start }, plannerState.targetValues[rowKey] || {});
+        if(field === 'target'){
+          next.target = clampTargetLureLevel(fieldControl.value, start);
+          plannerState.targetValues[rowKey] = next;
         }
-        plannerState.targetValues[rowKey] = next;
       }
       queuePlannerStateSave();
       renderPlannerView();
