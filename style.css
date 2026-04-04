@@ -5912,3 +5912,15 @@ body.planner-page-active .planner-drawer-body{
 .planner-lure-calc-table .planner-lure-num{
   text-align: center;
 }
+
+
+/* === Re-anchor header share icon + Fishing Guide to pre-shift position === */
+@media (min-width: 900px){
+  .topbar .header-menu-wrap{
+    right: calc(var(--hdr-right) + 10px) !important;
+  }
+  .companion-panel{
+    right: 78px !important;
+    transform: none !important;
+  }
+}
