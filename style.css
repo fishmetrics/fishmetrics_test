@@ -5924,3 +5924,26 @@ body.planner-page-active .planner-drawer-body{
     transform: none !important;
   }
 }
+
+
+.planner-chip-btn{
+  border:1px solid rgba(120,170,255,0.18);
+  background:rgba(18,45,112,0.45);
+  color:#d9e7ff;
+  border-radius:999px;
+  padding:6px 12px;
+  font-weight:700;
+  cursor:pointer;
+}
+.planner-chip-btn.active{
+  background:rgba(61,150,255,0.22);
+  color:#ffffff;
+  border-color:rgba(120,190,255,0.38);
+}
+
+
+.xp-toggle-center {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+}

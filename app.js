@@ -8983,7 +8983,8 @@ Requirement: ${currPct}% ${metricLabel}.`;
     lureCalcTo: 0,
     lureCalcFishInHand: 0,
     seasonScope: 'MAIN',
-    seasonMonth: 3,
+    seasonMonth: (new Date().getMonth() + 1),
+    seasonMonthUserSet: false,
     seasonMap: 'ALL_MAIN',
     seasonTarget: 'MEDIUM',
     seasonCustomMain: { Common: 480, Rare: 640, Epic: 800, Legendary: 8000 },
@@ -9000,6 +9001,7 @@ Requirement: ${currPct}% ${metricLabel}.`;
     xpLogDate: '',
     xpLogValue: null,
     xpEntries: [],
+    xpGraphMode: 'TOTAL',
     homeMarkup: ''
   };
   let plannerStateLoaded = false;
@@ -9023,6 +9025,7 @@ Requirement: ${currPct}% ${metricLabel}.`;
       lureCalcFishInHand: plannerState.lureCalcFishInHand,
       seasonScope: plannerState.seasonScope,
       seasonMonth: plannerState.seasonMonth,
+      seasonMonthUserSet: !!plannerState.seasonMonthUserSet,
       seasonMap: plannerState.seasonMap,
       seasonTarget: plannerState.seasonTarget,
       seasonCustomMain: Object.assign({}, plannerState.seasonCustomMain || {}),
@@ -9038,7 +9041,8 @@ Requirement: ${currPct}% ${metricLabel}.`;
       xpTarget: plannerState.xpTarget,
       xpLogDate: plannerState.xpLogDate,
       xpLogValue: plannerState.xpLogValue,
-      xpEntries: Array.isArray(plannerState.xpEntries) ? plannerState.xpEntries.map((entry) => ({ date: entry.date, xp: entry.xp })) : []
+      xpEntries: Array.isArray(plannerState.xpEntries) ? plannerState.xpEntries.map((entry) => ({ date: entry.date, xp: entry.xp })) : [],
+      xpGraphMode: plannerState.xpGraphMode === 'GAIN' ? 'GAIN' : 'TOTAL'
     };
   }
 
@@ -9226,7 +9230,8 @@ function ensureValidPlannerActiveSet(){
   };
 
   function normalizeSeasonCustomTargets(raw, fallback){
-    const base = Object.assign({}, fallback || SEASON_TARGET_PRESETS.MEDIUM || { Common: 480, Rare: 640, Epic: 800, Legendary: 8000 });
+    const defaultPreset = ((SEASON_TARGET_PRESETS && SEASON_TARGET_PRESETS.MAIN && SEASON_TARGET_PRESETS.MAIN.MEDIUM) || { Common: 480, Rare: 640, Epic: 750, Legendary: 7500 });
+    const base = Object.assign({}, fallback || defaultPreset);
     const out = {};
     ['Common','Rare','Epic','Legendary'].forEach((rarity) => {
       const range = SEASON_CUSTOM_RANGES[rarity];
@@ -9255,7 +9260,12 @@ function ensureValidPlannerActiveSet(){
     plannerState.lureCalcFishInHand = clampFishInHand(saved.lureCalcFishInHand);
     plannerState.seasonScope = ['MAIN','VIP'].includes(saved.seasonScope) ? saved.seasonScope : plannerState.seasonScope;
     const sm = Number(saved.seasonMonth);
-    plannerState.seasonMonth = Number.isFinite(sm) ? Math.max(1, Math.min(12, Math.round(sm))) : plannerState.seasonMonth;
+    const currentPlannerLocalMonth = (new Date().getMonth() + 1);
+    const savedSeasonMonthUserSet = !!saved.seasonMonthUserSet;
+    plannerState.seasonMonthUserSet = savedSeasonMonthUserSet;
+    plannerState.seasonMonth = Number.isFinite(sm)
+      ? (savedSeasonMonthUserSet ? Math.max(1, Math.min(12, Math.round(sm))) : currentPlannerLocalMonth)
+      : currentPlannerLocalMonth;
     plannerState.seasonMap = String(saved.seasonMap || plannerState.seasonMap || 'ALL_MAIN');
     plannerState.seasonTarget = ['MEDIUM','HIGH','CUSTOM'].includes(saved.seasonTarget) ? saved.seasonTarget : plannerState.seasonTarget;
     plannerState.seasonCustomMain = normalizeSeasonCustomTargets(saved.seasonCustomMain, plannerState.seasonCustomMain);
@@ -9272,6 +9282,7 @@ function ensureValidPlannerActiveSet(){
     plannerState.xpLogDate = normalizeISODate(saved.xpLogDate) || plannerState.xpLogDate;
     plannerState.xpLogValue = clampXPValue(saved.xpLogValue);
     plannerState.xpEntries = sanitizeXPEntries(saved.xpEntries);
+    plannerState.xpGraphMode = saved.xpGraphMode === 'GAIN' ? 'GAIN' : 'TOTAL';
   }
 
   function queuePlannerStateSave(){
@@ -9540,7 +9551,7 @@ function ensureValidPlannerActiveSet(){
     if(plannerState.scope === 'VIP') addRows(LOCATIONS_VIP, 'VIP');
     return rows
       .filter((row) => plannerState.map === 'ALL' ? true : row.location === plannerState.map)
-      .sort(comparePlannerAlpha);
+      .sort(comparePlannerGameOrder);
   }
 
   
@@ -9696,28 +9707,41 @@ function getFilteredPlannerRows(){
   ];
   const SEASON_OOS_TARGETS = { Common: 357, Rare: 476, Epic: 595 };
   const SEASON_TARGET_PRESETS = {
-    MEDIUM: { Common: 480, Rare: 640, Epic: 800, Legendary: 8000 },
-    HIGH: { Common: 520, Rare: 665, Epic: 810, Legendary: 8350 }
+    MAIN: {
+      MEDIUM: { Common: 480, Rare: 640, Epic: 750, Legendary: 7500 },
+      HIGH: { Common: 520, Rare: 665, Epic: 810, Legendary: 8000 }
+    },
+    VIP: {
+      MEDIUM: { Common: 450, Rare: 560, Epic: 700, Legendary: 6500 },
+      HIGH: { Common: 490, Rare: 640, Epic: 800, Legendary: 7500 }
+    }
   };
+
+  function getSeasonPresetSet(){
+    return plannerState.seasonScope === 'VIP' ? SEASON_TARGET_PRESETS.VIP : SEASON_TARGET_PRESETS.MAIN;
+  }
 
   function getSeasonCustomStateKey(){
     return plannerState.seasonScope === 'VIP' ? 'seasonCustomVIP' : 'seasonCustomMain';
   }
 
   function getSeasonActiveTargets(){
+    const presetSet = getSeasonPresetSet();
     if(plannerState.seasonTarget === 'CUSTOM'){
-      return normalizeSeasonCustomTargets(plannerState[getSeasonCustomStateKey()], SEASON_TARGET_PRESETS.MEDIUM);
+      return normalizeSeasonCustomTargets(plannerState[getSeasonCustomStateKey()], presetSet.MEDIUM);
     }
-    return Object.assign({}, SEASON_TARGET_PRESETS[plannerState.seasonTarget] || SEASON_TARGET_PRESETS.MEDIUM);
+    return Object.assign({}, presetSet[plannerState.seasonTarget] || presetSet.MEDIUM);
   }
 
   function getSeasonCustomTargetsForScope(){
-    return normalizeSeasonCustomTargets(plannerState[getSeasonCustomStateKey()], SEASON_TARGET_PRESETS.MEDIUM);
+    const presetSet = getSeasonPresetSet();
+    return normalizeSeasonCustomTargets(plannerState[getSeasonCustomStateKey()], presetSet.MEDIUM);
   }
 
   function setSeasonCustomTarget(scope, rarity, value){
     const key = scope === 'VIP' ? 'seasonCustomVIP' : 'seasonCustomMain';
-    const current = normalizeSeasonCustomTargets(plannerState[key], SEASON_TARGET_PRESETS.MEDIUM);
+    const fallbackPreset = scope === 'VIP' ? SEASON_TARGET_PRESETS.VIP.MEDIUM : SEASON_TARGET_PRESETS.MAIN.MEDIUM;
+    const current = normalizeSeasonCustomTargets(plannerState[key], fallbackPreset);
     const range = SEASON_CUSTOM_RANGES[rarity] || { min: 0, max: Number.MAX_SAFE_INTEGER };
     const num = Number(value);
     const safe = Number.isFinite(num) ? Math.round(num) : current[rarity];
@@ -9900,10 +9924,12 @@ function getFilteredPlannerRows(){
       const fishMarkup = progress.enabled
         ? `<div class="planner-season-fish-cell"><span class="planner-progress-dot ${progressEntry.state}" title="${escapeAttr(progressEntry.label)} • ${fmtInt(progressEntry.actualPoints)} / ${fmtInt(progressEntry.targetPoints)} pts" aria-label="${escapeAttr(progressEntry.label)}"></span><div class="planner-lure-fish">${escapeHtml(toTitleCase(row.name))}</div></div>`
         : `<div class="planner-lure-fish">${escapeHtml(toTitleCase(row.name))}</div>`;
+      const timeInfo = getPlannerFishTimeInfo(row.name, row.scope);
       return `
         <tr>
           <td class="planner-lure-location-cell"><div class="planner-lure-primary">${escapeHtml(row.location)}</div><div class="planner-lure-meta">${escapeHtml(row.scope)}</div></td>
           <td>${fishMarkup}</td>
+          <td class="planner-time-cell" aria-label="${escapeAttr(timeInfo.label)}" title="${escapeAttr(timeInfo.label)}">${timeInfo.icon}</td>
           <td><div class="planner-season-category">${escapeHtml(row.category)}</div></td>
           <td class="planner-lure-num planner-season-status ${row.status === 'IS' ? 'is' : 'oos'}">${row.status}</td>
           <td class="planner-lure-num planner-lure-gold">${fmtInt(row.targetPoints)}</td>
@@ -9984,6 +10010,7 @@ function getFilteredPlannerRows(){
               <tr>
                 <th>Location</th>
                 <th>Fish</th>
+                <th class="planner-time-head">Time</th>
                 <th>Category</th>
                 <th class="planner-sortable-head" data-season-sort="1">Season Status ${plannerState.seasonSort === 'STATUS_ASC' ? '▲' : '▼'}</th>
                 <th>Target Points</th>
@@ -9996,8 +10023,8 @@ function getFilteredPlannerRows(){
   }
 
 
-  const OOS_DAY_FISH_MAIN = new Set(["redear sunfish", "muskie", "goldfish", "bessie", "tripletail", "sierra mackerel", "jack crevalle", "broomtail grouper", "striped marlin", "whale shark", "atka mackerel", "capelin", "arctic greyling", "blue lingcod", "king salmon", "dusky flathead", "red emperor snapper", "albacore", "unicorn leatherjacket", "coral trout", "hoodwinker sunfish", "bunyip", "twaite shad", "three spined stickleback", "gudgeon", "roach", "european grayling", "scottish salmon", "red tail tiger catfish", "juliens golden prize carp", "amazon pellona", "jatuarana", "redeye piranha", "bicuda", "pirapitinga", "rock bacu", "payara", "boiuna"]);
-  const OOS_NIGHT_FISH_MAIN = new Set(["bonefish", "pacific footballfish", "brown trout", "walleye", "smallmouth bass", "flathead catfish", "longnose gar", "wahoo", "pacific sailfish", "cubera snapper", "nurse shark", "black marlin", "bull shark", "don pedro", "lancetfish", "sockeye salmon", "burbot", "bigmouth sculpin", "wolf eel", "ocean sunfish", "shortfin mako shark", "carpet shark", "rock flagtail", "fingermark", "mangrove jack", "spotted handfish", "tiger shark", "northern pike", "vendace", "dace", "european smelt", "european eel", "common sturgeon", "pla kad thong", "rice eel", "marbled sand goby", "giant devil catfish", "yellow mystus", "wallago", "striped catfish", "mekong giant catfish", "tucunare", "curimbata", "redtail catfish", "tiger sorubim", "peacock bass", "speckled pavon", "arowana", "electric eel", "flatwhiskered catfish", "arapaima"]);
+  const OOS_DAY_FISH_MAIN = new Set(["striped red mullet", "mudskipper", "redear sunfish", "muskie", "goldfish", "bessie", "white crappie", "tripletail", "sierra mackerel", "jack crevalle", "broomtail grouper", "striped marlin", "whale shark", "atka mackerel", "capelin", "arctic greyling", "chum salmon", "blue lingcod", "king salmon", "dusky flathead", "red emperor snapper", "albacore", "unicorn leatherjacket", "coral trout", "hoodwinker sunfish", "bunyip", "twaite shad", "three spined stickleback", "gudgeon", "roach", "european grayling", "scottish salmon", "red tail tiger catfish", "giant freshwater whipray", "juliens golden prize carp", "amazon pellona", "jatuarana", "redeye piranha", "bicuda", "pirapitinga", "rock bacu", "payara", "boiuna"]);
+  const OOS_NIGHT_FISH_MAIN = new Set(["brisling", "gilt-head bream", "bonefish", "pacific footballfish", "brown trout", "walleye", "smallmouth bass", "flathead catfish", "longnose gar", "wahoo", "pacific sailfish", "cubera snapper", "nurse shark", "black marlin", "bull shark", "don pedro", "lancetfish", "sockeye salmon", "burbot", "bigmouth sculpin", "wolf eel", "ocean sunfish", "shortfin mako shark", "carpet shark", "rock flagtail", "fingermark", "mangrove jack", "spotted handfish", "tiger shark", "northern pike", "vendace", "dace", "european smelt", "european eel", "common sturgeon", "pla kad thong", "rice eel", "marbled sand goby", "giant devil catfish", "yellow mystus", "wallago", "striped catfish", "mekong giant catfish", "tucunare", "curimbata", "redtail catfish", "tiger sorubim", "peacock bass", "speckled pavon", "arowana", "electric eel", "flatwhiskered catfish", "arapaima"]);
   const OOS_DAY_FISH_VIP = new Set(["teapotfish", "slimesnail"]);
   const OOS_NIGHT_FISH_VIP = new Set(["anchorscale", "fish-eye", "bonebite"]);
 
@@ -10558,7 +10585,15 @@ function getFilteredPlannerRows(){
       <section class="planner-table-card">
         <div class="planner-table-bar">
           <div class="planner-table-title">XP Progress</div>
-          <div class="planner-table-count">${stats.currentXP === null ? 'No updates yet' : `Current XP ${fmtInt(stats.currentXP)}`}</div>
+          <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap; position:relative; width:100%;">
+            <div class="xp-toggle-center">
+              <div style="display:inline-flex; gap:6px; padding:4px; border-radius:999px; background:rgba(9,24,72,0.45); border:1px solid rgba(120,170,255,0.18);">
+                <button type="button" data-xp-graph-mode="TOTAL" class="planner-chip-btn${plannerState.xpGraphMode === 'GAIN' ? '' : ' active'}">Total XP</button>
+                <button type="button" data-xp-graph-mode="GAIN" class="planner-chip-btn${plannerState.xpGraphMode === 'GAIN' ? ' active' : ''}">XP Gains</button>
+              </div>
+            </div>
+            <div class="planner-table-count" style="margin-left:auto;">${stats.currentXP === null ? 'No updates yet' : `Current XP ${fmtInt(stats.currentXP)}`}</div>
+          </div>
         </div>
         <div class="planner-table-wrap" style="padding:12px; min-height:180px;">
           <canvas id="plannerXpChart" height="110"></canvas>
@@ -10590,24 +10625,98 @@ function getFilteredPlannerRows(){
       plannerXPChart = null;
       const canvas = document.getElementById('plannerXpChart');
       if(canvas && typeof Chart !== 'undefined'){
-        const labels = [];
-        const values = [];
-        if(stats.startXP !== null){
-          labels.push('Start');
-          values.push(stats.startXP);
+        const entryDates = (stats.entries || []).map(entry => normalizeISODate(entry && entry.date)).filter(Boolean);
+        const baseDate = entryDates.length ? entryDates[0] : null;
+        const msPerDay = 86400000;
+        const xValues = [];
+        const totalChartData = [];
+        const gainChartData = [];
+        const graphMode = plannerState.xpGraphMode === 'GAIN' ? 'GAIN' : 'TOTAL';
+
+        function dayOffsetFromBase(dateStr){
+          if(!baseDate || !dateStr) return 0;
+          const baseMs = Date.parse(baseDate + 'T00:00:00');
+          const dateMs = Date.parse(dateStr + 'T00:00:00');
+          if(!Number.isFinite(baseMs) || !Number.isFinite(dateMs)) return 0;
+          return Math.round((dateMs - baseMs) / msPerDay);
         }
-        stats.entries.forEach((entry) => {
-          labels.push(formatXPDate(entry.date));
-          values.push(entry.xp);
+        function pushPoint(target, dayOffset, value, dateStr, label){
+          const x = Number.isFinite(dayOffset) ? dayOffset : 0;
+          xValues.push(x);
+          target.push({ x, y: value, _date: dateStr || '', _label: label || '' });
+        }
+
+        if(stats.startXP !== null){
+          pushPoint(totalChartData, 0, stats.startXP, baseDate || '', 'Start');
+        }
+
+        (stats.entries || []).forEach((entry, idx) => {
+          const dateStr = normalizeISODate(entry && entry.date);
+          const dayOffset = dayOffsetFromBase(dateStr);
+          const prev = idx > 0 ? stats.entries[idx - 1] : null;
+          const gain = prev ? Math.max(0, entry.xp - prev.xp) : ((stats.startXP !== null) ? Math.max(0, entry.xp - stats.startXP) : null);
+          pushPoint(totalChartData, dayOffset, entry.xp, dateStr, 'Total XP');
+          if(gain !== null){
+            pushPoint(gainChartData, dayOffset, gain, dateStr, 'XP Gain');
+          }
         });
+
+        const selectedData = graphMode === 'GAIN' ? gainChartData : totalChartData;
         plannerXPChart = new Chart(canvas.getContext('2d'), {
-          type: 'line',
-          data: { labels, datasets: [{ label: 'XP', data: values, fill: false, tension: 0.2 }] },
+          type: (graphMode === 'GAIN' ? 'bar' : 'line'),
+          data: {
+            datasets: [{
+              label: graphMode === 'GAIN' ? 'XP Gain' : 'XP',
+              data: selectedData,
+              fill: false,
+              backgroundColor: graphMode === 'GAIN' ? 'rgba(255, 180, 0, 0.85)' : undefined,
+              borderColor: graphMode === 'GAIN' ? 'rgba(255, 200, 0, 1)' : undefined,
+              tension: graphMode === 'GAIN' ? 0 : 0.2,
+              barPercentage: graphMode === 'GAIN' ? 0.6 : undefined,
+              categoryPercentage: graphMode === 'GAIN' ? 0.8 : undefined
+            }]
+          },
           options: {
             responsive: true,
             maintainAspectRatio: false,
-            plugins: { legend: { display: false } },
-            scales: { y: { beginAtZero: false } }
+            parsing: false,
+            plugins: {
+              legend: { display: false },
+              tooltip: {
+                callbacks: {
+                  title(items){
+                    const raw = items && items[0] && items[0].raw;
+                    return raw && raw._date ? formatXPDate(raw._date) : 'Start';
+                  },
+                  label(item){
+                    const raw = item && item.raw;
+                    const prefix = graphMode === 'GAIN' ? 'Gain' : 'XP';
+                    return `${prefix}: ${fmtInt(raw && raw.y != null ? raw.y : 0)}`;
+                  }
+                }
+              }
+            },
+            scales: {
+              x: {
+                type: 'linear',
+                grace: 0,
+                afterBuildTicks(scale){
+                  const uniq = Array.from(new Set(xValues)).sort((a, b) => a - b);
+                  scale.ticks = uniq.map((value) => ({ value }));
+                },
+                ticks: {
+                  autoSkip: false,
+                  maxRotation: 0,
+                  callback(value){
+                    if(!baseDate) return value;
+                    const labelDate = new Date(Date.parse(baseDate + 'T00:00:00') + (Number(value) * msPerDay));
+                    if(!Number.isFinite(labelDate.getTime())) return '';
+                    return labelDate.toLocaleDateString(undefined, { month:'short', day:'numeric' });
+                  }
+                }
+              },
+              y: { beginAtZero: graphMode === 'GAIN' }
+            }
           }
         });
       }
@@ -10682,6 +10791,16 @@ function getFilteredPlannerRows(){
       const metricsBtn = e.target.closest('[data-planner-metrics]');
       if(metricsBtn){
         setOpen(false);
+        return;
+      }
+      const xpGraphBtn = e.target.closest('[data-xp-graph-mode]');
+      if(xpGraphBtn){
+        const nextMode = xpGraphBtn.getAttribute('data-xp-graph-mode') === 'GAIN' ? 'GAIN' : 'TOTAL';
+        if(plannerState.xpGraphMode !== nextMode){
+          plannerState.xpGraphMode = nextMode;
+          queuePlannerStateSave();
+          renderPlannerView();
+        }
         return;
       }
       const scopeBtn = e.target.closest('[data-planner-scope]');
