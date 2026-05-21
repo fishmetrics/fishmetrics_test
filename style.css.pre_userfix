@@ -6311,23 +6311,3 @@ body.season-active #recordsView .season-import-btn{
   border-color: rgba(255, 91, 91, .95);
   box-shadow: 0 0 0 2px rgba(255, 91, 91, .16);
 }
-
-
-/* Season import modal polish */
-.season-import-field select{
-  color: #ffffff;
-  background: rgba(20, 26, 48, .96);
-  border: 1px solid rgba(255, 208, 70, .35);
-  font-weight: 800;
-}
-.season-import-field select option{
-  color: #ffffff;
-  background: #151b34;
-}
-.season-import-complete-modal .modal-title{
-  color: #ffd44a;
-  letter-spacing: .02em;
-}
-#seasonImportCompleteBody strong{
-  color: #ffd44a;
-}

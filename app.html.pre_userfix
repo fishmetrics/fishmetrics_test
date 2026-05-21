@@ -5,13 +5,6 @@
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <title>FISHMETRICS</title>
-<meta property="og:title" content="FishMetrics">
-<meta property="og:description" content="Companion Analytics for Creatures of the Deep.">
-<meta property="og:image" content="https://www.fish-metrics.com/logo.png">
-<meta property="og:url" content="https://www.fish-metrics.com">
-<meta property="og:type" content="website">
-<meta name="twitter:card" content="summary_large_image">
-
 <link href="style.css" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com" rel="preconnect"/>
 <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
@@ -678,15 +671,7 @@ Not affiliated with any company or organization of a similar name.</div>
         <label class="season-import-field">
           <span>Map</span>
           <select id="seasonImportMap">
-            <option value="Marina">Marina</option>
             <option value="Paradise Island">Paradise Island</option>
-            <option value="Great Lakes">Great Lakes</option>
-            <option value="Costa Rica">Costa Rica</option>
-            <option value="Alaska">Alaska</option>
-            <option value="Australia">Australia</option>
-            <option value="Scotland">Scotland</option>
-            <option value="Thailand">Thailand</option>
-            <option value="Amazon">Amazon</option>
           </select>
         </label>
         <label class="season-import-upload">
@@ -721,19 +706,6 @@ Not affiliated with any company or organization of a similar name.</div>
         <button type="button" class="btn-secondary" id="seasonImportCancel">Cancel</button>
         <button type="button" class="btn-secondary" id="seasonImportPreview" disabled>Preview Import</button>
         <button type="button" class="btn-primary" id="seasonImportConfirm" disabled>Confirm Import</button>
-      </div>
-    </div>
-  </div>
-
-
-
-  <!-- Season import complete modal (custom, avoids browser file:// header) -->
-  <div class="modal-backdrop" id="seasonImportCompleteBackdrop" aria-hidden="true">
-    <div class="modal season-import-complete-modal" role="dialog" aria-modal="true" aria-labelledby="seasonImportCompleteTitle">
-      <div class="modal-title" id="seasonImportCompleteTitle">Season Import Complete</div>
-      <div class="modal-body" id="seasonImportCompleteBody"></div>
-      <div class="modal-actions">
-        <button type="button" class="btn-primary" id="seasonImportCompleteOk">OK</button>
       </div>
     </div>
   </div>

@@ -3586,27 +3586,6 @@ brokenXAxisBreak);
   });
 }
 
-
-function getSeasonTotalPossibleForPercent(locs, opts = {}){
-  try{
-    const includeLegendary = opts.includeLegendary !== false;
-    const includeOOS = opts.includeOOS !== false;
-    const data = (typeof getLocationsData === 'function') ? getLocationsData() : {};
-    const useLocs = Array.isArray(locs) && locs.length ? locs : (typeof getLocationList === 'function' ? getLocationList() : Object.keys(data || {}));
-    let total = 0;
-    for(const loc of useLocs){
-      const fishList = data?.[loc] || [];
-      for(const fish of fishList){
-        if(!fish) continue;
-        if(!includeLegendary && fish.category === 'Legendary') continue;
-        if((typeof isSeasonMode === 'function' && isSeasonMode()) && !includeOOS && typeof isFishInSeason === 'function' && !isFishInSeason(fish.name)) continue;
-        total += 1;
-      }
-    }
-    return total;
-  }catch(_){ return 0; }
-}
-
 function computeAggregates(records, opts = {}){
   const { includeLegendary = true, includeOOS = true } = opts;
   const recs = records || recordsByLocation || {};
@@ -3886,15 +3865,10 @@ try{
     const starsTxt = '★'.repeat(full) + (half ? '☆' : '') + '☆'.repeat(Math.max(0, 5 - full - (half?1:0)));
     avgStarsEl.textContent = starsTxt;
   }
-  const starPctDenom = (typeof isSeasonMode === 'function' && isSeasonMode())
-    ? getSeasonTotalPossibleForPercent(locs, { includeLegendary: includeLegendaryDashboard, includeOOS: includeOOSSeasonDashboard })
-    : totalCaught;
-  const pct4Val = starPctDenom ? (100 * star4 / starPctDenom) : 0;
-  const pct5Val = starPctDenom ? (100 * star5 / starPctDenom) : 0;
-  if(pct4El) pct4El.textContent = `${pct4Val.toFixed(1)}%`;
-  if(pct5El) pct5El.textContent = `${pct5Val.toFixed(1)}%`;
+  if(pct4El) pct4El.textContent = totalCaught ? `${(100*(star4)/totalCaught).toFixed(1)}%` : '0.0%';
+  if(pct5El) pct5El.textContent = totalCaught ? `${(100*star5/totalCaught).toFixed(1)}%` : '0.0%';
 
-  try{ renderKpiBadges({ totalPoints, pct4: pct4Val, pct5: pct5Val }); }catch(_){}
+  try{ renderKpiBadges({ totalPoints, pct4: (totalCaught ? (100*(star4)/totalCaught) : 0), pct5: (totalCaught ? (100*star5/totalCaught) : 0) }); }catch(_){}
 
 
   // Star distribution (exact 2★–5★, normalized within 2–5★)
@@ -5478,11 +5452,8 @@ function buildShareKPIs(opts){
     }
   }
 
-  const sharePctDenom = (mode === 'season')
-    ? getSeasonTotalPossibleForPercent(locs, { includeLegendary: true, includeOOS: true })
-    : totalCaught;
-  const pct4 = sharePctDenom ? ((star4) / sharePctDenom * 100) : 0;
-  const pct5 = sharePctDenom ? (star5 / sharePctDenom * 100) : 0;
+  const pct4 = totalCaught ? ((star4) / totalCaught * 100) : 0;
+  const pct5 = totalCaught ? (star5 / totalCaught * 100) : 0;
 
   return {
     mode,
@@ -11419,8 +11390,6 @@ if(rowSelectBtn){
 (function(){
   function qs(id){ return document.getElementById(id); }
   function openSeasonImportModal(){
-    populateSeasonImportMapOptions();
-    setSeasonImportDefaultMapFromCurrentView();
     var backdrop = qs('seasonImportBackdrop');
     var confirm = qs('seasonImportConfirm');
     if(confirm) confirm.disabled = true;
@@ -11469,27 +11438,9 @@ if(rowSelectBtn){
     return String(value || '').toLowerCase().replace(/&/g,'and').replace(/[^a-z0-9]/g,'');
   }
 
-  function getSeasonImportScopeForMap(mapName){
-    try{
-      if(typeof LOCATIONS_VIP !== 'undefined' && LOCATIONS_VIP && LOCATIONS_VIP[mapName]) return 'VIP';
-      if(typeof isVipModeActive === 'function' && isVipModeActive()) return 'VIP';
-    }catch(_){ }
-    return 'MAIN';
-  }
-
-  function getSeasonImportLocationsForScope(scope){
-    var isVip = String(scope || '').toUpperCase() === 'VIP';
-    try{
-      return isVip
-        ? ((typeof LOCATIONS_VIP !== 'undefined' && LOCATIONS_VIP) ? LOCATIONS_VIP : {})
-        : ((typeof LOCATIONS !== 'undefined' && LOCATIONS) ? LOCATIONS : {});
-    }catch(_){ return {}; }
-  }
-
   function getSeasonImportFishList(mapName){
     try{
-      var locs = getSeasonImportLocationsForScope(getSeasonImportScopeForMap(mapName));
-      var source = (locs && locs[mapName]) ? locs[mapName] : [];
+      var source = (typeof LOCATIONS !== 'undefined' && LOCATIONS && LOCATIONS[mapName]) ? LOCATIONS[mapName] : [];
       return source.map(function(f){
         return {
           name: f.name,
@@ -11831,46 +11782,9 @@ if(rowSelectBtn){
     return out;
   }
 
-  function setSeasonImportLogLocation(mapName){
-    try{
-      var loc = qs('locationSelect') || (typeof locationSelect !== 'undefined' ? locationSelect : null);
-      if(!loc) return;
-      var hasOption = Array.prototype.slice.call(loc.options || []).some(function(opt){ return opt && opt.value === mapName; });
-      if(!hasOption) return;
-      loc.value = mapName;
-    }catch(_){ }
-  }
-
-  function showSeasonImportCompleteModal(mapName, updated, cleared){
-    var backdrop = qs('seasonImportCompleteBackdrop');
-    var body = qs('seasonImportCompleteBody');
-    var ok = qs('seasonImportCompleteOk');
-    var text = mapName + ' imported. ' + updated + ' fish updated' + (cleared ? ' · ' + cleared + ' cleared' : '') + '.';
-    if(!backdrop || !body || !ok){
-      try{ console.log('Season import complete:', text); }catch(_){ }
-      return;
-    }
-    body.innerHTML = '<strong>' + escapeSeasonImportText(mapName) + '</strong> imported successfully.<br>' +
-      escapeSeasonImportText(String(updated)) + ' fish updated' +
-      (cleared ? ' · ' + escapeSeasonImportText(String(cleared)) + ' cleared' : '') +
-      '.<br><br>Log Records has been switched to this map.';
-    backdrop.classList.add('show');
-    backdrop.setAttribute('aria-hidden','false');
-    var cleanup = function(){
-      backdrop.classList.remove('show');
-      backdrop.setAttribute('aria-hidden','true');
-      ok.onclick = null;
-      backdrop.onclick = null;
-    };
-    ok.onclick = cleanup;
-    backdrop.onclick = function(e){ if(e.target === backdrop) cleanup(); };
-  }
-
   async function confirmSeasonImport(){
     var mapSelect = qs('seasonImportMap');
     var mapName = mapSelect && mapSelect.value ? mapSelect.value : 'Paradise Island';
-    var importScope = getSeasonImportScopeForMap(mapName);
-    var isVipImport = importScope === 'VIP';
     var rows = collectSeasonImportPreviewRows();
     var status = qs('seasonImportPreviewStatus');
     var confirmBtn = qs('seasonImportConfirm');
@@ -11905,13 +11819,8 @@ if(rowSelectBtn){
 
     if(confirmBtn){ confirmBtn.disabled = true; confirmBtn.textContent = 'Importing…'; }
     try{
-      if(isVipImport){
-        if(!seasonRecordsByLocation_vip || typeof seasonRecordsByLocation_vip !== 'object') seasonRecordsByLocation_vip = {};
-      }else{
-        if(!seasonRecordsByLocation_main || typeof seasonRecordsByLocation_main !== 'object') seasonRecordsByLocation_main = {};
-      }
-      var targetSeasonStore = isVipImport ? seasonRecordsByLocation_vip : seasonRecordsByLocation_main;
-      var mapRecords = Object.assign({}, targetSeasonStore[mapName] || {});
+      if(!seasonRecordsByLocation_main || typeof seasonRecordsByLocation_main !== 'object') seasonRecordsByLocation_main = {};
+      var mapRecords = Object.assign({}, seasonRecordsByLocation_main[mapName] || {});
       var updated = 0;
       var cleared = 0;
       valid.forEach(function(item){
@@ -11925,21 +11834,16 @@ if(rowSelectBtn){
         mapRecords[key] = wStr;
         updated++;
       });
-      targetSeasonStore[mapName] = mapRecords;
-      if(isVipImport){
-        seasonRecordsByLocation_vip = targetSeasonStore;
-        if(typeof isVipModeActive === 'function' && isVipModeActive()) seasonRecordsByLocation = seasonRecordsByLocation_vip;
-      }else{
-        seasonRecordsByLocation_main = targetSeasonStore;
-        if(!(typeof isVipModeActive === 'function' && isVipModeActive())) seasonRecordsByLocation = seasonRecordsByLocation_main;
+      seasonRecordsByLocation_main[mapName] = mapRecords;
+      if(!(typeof isVipModeActive === 'function' && isVipModeActive())){
+        seasonRecordsByLocation = seasonRecordsByLocation_main;
       }
       if(typeof idbSaveAllSeasonRecordsToStore === 'function'){
-        await idbSaveAllSeasonRecordsToStore(isVipImport ? IDB_STORE_SEASON_VIP : IDB_STORE_SEASON, targetSeasonStore || {});
-      }else if(!isVipImport){
+        await idbSaveAllSeasonRecordsToStore(IDB_STORE_SEASON, seasonRecordsByLocation_main || {});
+      }else{
         await idbSaveAllSeasonRecords(seasonRecordsByLocation_main || {});
       }
 
-      setSeasonImportLogLocation(mapName);
       try{ if(typeof renderTable === 'function') renderTable(); }catch(_){ }
       try{ if(typeof recomputeFromDOM === 'function') recomputeFromDOM(); }catch(_){ }
       try{ if(typeof updateDashboard === 'function') updateDashboard(); }catch(_){ }
@@ -11948,64 +11852,15 @@ if(rowSelectBtn){
       try{ if(typeof renderCareerTargets === 'function') renderCareerTargets(); }catch(_){ }
 
       if(status) status.textContent = mapName + ' imported · ' + updated + ' updated' + (cleared ? ' · ' + cleared + ' cleared' : '');
-      closeSeasonImportModal();
-      showSeasonImportCompleteModal(mapName, updated, cleared);
+      try{ alert('Season import complete for ' + mapName + '.'); }catch(_){ }
     }catch(err){
-      if(status) status.textContent = 'Import failed' + (err && err.message ? ': ' + err.message : '');
+      if(status) status.textContent = 'Import failed';
+      try{ alert('Season import failed. ' + (err && err.message ? err.message : '')); }catch(_){ }
     }finally{
       if(confirmBtn){ confirmBtn.disabled = false; confirmBtn.textContent = 'Confirm Import'; }
     }
   }
 
-
-  function getSeasonImportMapsForActiveMode(){
-    var useVip = false;
-    try{ useVip = (typeof isVipModeActive === 'function' && isVipModeActive()); }catch(_){ useVip = false; }
-    try{
-      if(useVip){
-        if(typeof VIP_LOCATION_ORDER !== 'undefined' && Array.isArray(VIP_LOCATION_ORDER)){
-          return VIP_LOCATION_ORDER.filter(function(name){ return !!(LOCATIONS_VIP && LOCATIONS_VIP[name]); });
-        }
-        if(typeof LOCATIONS_VIP !== 'undefined' && LOCATIONS_VIP) return Object.keys(LOCATIONS_VIP);
-      }
-      if(typeof LOCATION_ORDER !== 'undefined' && Array.isArray(LOCATION_ORDER)){
-        return LOCATION_ORDER.filter(function(name){ return !!(LOCATIONS && LOCATIONS[name]); });
-      }
-      if(typeof LOCATIONS !== 'undefined' && LOCATIONS) return Object.keys(LOCATIONS);
-    }catch(_){ }
-    return ['Paradise Island'];
-  }
-
-  function populateSeasonImportMapOptions(){
-    var mapSelect = qs('seasonImportMap');
-    if(!mapSelect) return;
-    var useVip = false;
-    try{ useVip = (typeof isVipModeActive === 'function' && isVipModeActive()); }catch(_){ useVip = false; }
-    var modeKey = useVip ? 'VIP' : 'MAIN';
-    var maps = getSeasonImportMapsForActiveMode();
-    var current = mapSelect.value || (useVip ? (maps[0] || '') : 'Paradise Island');
-    if(mapSelect.__fmPopulatedMode === modeKey && mapSelect.options && mapSelect.options.length === maps.length) return;
-    mapSelect.innerHTML = maps.map(function(name){
-      return '<option value="' + escapeSeasonImportText(name) + '">' + escapeSeasonImportText(name) + '</option>';
-    }).join('');
-    if(maps.indexOf(current) !== -1) mapSelect.value = current;
-    else if(!useVip && maps.indexOf('Paradise Island') !== -1) mapSelect.value = 'Paradise Island';
-    else if(maps.length) mapSelect.value = maps[0];
-    mapSelect.__fmPopulatedMode = modeKey;
-  }
-
-  function setSeasonImportDefaultMapFromCurrentView(){
-    var mapSelect = qs('seasonImportMap');
-    if(!mapSelect) return;
-    try{
-      var loc = qs('locationSelect') || (typeof locationSelect !== 'undefined' ? locationSelect : null);
-      var current = loc && loc.value ? loc.value : '';
-      var maps = getSeasonImportMapsForActiveMode();
-      if(current && current !== '__ALL__' && current !== 'All Locations' && maps.indexOf(current) !== -1){
-        mapSelect.value = current;
-      }
-    }catch(_){ }
-  }
   function initSeasonImportUi(){
     var btn = qs('seasonImportBtn');
     if(btn && !btn.__bound){
@@ -12021,16 +11876,6 @@ if(rowSelectBtn){
     if(backdrop && !backdrop.__bound){
       backdrop.__bound = true;
       backdrop.addEventListener('click', function(e){ if(e.target === backdrop) closeSeasonImportModal(); });
-    }
-    populateSeasonImportMapOptions();
-    var mapSelect = qs('seasonImportMap');
-    if(mapSelect && !mapSelect.__bound){
-      mapSelect.__bound = true;
-      mapSelect.addEventListener('change', function(){
-        resetSeasonImportPreview();
-        var confirm = qs('seasonImportConfirm');
-        if(confirm) confirm.disabled = true;
-      });
     }
     var files = qs('seasonImportFiles');
     if(files && !files.__bound){
