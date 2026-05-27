@@ -1,4 +1,5 @@
-v1.7.0 import assistant finishing pass
-- Keeps editable/manual review workflow as the safety layer for OCR point mistakes.
-- Adds Season screenshot import support for active VIP maps as well as Main maps.
-- Keeps All-time/PB logic untouched.
+FishMetrics v1.8.0 duplicate-date + delete-edit cleanup fix
+
+- Duplicate battle warning now triggers for any existing saved battle on the same date, even when the opponent/clan is different.
+- Deleting a battle currently loaded in Battle Entry now clears the edit screen immediately.
+- OCR logic unchanged.

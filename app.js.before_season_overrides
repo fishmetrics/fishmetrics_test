@@ -1,4 +1,4 @@
-const APP_VERSION = "1.8.0";
+const APP_VERSION = "1.7.0";
 
 // === Seasonality (Out-of-Season) Support ===
 // Define which months each fish is IN season for. Months are 1-12.
@@ -723,10 +723,6 @@ function setupShareButton(){
       try{
         if(mode === 'backup'){
           downloadBackupJSON();
-          return;
-        }
-        if(mode === 'all-time-poster'){
-          try{ downloadAllTimePoster(); }catch(err){ console.error('All-time poster failed', err); try{ fmShowNoticeModal('Poster Not Available','FishMetrics could not generate an All-time poster yet.','OK'); }catch(_){ alert('Could not generate All-time poster.'); } }
           return;
         }
         if(mode === 'last-season-poster'){
@@ -4743,7 +4739,6 @@ async function autoRollSeasonMonthly(){
   if(!storedMonth){
     try{ localStorage.setItem('fm_season_month', currentMonth); }catch(_){ }
     try{ localStorage.setItem('fm_active_season_id', currentMonth); }catch(_){ }
-    try{ localStorage.setItem('fishmetrics_clan_battles_season_id', currentMonth); }catch(_){ }
     return;
   }
 
@@ -4784,7 +4779,7 @@ async function autoRollSeasonMonthly(){
           exportedAt: (mainSnap && mainSnap.exportedAt) || (vipSnap && vipSnap.exportedAt) || now.toISOString(),
           archivedAtUTC: now.toISOString(),
           archivedAtLocal: (typeof _seasonLocalTimestampString === 'function') ? _seasonLocalTimestampString(now) : '',
-          app: { name: "FishMetrics", version: "v1.8" },
+          app: { name: "FishMetrics", version: "v1.7" },
           month: storedMonth,
           resetBoundary: { type: "cotd-global", utc: "00:00", note: "CotD season rollover; not local midnight" },
           main: mainSnap,
@@ -4793,33 +4788,6 @@ async function autoRollSeasonMonthly(){
         try{ _downloadJson(`FishMetrics_SeasonArchive_${storedMonth}.json`, bundle); }catch(_){ }
         try{ fmShowNoticeModal("Season Archived", "Previous Season data was archived successfully.<br><br>You can generate a poster from the archived snapshot later.", "OK"); }catch(_){ }
       }
-    }catch(_){ }
-
-    // Clan battles are season-scoped too: archive the active Battle Info list,
-    // then clear it for the new season. Clan Statistics are intentionally left
-    // untouched so long-term stats can span seasons.
-    try{
-      const clanBattleKey = 'fishmetrics_clan_battles_v1';
-      const clanArchiveKey = 'fishmetrics_clan_battle_archives_v1';
-      const rawBattles = JSON.parse(localStorage.getItem(clanBattleKey) || '[]');
-      const clanBattles = Array.isArray(rawBattles) ? rawBattles : [];
-      if(clanBattles.length){
-        let archives = [];
-        try{ archives = JSON.parse(localStorage.getItem(clanArchiveKey) || '[]'); }catch(_){ archives = []; }
-        if(!Array.isArray(archives)) archives = [];
-        const archivedBattles = clanBattles.map(b => Object.assign({}, b || {}, { seasonId: (b && b.seasonId) ? b.seasonId : storedMonth }));
-        archives = archives.filter(a => String(a && a.seasonId || '') !== String(storedMonth || ''));
-        archives.unshift({
-          seasonId: String(storedMonth || ''),
-          archivedAt: now.toISOString(),
-          battles: archivedBattles
-        });
-        localStorage.setItem(clanArchiveKey, JSON.stringify(archives));
-      }
-      localStorage.setItem(clanBattleKey, '[]');
-      localStorage.setItem('fishmetrics_clan_battles_season_id', String(currentMonth || ''));
-      try{ if(typeof window !== 'undefined' && typeof window.__fmClanRenderBattleHistory === 'function') window.__fmClanRenderBattleHistory(); }catch(_){ }
-      try{ if(typeof window !== 'undefined' && typeof window.__fmClanRenderArchivePanel === 'function') window.__fmClanRenderArchivePanel(); }catch(_){ }
     }catch(_){ }
 
     try{ await idbSaveAllSeasonRecordsToStore(IDB_STORE_SEASON, {}); }catch(_){ }
@@ -4861,57 +4829,6 @@ function getPreviousCotDSeasonId(date = new Date()){
   }
 }
 
-
-function _fmArchiveClanBattlesForSeason(archiveMonth, now, options){
-  options = options || {};
-  const clanBattleKey = 'fishmetrics_clan_battles_v1';
-  const clanArchiveKey = 'fishmetrics_clan_battle_archives_v1';
-  let clanBattles = [];
-  try{
-    const raw = JSON.parse(localStorage.getItem(clanBattleKey) || '[]');
-    clanBattles = Array.isArray(raw) ? raw : [];
-  }catch(_){ clanBattles = []; }
-
-  let archives = [];
-  try{
-    const rawArchives = JSON.parse(localStorage.getItem(clanArchiveKey) || '[]');
-    archives = Array.isArray(rawArchives) ? rawArchives : [];
-  }catch(_){ archives = []; }
-
-  const month = String(archiveMonth || '').slice(0,7);
-  const stamp = (now instanceof Date) ? now.toISOString() : new Date().toISOString();
-  let archive = null;
-
-  if(clanBattles.length && month){
-    const archivedBattles = clanBattles.map(b => Object.assign({}, b || {}, {
-      seasonId: (b && b.seasonId) ? b.seasonId : month
-    }));
-    archives = archives.filter(a => String(a && a.seasonId || '') !== month);
-    archive = {
-      schemaVersion: 'clan-season-archive-v1',
-      seasonId: month,
-      archivedAt: stamp,
-      testArchive: !!options.testArchive,
-      battles: archivedBattles
-    };
-    archives.unshift(archive);
-    try{ localStorage.setItem(clanArchiveKey, JSON.stringify(archives)); }catch(_){ }
-  }
-
-  if(options.clearActive){
-    try{ localStorage.setItem(clanBattleKey, '[]'); }catch(_){ }
-    try{ localStorage.setItem('fishmetrics_clan_battles_season_id', String(options.currentMonth || '')); }catch(_){ }
-    try{ if(typeof window !== 'undefined' && typeof window.__fmClanRenderBattleHistory === 'function') window.__fmClanRenderBattleHistory(); }catch(_){ }
-    try{ if(typeof window !== 'undefined' && typeof window.__fmClanRenderArchivePanel === 'function') window.__fmClanRenderArchivePanel(); }catch(_){ }
-  }
-
-  return {
-    archive,
-    count: clanBattles.length,
-    archived: !!archive
-  };
-}
-
 async function fmTestSeasonRolloverArchive(forceMonth){
   // Manual test helper for test branches:
   // archives current Main + VIP season data as the supplied/previous CotD season,
@@ -4922,7 +4839,6 @@ async function fmTestSeasonRolloverArchive(forceMonth){
 
   let mainSnap = null;
   let vipSnap = null;
-  let clanResult = { archive: null, count: 0, archived: false };
 
   const mainSeason = await idbReadAllRecordsOnly(IDB_STORE_SEASON);
   const vipSeason  = await idbReadAllRecordsOnly(IDB_STORE_SEASON_VIP);
@@ -4936,9 +4852,7 @@ async function fmTestSeasonRolloverArchive(forceMonth){
     try{ vipSnap = _buildSeasonArchiveSnapshotFrom(vipSeason, LOCATIONS_VIP, 'VIP', archiveMonth, now); }catch(_){ vipSnap = null; }
   }
 
-  try{ clanResult = _fmArchiveClanBattlesForSeason(archiveMonth, now, { clearActive: true, currentMonth, testArchive: true }); }catch(_){ clanResult = { archive: null, count: 0, archived: false }; }
-
-  if(mainSnap || vipSnap || (clanResult && clanResult.archive)){
+  if(mainSnap || vipSnap){
     const listKey = "fishmetrics_season_archives_v1";
     let list = [];
     try{ list = JSON.parse(localStorage.getItem(listKey) || "[]"); }catch(_){ list = []; }
@@ -4959,12 +4873,11 @@ async function fmTestSeasonRolloverArchive(forceMonth){
       exportedAt: (mainSnap && mainSnap.exportedAt) || (vipSnap && vipSnap.exportedAt) || now.toISOString(),
       archivedAtUTC: now.toISOString(),
       archivedAtLocal: (typeof _seasonLocalTimestampString === 'function') ? _seasonLocalTimestampString(now) : '',
-      app: { name: "FishMetrics", version: "v1.8" },
+      app: { name: "FishMetrics", version: "v1.7" },
       month: archiveMonth,
       resetBoundary: { type: "cotd-global", utc: "00:00", note: "CotD season rollover test; not local midnight" },
       main: mainSnap,
-      vip: vipSnap,
-      clan: clanResult && clanResult.archive ? clanResult.archive : null
+      vip: vipSnap
     };
     try{ _downloadJson(`FishMetrics_SeasonArchive_TEST_${archiveMonth}.json`, bundle); }catch(_){ }
   }
@@ -4984,16 +4897,12 @@ async function fmTestSeasonRolloverArchive(forceMonth){
   try{ updateDashboard(); }catch(_){ }
   try{ updateSeasonProgress(); }catch(_){ }
   try{ updateSeasonUncaughtCount(); }catch(_){ }
-  try{ if(typeof window !== 'undefined' && typeof window.__fmClanRenderBattleHistory === 'function') window.__fmClanRenderBattleHistory(); }catch(_){ }
-  try{ if(typeof window !== 'undefined' && typeof window.__fmClanRenderArchivePanel === 'function') window.__fmClanRenderArchivePanel(); }catch(_){ }
 
   return {
     archiveMonth,
     currentMonth,
     archivedMain: !!mainSnap,
     archivedVip: !!vipSnap,
-    archivedClan: !!(clanResult && clanResult.archive),
-    clanCount: clanResult && Number.isFinite(Number(clanResult.count)) ? Number(clanResult.count) : 0,
     mainCount: hadMain ? _countBackupRecords(mainSeason || {}) : 0,
     vipCount: hadVip ? _countBackupRecords(vipSeason || {}) : 0
   };
@@ -5109,7 +5018,7 @@ function setupSeasonRolloverTestButton(){
     btn.addEventListener('click', async ()=>{
       const ok = await fmShowConfirmModal(
         'Test Season Rollover',
-        'This will archive current <strong>Main + VIP Season</strong> data plus <strong>Clan Battle Info</strong> as last season, download a test archive JSON, and clear live Season/Clan Battle Info data.<br><br><strong>All-Time records and Clan Statistics will not be changed.</strong>',
+        'This will archive current <strong>Main + VIP Season</strong> data as last season, download a test archive JSON, and clear live Season data.<br><br><strong>All-Time records will not be changed.</strong>',
         'Run Test',
         'Cancel'
       );
@@ -5120,11 +5029,11 @@ function setupSeasonRolloverTestButton(){
       if(msg) msg.textContent = "";
       try{
         const result = await fmTestSeasonRolloverArchive();
-        const line = `Test archive complete: ${result.archiveMonth} • Main ${result.mainCount} • VIP ${result.vipCount} • Clan ${result.clanCount}`;
+        const line = `Test archive complete: ${result.archiveMonth} • Main ${result.mainCount} • VIP ${result.vipCount}`;
         if(msg) msg.textContent = line;
         await fmShowNoticeModal(
           'Season Archive Created',
-          '<strong>Test rollover complete.</strong><br><br>' + fmEscapeHtml(line) + '<br><br>Live Season records and Clan Battle Info were cleared. All-Time records and Clan Statistics were left untouched.',
+          '<strong>Test rollover complete.</strong><br><br>' + fmEscapeHtml(line) + '<br><br>Live Season records were cleared. All-Time records were left untouched.',
           'Done'
         );
       }catch(e){
@@ -5288,7 +5197,7 @@ function _buildSeasonArchiveSnapshot(){
     exportedAt: now.toISOString(),
     archivedAtUTC: now.toISOString(),
     archivedAtLocal: (typeof _seasonLocalTimestampString === 'function') ? _seasonLocalTimestampString(now) : '',
-    app: { name: "FishMetrics", version: "v1.8" },
+    app: { name: "FishMetrics", version: "v1.7" },
     season: { seasonId, startedAt, month, resetBoundary: { type: "cotd-global", utc: "00:00" } },
     rules: {
       oosCaps: { Common: 357, Rare: 476, Epic: 595 },
@@ -5398,7 +5307,7 @@ function _buildSeasonArchiveSnapshotFrom(seasonRecordsInput, locationsData, mode
     exportedAt: now.toISOString(),
     archivedAtUTC: now.toISOString(),
     archivedAtLocal: (typeof _seasonLocalTimestampString === 'function') ? _seasonLocalTimestampString(now) : '',
-    app: { name: "FishMetrics", version: "v1.8" },
+    app: { name: "FishMetrics", version: "v1.7" },
     season: { seasonId, startedAt, month: safeMonth, resetBoundary: { type: "cotd-global", utc: "00:00" } },
     rules: {
       oosCaps: { Common: 357, Rare: 476, Epic: 595 },
@@ -5535,44 +5444,6 @@ function getPlannerFlagFromUrl(){
       const h = (window.location.hash || '').toLowerCase();
       return search.includes('planner=1') || search.includes('planner=true') || h.includes('planner');
     }catch(__){ return false; }
-  }
-}
-
-
-function getClanFlagFromUrl(){
-  try{
-    const url = new URL(window.location.href);
-    const qp = String(url.searchParams.get('clan') || '').toLowerCase();
-    if(qp === '1' || qp === 'true' || qp === 'yes') return true;
-    const h = (window.location.hash || '').toLowerCase();
-    return h.includes('clan');
-  }catch(_){
-    try{
-      const search = String(window.location.search || '').toLowerCase();
-      const h = (window.location.hash || '').toLowerCase();
-      return search.includes('clan=1') || search.includes('clan=true') || h.includes('clan');
-    }catch(__){ return false; }
-  }
-}
-
-function scrubClanFromUrl(){
-  try{
-    const url = new URL(window.location.href);
-    url.searchParams.delete('clan');
-    const rawHash = String(url.hash || '');
-    if(rawHash && /clan/i.test(rawHash)) url.hash = (/vip/i.test(rawHash) ? '#vip' : '');
-    history.replaceState(null, '', url.pathname + (url.search || '') + (url.hash || ''));
-  }catch(_){ }
-}
-
-function openClanComingSoon(){
-  try{
-    if(typeof window.__fmOpenClanPage === 'function'){ window.__fmOpenClanPage(); return; }
-  }catch(_){}
-  try{
-    fmShowNoticeModal('Clan', 'Clan battle analytics will live here soon.<br><br>This section will use OCR imports for battle setup, rankings, trophy counts, fish sets, and results.', 'OK');
-  }catch(_){
-    try{ alert('Clan battle analytics coming soon.'); }catch(__){}
   }
 }
 
@@ -6182,9 +6053,8 @@ function _fmArchiveTopByRarity(snap){
 function generateLastSeasonPosterFromArchive(snap){
   if(!snap || !Array.isArray(snap.fishPoints)) throw new Error('Missing archive snapshot');
 
-  const isAllTimePoster = String((snap && snap.posterType) || '').toLowerCase() === 'alltime';
   const modePrefix = String((snap.season && snap.season.seasonId || '').startsWith('VIP-') ? 'VIP' : 'MAIN');
-  const label = isAllTimePoster ? 'All-time' : _fmSeasonArchiveLabel(snap);
+  const label = _fmSeasonArchiveLabel(snap);
   const isVip = modePrefix === 'VIP';
   const locationsObj = isVip ? (typeof LOCATIONS_VIP !== 'undefined' ? LOCATIONS_VIP : {}) : (typeof LOCATIONS !== 'undefined' ? LOCATIONS : {});
   const orderedMaps = Object.keys(locationsObj || {});
@@ -6335,7 +6205,7 @@ function generateLastSeasonPosterFromArchive(snap){
   ctx.fillStyle = colors.text;
   ctx.font = '950 50px system-ui, -apple-system, Segoe UI, Roboto, Arial';
   ctx.textAlign = 'center';
-  ctx.fillText(isAllTimePoster ? 'ALL-TIME CATCH REPORT' : 'SEASON CATCH REPORT', W/2, 54);
+  ctx.fillText('SEASON CATCH REPORT', W/2, 54);
   ctx.fillStyle = colors.gold;
   ctx.font = '950 35px system-ui, -apple-system, Segoe UI, Roboto, Arial';
   ctx.fillText(`${modePrefix} • ${String(label).toUpperCase()}`, W/2, 94);
@@ -6393,12 +6263,7 @@ function generateLastSeasonPosterFromArchive(snap){
   const k1=390, k2=290, k3=290, k4=350;
   const kX=[30, 30+k1+kGap, 30+k1+kGap+k2+kGap, 30+k1+kGap+k2+kGap+k3+kGap];
   const kW=[k1,k2,k3,k4];
-  const kpis = isAllTimePoster ? [
-    ['TOTAL ALL-TIME POINTS', fmt(totalPoints), colors.text],
-    ['FISH TRACKED', `${totalCaught} / ${totalPossible}`, colors.text],
-    ['MISSING FISH', String(missingFish), missingFish ? colors.text : colors.green],
-    ['BEST MAP', bestMap, colors.gold]
-  ] : [
+  const kpis=[
     ['TOTAL SEASON POINTS', fmt(totalPoints), colors.text],
     ['TARGETS HIT', `${totalCaught} / ${totalPossible}`, colors.text],
     ['MISSING FISH', String(missingFish), missingFish ? colors.text : colors.green],
@@ -6544,59 +6409,6 @@ async function _fmDrawBestMapIconOnPoster(canvas){
     // Icon is decorative. Never fail poster generation if an image is missing.
     console.warn('FishMetrics poster map icon skipped:', err);
   }
-}
-
-
-function _fmBuildAllTimePosterSnapshot(){
-  const mode = _fmArchiveModePrefix();
-  const isVip = mode === 'VIP';
-  const locationsObj = isVip ? (typeof LOCATIONS_VIP !== 'undefined' ? LOCATIONS_VIP : {}) : (typeof LOCATIONS !== 'undefined' ? LOCATIONS : {});
-  const recs = (typeof recordsByLocation !== 'undefined' && recordsByLocation) ? recordsByLocation : {};
-  const fishPoints = [];
-  Object.keys(locationsObj || {}).forEach(function(loc){
-    const fishList = locationsObj[loc] || [];
-    fishList.forEach(function(fish){
-      const key = (typeof canonicalizeFishName === 'function') ? canonicalizeFishName(fish.name) : String(fish.name || '').toLowerCase();
-      const raw = recs && recs[loc] ? recs[loc][key] : '';
-      const w = (typeof parseStoredWeightLbs === 'function') ? parseStoredWeightLbs(raw) : Number(raw);
-      const valid = raw !== '' && !Number.isNaN(w) && w > 0 && w >= fish.min && w <= fish.max;
-      if(!valid) return;
-      const pts = (typeof calculatePoints === 'function') ? calculatePoints(w, fish) : 0;
-      const rawPts = (typeof calculatePointsRaw === 'function') ? calculatePointsRaw(w, fish) : pts;
-      const stars = (typeof calculateStars === 'function') ? calculateStars(fish.category, rawPts) : 0;
-      fishPoints.push({
-        name: fish.name,
-        location: loc,
-        category: fish.category,
-        points: pts,
-        stars: stars,
-        weight: w
-      });
-    });
-  });
-  return {
-    posterType: 'alltime',
-    season: { seasonId: mode + '-ALLTIME', month: 'All-time' },
-    fishPoints: fishPoints
-  };
-}
-
-async function downloadAllTimePoster(){
-  const mode = _fmArchiveModePrefix();
-  const snap = _fmBuildAllTimePosterSnapshot();
-  if(!snap || !Array.isArray(snap.fishPoints) || !snap.fishPoints.length){
-    await fmShowNoticeModal('No All-time Records Found', `FishMetrics could not find ${mode} All-time records to poster yet.`, 'OK');
-    return;
-  }
-  const c = generateLastSeasonPosterFromArchive(snap);
-  await _fmDrawBestMapIconOnPoster(c);
-  const a = document.createElement('a');
-  a.href = c.toDataURL('image/png');
-  a.download = `FishMetrics_${mode}_AllTime_Poster.png`;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  try{ await fmShowNoticeModal('Poster Generated', `${mode} All-time poster was generated.`, 'OK'); }catch(_){ }
 }
 
 async function downloadLastSeasonPosterFromArchive(){
@@ -7000,26 +6812,11 @@ async function downloadBackupJSON(){
     const mainLocOrder = (typeof getLocationList === 'function') ? getLocationList() : (typeof LOCATION_ORDER !== 'undefined' ? LOCATION_ORDER : []);
     const vipLocOrder = getVipLocationListForBackup();
 
-    let clanBattlesPersisted = [];
-    try{
-      const rawClan = localStorage.getItem('fishmetrics_clan_battles_v1') || '[]';
-      const parsedClan = JSON.parse(rawClan);
-      clanBattlesPersisted = Array.isArray(parsedClan) ? parsedClan : [];
-    }catch(_){ clanBattlesPersisted = []; }
-    let clanArchivesPersisted = [];
-    try{
-      const rawClanArchives = localStorage.getItem('fishmetrics_clan_battle_archives_v1') || '[]';
-      const parsedClanArchives = JSON.parse(rawClanArchives);
-      clanArchivesPersisted = Array.isArray(parsedClanArchives) ? parsedClanArchives : [];
-    }catch(_){ clanArchivesPersisted = []; }
-
-    const currentSeasonMeta = (function(){ try{ const sid = (typeof getCurrentSeasonId === 'function') ? getCurrentSeasonId() : null; return sid ? { seasonId: String(sid) } : null; }catch(_){ return null; } })();
-
     const payload = {
       schema: "fm_unified_backup_v1",
-      version: (typeof APP_VERSION !== "undefined" ? APP_VERSION : "1.8.0"),
+      version: (typeof APP_VERSION !== "undefined" ? APP_VERSION : "1.7.0"),
       createdAt: new Date().toISOString(),
-      seasonMeta: currentSeasonMeta,
+      seasonMeta: (function(){ try{ const sid = (typeof getCurrentSeasonId === 'function') ? getCurrentSeasonId() : null; return sid ? { seasonId: String(sid) } : null; }catch(_){ return null; } })(),
       main: {
         allTime: { recordsByLocation: orderLocationsForBackup(mainAllTime || {}, mainLocOrder), meta: { canonicalWeightUnit: "lbs", sourceOfTruth: "weight" } },
         season:  { recordsByLocation: orderLocationsForBackup(mainSeasonPts || {}, mainLocOrder), meta: { sourceOfTruth: "points" } }
@@ -7031,11 +6828,6 @@ async function downloadBackupJSON(){
       planner: {
         meta: { includesCatchValueTracker: true, catchValueSchema: 'weight_price_v1' },
         state: plannerPersisted && typeof plannerPersisted === 'object' ? plannerPersisted : {}
-      },
-      clan: {
-        meta: { sourceOfTruth: 'battleRecords', seasonId: currentSeasonMeta && currentSeasonMeta.seasonId ? String(currentSeasonMeta.seasonId) : null },
-        battles: clanBattlesPersisted,
-        archives: clanArchivesPersisted
       }
     };
 
@@ -7044,9 +6836,7 @@ async function downloadBackupJSON(){
       const n = _countBackupRecords(payload.main.allTime.recordsByLocation) +
                 _countBackupRecords(payload.main.season.recordsByLocation) +
                 _countBackupRecords(payload.vip.allTime.recordsByLocation) +
-                _countBackupRecords(payload.vip.season.recordsByLocation) +
-                ((payload.clan && Array.isArray(payload.clan.battles)) ? payload.clan.battles.length : 0) +
-                ((payload.clan && Array.isArray(payload.clan.archives)) ? payload.clan.archives.reduce((n,a)=>n+(Array.isArray(a && a.battles)?a.battles.length:0),0) : 0);
+                _countBackupRecords(payload.vip.season.recordsByLocation);
       if(n === 0){
         const ok = confirm("Export an empty unified backup template?");
         if(!ok) return;
@@ -7140,19 +6930,11 @@ function _normalizeBackupObject(parsed){
       const plannerState = (parsed?.planner?.state && typeof parsed.planner.state === 'object')
         ? parsed.planner.state
         : ((parsed?.plannerState && typeof parsed.plannerState === 'object') ? parsed.plannerState : null);
-      const clanBattles = Array.isArray(parsed?.clan?.battles)
-        ? parsed.clan.battles
-        : (Array.isArray(parsed?.clanBattles) ? parsed.clanBattles : null);
-      const clanArchives = Array.isArray(parsed?.clan?.archives)
-        ? parsed.clan.archives
-        : (Array.isArray(parsed?.clanArchives) ? parsed.clanArchives : null);
-      const clanSeasonMeta = (parsed?.clan?.meta && typeof parsed.clan.meta === 'object') ? parsed.clan.meta : seasonMeta;
 
       // At least one section must be an object.
       const hasAny = (mainAT && typeof mainAT === 'object') || (mainS && typeof mainS === 'object') ||
                      (vipAT && typeof vipAT === 'object') || (vipS && typeof vipS === 'object') ||
-                     (plannerState && typeof plannerState === 'object') ||
-                     Array.isArray(clanBattles) || Array.isArray(clanArchives);
+                     (plannerState && typeof plannerState === 'object');
       if(!hasAny) return null;
 
       return {
@@ -7163,9 +6945,6 @@ function _normalizeBackupObject(parsed){
         vipSeason:   (vipS   && typeof vipS   === 'object') ? vipS   : null,
         seasonMeta,
         plannerState: (plannerState && typeof plannerState === 'object') ? plannerState : null,
-        clanBattles: Array.isArray(clanBattles) ? clanBattles : null,
-        clanArchives: Array.isArray(clanArchives) ? clanArchives : null,
-        clanSeasonMeta,
         pbImportedFromSeasonFish: pbImported,
         weightUnit: unit,
         storageUnit,
@@ -7194,9 +6973,6 @@ function _normalizeBackupObject(parsed){
     vipSeason: null,
     seasonMeta,
     plannerState: null,
-    clanBattles: null,
-    clanArchives: null,
-    clanSeasonMeta: null,
     pbImportedFromSeasonFish: pbImported,
     weightUnit: unit,
     storageUnit,
@@ -7216,8 +6992,6 @@ async function applyRestoredState(restored){
   const hasVipAT  = !!(restored && restored.vipAllTime  && typeof restored.vipAllTime  === 'object');
   const hasMainS  = !!(restored && restored.mainSeason  && typeof restored.mainSeason  === 'object');
   const hasVipS   = !!(restored && restored.vipSeason   && typeof restored.vipSeason   === 'object');
-  const hasClanBattles = !!(restored && Array.isArray(restored.clanBattles));
-  const hasClanArchives = !!(restored && Array.isArray(restored.clanArchives));
 
   // Canonicalize + merge alias fish keys so old backups don't wipe data
   const restoredMainCareer = hasMainAT ? canonicalizeRecordsByLocation(restored.mainAllTime || {}) : null;
@@ -7255,8 +7029,6 @@ async function applyRestoredState(restored){
   const curSeasonId = (typeof getCurrentSeasonId === 'function') ? getCurrentSeasonId() : null;
   const backupSeasonId = (restored && restored.seasonMeta && restored.seasonMeta.seasonId) ? String(restored.seasonMeta.seasonId) : null;
   const seasonMatches = (!!curSeasonId && !!backupSeasonId && String(curSeasonId) === String(backupSeasonId));
-  const clanBackupSeasonId = (restored && restored.clanSeasonMeta && restored.clanSeasonMeta.seasonId) ? String(restored.clanSeasonMeta.seasonId) : backupSeasonId;
-  const clanSeasonMatches = (!!curSeasonId && !!clanBackupSeasonId && String(curSeasonId) === String(clanBackupSeasonId));
 
   let restoredMainSeasonStored = null;
   let restoredVipSeasonStored = null;
@@ -7295,21 +7067,6 @@ async function applyRestoredState(restored){
           window.__fmPlannerApplyStateFromRestore(plannerRestoredRaw);
         }
       }catch(_){ }
-    }catch(_){ }
-  }
-
-  // Clan battles are season-based, so restore them only when the backup season matches
-  // the active season. This avoids bringing last month's Battle Info into the live season.
-  if(hasClanBattles && clanSeasonMatches){
-    try{
-      localStorage.setItem('fishmetrics_clan_battles_v1', JSON.stringify(restored.clanBattles || []));
-      try{ if(typeof window !== 'undefined' && typeof window.__fmClanRenderBattleHistory === 'function') window.__fmClanRenderBattleHistory(); }catch(_){ }
-    }catch(_){ }
-  }
-  if(hasClanArchives){
-    try{
-      localStorage.setItem('fishmetrics_clan_battle_archives_v1', JSON.stringify(restored.clanArchives || []));
-      try{ if(typeof window !== 'undefined' && typeof window.__fmClanRenderArchivePanel === 'function') window.__fmClanRenderArchivePanel(); }catch(_){ }
     }catch(_){ }
   }
 
@@ -7408,16 +7165,14 @@ async function restoreFromFile(file){
         mainSeason:  _sectionInfo(norm.mainSeason),
         vipAllTime:  _sectionInfo(norm.vipAllTime),
         vipSeason:   _sectionInfo(norm.vipSeason),
-        planner:     (norm.plannerState && typeof norm.plannerState === 'object') ? 1 : 0,
-        clan:        (Array.isArray(norm.clanBattles) ? norm.clanBattles.length : 0) + (Array.isArray(norm.clanArchives) ? norm.clanArchives.reduce((n,a)=>n+(Array.isArray(a && a.battles)?a.battles.length:0),0) : 0)
+        planner:     (norm.plannerState && typeof norm.plannerState === 'object') ? 1 : 0
       };
       const hasDetected = {
         mainAllTime: (detected.mainAllTime.locs || detected.mainAllTime.fish),
         mainSeason:  (detected.mainSeason.locs  || detected.mainSeason.fish),
         vipAllTime:  (detected.vipAllTime.locs  || detected.vipAllTime.fish),
         vipSeason:   (detected.vipSeason.locs   || detected.vipSeason.fish),
-        planner:     !!detected.planner,
-        clan:        detected.clan > 0
+        planner:     !!detected.planner
       };
       // Safety gate: only apply season data if the backup season matches the active season.
       // If seasonMeta is missing or mismatched, we ignore season payloads entirely (fail closed).
@@ -7467,23 +7222,8 @@ async function restoreFromFile(file){
         const note = seasonApplied ? '' : ' (not applied)';
         detectedLines.push(`• VIP season: ${detected.vipSeason.fish} fish / ${detected.vipSeason.locs} locations${note}<br>`);
       }
-      let clanApplied = false;
-      let clanNotAppliedReason = '';
-      try{
-        if(hasDetected.clan){
-          const curSeasonId = (typeof getCurrentSeasonId === 'function') ? getCurrentSeasonId() : null;
-          const clanSeasonId = (norm && norm.clanSeasonMeta && norm.clanSeasonMeta.seasonId) ? String(norm.clanSeasonMeta.seasonId) : ((norm && norm.seasonMeta && norm.seasonMeta.seasonId) ? String(norm.seasonMeta.seasonId) : '');
-          clanApplied = !!(curSeasonId && clanSeasonId && String(curSeasonId) === String(clanSeasonId));
-          if(!clanApplied){
-            clanNotAppliedReason = clanSeasonId && curSeasonId ? `Clan battles from ${clanSeasonId} were not applied to the current season (${curSeasonId}).` : 'Clan battles were not applied.';
-          }
-        }
-      }catch(_){ clanApplied = false; }
       if(hasDetected.planner){
         detectedLines.push('• Planner state: included<br>');
-      }
-      if(hasDetected.clan){
-        detectedLines.push(`• Clan battles: ${detected.clan} battle${detected.clan === 1 ? '' : 's'}${clanApplied ? '' : ' (not applied)'}<br>`);
       }
       if(!detectedLines.length){
         detectedLines.push('• No recognizable sections found<br>');
@@ -7516,10 +7256,6 @@ async function restoreFromFile(file){
       try{ showRestoreConfirmation(); }catch(_){}
       // Persist a one-time post-restore landing target so the reload returns to Dashboard at the top.
       try{ sessionStorage.setItem('fmPostRestoreGoTop', '1'); }catch(_){}
-
-      if(clanNotAppliedReason){
-        try{ alert(clanNotAppliedReason); }catch(_){ }
-      }
 
       if(seasonApplied){
         setBackupMsg('🎉 Fish Tank successfully restored (including Season data).');
@@ -10145,7 +9881,6 @@ Requirement: ${currPct}% ${metricLabel}.`;
     seasonTarget: 'MEDIUM',
     seasonCustomMain: { Common: 480, Rare: 640, Epic: 800, Legendary: 8000 },
     seasonCustomVIP: { Common: 480, Rare: 640, Epic: 800, Legendary: 8000 },
-    seasonFishTargets: Object.create(null),
     seasonSort: 'STATUS_ASC',
     oosScope: 'MAIN',
     oosMap: 'ALL_MAIN',
@@ -10193,7 +9928,6 @@ Requirement: ${currPct}% ${metricLabel}.`;
       seasonTarget: plannerState.seasonTarget,
       seasonCustomMain: Object.assign({}, plannerState.seasonCustomMain || {}),
       seasonCustomVIP: Object.assign({}, plannerState.seasonCustomVIP || {}),
-      seasonFishTargets: sanitizeSeasonFishTargets(plannerState.seasonFishTargets),
       seasonSort: plannerState.seasonSort,
       oosScope: plannerState.oosScope,
       oosMap: plannerState.oosMap,
@@ -10416,48 +10150,6 @@ function ensureValidPlannerActiveSet(){
     return out;
   }
 
-
-  function sanitizeSeasonFishTargets(raw){
-    const out = Object.create(null);
-    try{
-      Object.keys(raw || {}).forEach((key) => {
-        const safeKey = String(key || '').trim();
-        const num = Number(raw[key]);
-        if(!safeKey || !Number.isFinite(num)) return;
-        out[safeKey] = Math.max(0, Math.min(100000, Math.round(num)));
-      });
-    }catch(_){ }
-    return out;
-  }
-
-  function getSeasonFishTargetKey(row){
-    return [String(row && row.scope || plannerState.seasonScope || 'MAIN'), String(plannerState.seasonMonth || ''), String(row && row.location || ''), canonicalizeFishName(row && row.name || '')].join('|');
-  }
-
-  function getSeasonFishOverride(row){
-    const key = getSeasonFishTargetKey(row);
-    const val = Number((plannerState.seasonFishTargets || {})[key]);
-    return Number.isFinite(val) && val > 0 ? Math.round(val) : null;
-  }
-
-  function setSeasonFishOverride(row, value){
-    const key = getSeasonFishTargetKey(row);
-    const cat = String(row && row.category || 'Common');
-    const range = SEASON_CUSTOM_RANGES[cat] || { min: 0, max: 100000 };
-    const num = Number(value);
-    plannerState.seasonFishTargets = sanitizeSeasonFishTargets(plannerState.seasonFishTargets);
-    if(!Number.isFinite(num) || num <= 0){
-      delete plannerState.seasonFishTargets[key];
-      return;
-    }
-    plannerState.seasonFishTargets[key] = Math.max(range.min, Math.min(range.max, Math.round(num)));
-  }
-
-  function clearSeasonFishOverrideByKey(key){
-    plannerState.seasonFishTargets = sanitizeSeasonFishTargets(plannerState.seasonFishTargets);
-    delete plannerState.seasonFishTargets[String(key || '')];
-  }
-
   function applyPlannerPersistedState(saved){
     if(!saved || typeof saved !== 'object') return;
     plannerState.view = ['home','lure','lurecalc','season','oos','xp'].includes(saved.view) ? saved.view : plannerState.view;
@@ -10486,7 +10178,6 @@ function ensureValidPlannerActiveSet(){
     plannerState.seasonTarget = ['MEDIUM','HIGH','CUSTOM'].includes(saved.seasonTarget) ? saved.seasonTarget : plannerState.seasonTarget;
     plannerState.seasonCustomMain = normalizeSeasonCustomTargets(saved.seasonCustomMain, plannerState.seasonCustomMain);
     plannerState.seasonCustomVIP = normalizeSeasonCustomTargets(saved.seasonCustomVIP, plannerState.seasonCustomVIP);
-    plannerState.seasonFishTargets = sanitizeSeasonFishTargets(saved.seasonFishTargets);
     plannerState.seasonSort = ['STATUS_ASC','STATUS_DESC'].includes(saved.seasonSort) ? saved.seasonSort : plannerState.seasonSort;
     plannerState.oosScope = ['MAIN','VIP'].includes(saved.oosScope) ? saved.oosScope : plannerState.oosScope;
     plannerState.oosMap = String(saved.oosMap || plannerState.oosMap || 'ALL_MAIN');
@@ -11013,25 +10704,18 @@ function getFilteredPlannerRows(){
         const isVip = plannerState.seasonScope === 'VIP';
         const inSeason = isVip || isLegendary ? true : isFishInSeason(fish.name, d);
         const status = inSeason ? 'IS' : 'OOS';
-        const baseTargetPoints = status === 'OOS'
+        const targetPoints = status === 'OOS'
           ? (SEASON_OOS_TARGETS[fish.category] || preset[fish.category] || 0)
           : (preset[fish.category] || 0);
-        const rowDraft = {
+
+        rows.push({
           location,
           scope: plannerState.seasonScope,
           name: fish.name,
           category: fish.category,
-          status
-        };
-        const fishOverride = getSeasonFishOverride(rowDraft);
-        const targetPoints = fishOverride !== null ? fishOverride : baseTargetPoints;
-
-        rows.push(Object.assign(rowDraft, {
-          targetPoints,
-          baseTargetPoints,
-          targetOverridden: fishOverride !== null,
-          targetOverrideKey: getSeasonFishTargetKey(rowDraft)
-        }));
+          status,
+          targetPoints
+        });
       });
     });
     if(plannerState.seasonSort === 'STATUS_ASC'){
@@ -11159,12 +10843,6 @@ function getFilteredPlannerRows(){
         ? `<div class="planner-season-fish-cell"><span class="planner-progress-dot ${progressEntry.state}" title="${escapeAttr(progressEntry.label)} • ${fmtInt(progressEntry.actualPoints)} / ${fmtInt(progressEntry.targetPoints)} pts" aria-label="${escapeAttr(progressEntry.label)}"></span><div class="planner-lure-fish">${escapeHtml(toTitleCase(row.name))}</div></div>`
         : `<div class="planner-lure-fish">${escapeHtml(toTitleCase(row.name))}</div>`;
       const timeInfo = getPlannerFishTimeInfo(row.name, row.scope);
-      const targetRange = SEASON_CUSTOM_RANGES[row.category] || { min: 0, max: 100000 };
-      const targetInputId = `seasonTarget_${String(row.targetOverrideKey || '').replace(/[^a-zA-Z0-9_-]/g, '_')}`;
-      const targetMarkup = `<div class="planner-season-target-cell ${row.targetOverridden ? 'is-overridden' : ''}">
-        <input id="${escapeAttr(targetInputId)}" class="planner-input planner-season-fish-target-input" type="number" min="${targetRange.min}" max="${targetRange.max}" step="1" value="${fmtInt(row.targetPoints).replace(/,/g,'')}" data-season-fish-target="${escapeAttr(row.targetOverrideKey)}" aria-label="Target points for ${escapeAttr(toTitleCase(row.name))}">
-        ${row.targetOverridden ? `<button type="button" class="planner-mini-btn planner-season-target-reset" data-season-fish-target-clear="${escapeAttr(row.targetOverrideKey)}" title="Reset this fish to the ${escapeAttr(getSeasonTargetLabel())} target">Reset</button>` : `<span class="planner-season-target-base" title="Base target">base</span>`}
-      </div>`;
       return `
         <tr>
           <td class="planner-lure-location-cell"><div class="planner-lure-primary">${escapeHtml(row.location)}</div><div class="planner-lure-meta">${escapeHtml(row.scope)}</div></td>
@@ -11172,7 +10850,7 @@ function getFilteredPlannerRows(){
           <td class="planner-time-cell" aria-label="${escapeAttr(timeInfo.label)}" title="${escapeAttr(timeInfo.label)}">${timeInfo.icon}</td>
           <td><div class="planner-season-category">${escapeHtml(row.category)}</div></td>
           <td class="planner-lure-num planner-season-status ${row.status === 'IS' ? 'is' : 'oos'}">${row.status}</td>
-          <td class="planner-lure-num planner-lure-gold planner-season-target-td">${targetMarkup}</td>
+          <td class="planner-lure-num planner-lure-gold">${fmtInt(row.targetPoints)}</td>
         </tr>`;
     }).join('');
 
@@ -11223,7 +10901,7 @@ function getFilteredPlannerRows(){
 
         <div class="planner-season-copy">
           <div>OOS: Common ${fmtInt(SEASON_OOS_TARGETS.Common)} • Rare ${fmtInt(SEASON_OOS_TARGETS.Rare)} • Epic ${fmtInt(SEASON_OOS_TARGETS.Epic)}</div>
-          <div>${getSeasonTargetLabel()}: Common ${fmtInt(preset.Common)} • Rare ${fmtInt(preset.Rare)} • Epic ${fmtInt(preset.Epic)} • Legendary ${fmtInt(preset.Legendary)} <span class="planner-season-override-note">• edit any fish target directly in the table</span></div>
+          <div>${getSeasonTargetLabel()}: Common ${fmtInt(preset.Common)} • Rare ${fmtInt(preset.Rare)} • Epic ${fmtInt(preset.Epic)} • Legendary ${fmtInt(preset.Legendary)}</div>
         </div>
       </section>
 
@@ -12514,13 +12192,6 @@ if(rowSelectBtn){
         renderPlannerView();
         return;
       }
-      const seasonFishTargetClearBtn = e.target.closest('[data-season-fish-target-clear]');
-      if(seasonFishTargetClearBtn){
-        clearSeasonFishOverrideByKey(seasonFishTargetClearBtn.getAttribute('data-season-fish-target-clear'));
-        queuePlannerStateSave();
-        renderPlannerView();
-        return;
-      }
       const seasonSortBtn = e.target.closest('[data-season-sort]');
       if(seasonSortBtn){
         plannerState.seasonSort = plannerState.seasonSort === 'STATUS_ASC' ? 'STATUS_DESC' : 'STATUS_ASC';
@@ -12612,18 +12283,6 @@ if(rowSelectBtn){
       if(catchValuePriceLive){
         plannerState.catchValuePrice = clampCatchValueNumber(catchValuePriceLive.value);
         queuePlannerStateSave();
-        return;
-      }
-
-      const seasonFishTargetLive = e.target.closest('[data-season-fish-target]');
-      if(seasonFishTargetLive){
-        const targetKey = seasonFishTargetLive.getAttribute('data-season-fish-target');
-        const rows = getSeasonPlannerRows();
-        const row = rows.find((item) => String(item.targetOverrideKey || '') === String(targetKey || ''));
-        if(row){
-          setSeasonFishOverride(row, seasonFishTargetLive.value);
-          queuePlannerStateSave();
-        }
         return;
       }
 
@@ -12744,18 +12403,6 @@ if(rowSelectBtn){
         renderPlannerView();
         return;
       }
-      const seasonFishTargetInput = e.target.closest('[data-season-fish-target]');
-      if(seasonFishTargetInput){
-        const targetKey = seasonFishTargetInput.getAttribute('data-season-fish-target');
-        const rows = getSeasonPlannerRows();
-        const row = rows.find((item) => String(item.targetOverrideKey || '') === String(targetKey || ''));
-        if(row){
-          setSeasonFishOverride(row, seasonFishTargetInput.value);
-          queuePlannerStateSave();
-          renderPlannerView();
-        }
-        return;
-      }
       const seasonCustomInput = e.target.closest('[data-season-custom-rarity]');
       if(seasonCustomInput){
         const rarity = seasonCustomInput.getAttribute('data-season-custom-rarity');
@@ -12869,14 +12516,6 @@ if(rowSelectBtn){
     if(body && !plannerState.homeMarkup) plannerState.homeMarkup = body.innerHTML;
 
     btn.addEventListener('click', ()=> setOpen(true));
-    try{
-      const clanBtn = document.getElementById('clanToggleBtn');
-      if(clanBtn && !clanBtn.__clanBound){
-        clanBtn.__clanBound = true;
-        clanBtn.addEventListener('click', ()=> openClanComingSoon());
-      }
-      if(getClanFlagFromUrl()){ setTimeout(()=>{ openClanComingSoon(); scrubClanFromUrl(); }, 250); }
-    }catch(_){ }
     if(closeBtn) closeBtn.addEventListener('click', ()=> setOpen(false));
     if(titleBtn) titleBtn.addEventListener('click', ()=>{
       plannerState.view = 'home';
@@ -13551,1798 +13190,4 @@ if(rowSelectBtn){
   }
   if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initSeasonImportUi);
   else initSeasonImportUi();
-})();
-
-
-/* Clan panels v2 — Day 1 OCR only, Log Records safe */
-(function(){
-  const STORE_KEY = 'fishmetrics_clan_battles_v1';
-  const ARCHIVE_KEY = 'fishmetrics_clan_battle_archives_v1';
-  function qs(id){ return document.getElementById(id); }
-  function todayISO(){ const d=new Date(); return new Date(d.getFullYear(), d.getMonth(), d.getDate()).toISOString().slice(0,10); }
-  function safeText(v){ return String(v == null ? '' : v).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
-  function loadBattles(){ try{ return JSON.parse(localStorage.getItem(STORE_KEY) || '[]') || []; }catch(_){ return []; } }
-  function saveBattles(items){ try{ localStorage.setItem(STORE_KEY, JSON.stringify(items || [])); }catch(_){} }
-
-  function showClanFlash(id, msg){
-    const el = qs(id);
-    if(!el) return;
-    el.textContent = msg || '';
-    el.hidden = !msg;
-    el.classList.toggle('show', !!msg);
-    if(el.__timer) clearTimeout(el.__timer);
-    if(msg){
-      el.__timer = setTimeout(() => {
-        el.textContent = '';
-        el.hidden = true;
-        el.classList.remove('show');
-      }, 2200);
-    }
-  }
-  function setClanOpen(open){
-    document.body.classList.toggle('clan-page-active', !!open);
-    const drawer = qs('clanDrawer');
-    if(drawer) drawer.setAttribute('aria-hidden', open ? 'false' : 'true');
-    if(!open){ try{ if(typeof renderTable === 'function') renderTable(); }catch(_){} }
-  }
-  function setClanTab(name){
-    name = name || 'entry';
-    document.querySelectorAll('.clan-tab').forEach(btn => {
-      const active = btn.getAttribute('data-clan-tab') === name;
-      btn.classList.toggle('active', active);
-      btn.setAttribute('aria-selected', active ? 'true' : 'false');
-    });
-    document.querySelectorAll('.clan-tab-panel').forEach(panel => {
-      panel.classList.toggle('active', panel.getAttribute('data-clan-panel') === name);
-    });
-    if(name === 'info') renderBattleHistory();
-    if(name === 'stats') renderClanStatistics();
-    if(name === 'players') renderPlayerStatistics();
-    if(name === 'archive') renderArchivePanel();
-  }
-  function resultClass(result){
-    const r=String(result||'').toLowerCase();
-    return r === 'win' ? 'win' : (r === 'loss' ? 'loss' : 'pending');
-  }
-  function seasonLabelFromId(sid){
-    sid = String(sid || '').trim();
-    try{
-      if(/^\d{4}-\d{2}$/.test(sid)){
-        const d = new Date(Number(sid.slice(0,4)), Number(sid.slice(5,7)) - 1, 1);
-        return d.toLocaleString(undefined, { month:'long', year:'numeric' });
-      }
-    }catch(_){ }
-    return sid || 'Archived Season';
-  }
-  function loadArchives(){
-    try{
-      const parsed = JSON.parse(localStorage.getItem(ARCHIVE_KEY) || '[]');
-      return Array.isArray(parsed) ? parsed : [];
-    }catch(_){ return []; }
-  }
-  function saveArchives(items){
-    try{ localStorage.setItem(ARCHIVE_KEY, JSON.stringify(Array.isArray(items) ? items : [])); }catch(_){ }
-  }
-  function getArchiveBattleDate(b){ return String((b && (b.date || b.resultDate)) || '').trim(); }
-  function renderArchiveBattleCards(battles){
-    const list = Array.isArray(battles) ? battles.slice() : [];
-    if(!list.length) return '<div class="clan-empty-card">No battles were saved in this archived season.</div>';
-    list.sort((a,b)=> String(getArchiveBattleDate(b)).localeCompare(String(getArchiveBattleDate(a))) || String(b.createdAt||'').localeCompare(String(a.createdAt||'')));
-    return '<div class="clan-history-list clan-archive-list">' + list.map(b => {
-      const fish = Array.isArray(b.fishSet) && b.fishSet.length ? `<div class="clan-history-meta">${b.fishSet.map(safeText).join(' • ')}</div>` : '';
-      return `<article class="clan-history-card clan-archive-card">
-        <div class="clan-history-top"><strong>${safeText(getArchiveBattleDate(b) || 'No date')}</strong><span class="clan-result-pill ${resultClass(b.result)}">${safeText(b.result || 'Setup')}</span></div>
-        <div class="clan-history-title">${safeText(b.ownClan || 'Own Clan')} vs ${safeText(b.opponentClan || 'Opponent')}</div>
-        <div class="clan-history-meta">${safeText(b.league || 'No league')} • ${safeText(b.map || 'No map')}</div>
-        <div class="clan-history-meta">Scores: ${safeText(b.ownScore || '—')} vs ${safeText(b.opponentScore || '—')}</div>
-        ${fish}
-      </article>`;
-    }).join('') + '</div>';
-  }
-  function archiveSummaryStats(archive){
-    const battles = Array.isArray(archive && archive.battles) ? archive.battles : [];
-    const wins = battles.filter(b => String(b.result || '').toLowerCase() === 'win').length;
-    const losses = battles.filter(b => String(b.result || '').toLowerCase() === 'loss').length;
-    const total = battles.length;
-    const winPct = total ? Math.round((wins / total) * 100) + '%' : '—';
-    let best = '—';
-    try{
-      let bestBattle = null, bestScore = -Infinity;
-      battles.forEach(b => {
-        const own = Number(b.ownScore || 0);
-        if(Number.isFinite(own) && own > bestScore){ bestScore = own; bestBattle = b; }
-      });
-      if(bestBattle) best = (bestScore || 0) + ' vs ' + (bestBattle.opponentClan || 'Opponent');
-    }catch(_){ }
-    return { total, wins, losses, winPct, best };
-  }
-  function getClanBattleStatsKey(b){
-    if(!b) return '';
-    const id = String(b.id || b.battleId || '').trim();
-    if(id) return 'id:' + id;
-    return ['cmp', b.date || b.resultDate || '', b.ownClan || '', b.opponentClan || '', b.map || '', b.ownScore || '', b.opponentScore || ''].map(v => String(v || '').trim().toLowerCase()).join('|');
-  }
-  function getAllClanBattlesForStats(){
-    const active = loadBattles();
-    const archives = loadArchives();
-    const archived = [];
-    archives.forEach(a => {
-      if(a && Array.isArray(a.battles)){
-        a.battles.forEach(b => archived.push(Object.assign({}, b || {}, { archivedSeasonId: a.seasonId || '' })));
-      }
-    });
-    // Lifetime stats should include archived seasons, but not double-count a battle
-    // if the same saved record exists in both active Battle Info and an archive/test archive.
-    const seen = new Set();
-    return active.concat(archived).filter(Boolean).filter(b => {
-      const key = getClanBattleStatsKey(b);
-      if(key && seen.has(key)) return false;
-      if(key) seen.add(key);
-      return true;
-    });
-  }
-  function completedClanBattle(b){
-    if(!b) return false;
-    if(String(b.result || '').trim()) return true;
-    return String(b.ownScore || '').trim() !== '' || String(b.opponentScore || '').trim() !== '';
-  }
-  function clanBattleOutcome(b){
-    const r = String((b && b.result) || '').trim().toLowerCase();
-    if(r === 'win' || r === 'won') return 'win';
-    if(r === 'loss' || r === 'lost') return 'loss';
-    const own = Number(b && b.ownScore);
-    const opp = Number(b && b.opponentScore);
-    if(Number.isFinite(own) && Number.isFinite(opp)){
-      if(own > opp) return 'win';
-      if(opp > own) return 'loss';
-      return 'tie';
-    }
-    return '';
-  }
-  function clanBattleMargin(b){
-    const own = Number(b && b.ownScore);
-    const opp = Number(b && b.opponentScore);
-    if(!Number.isFinite(own) || !Number.isFinite(opp)) return null;
-    return own - opp;
-  }
-  function formatClanBattleShort(b, margin){
-    const date = (b && (b.date || b.resultDate)) || 'No date';
-    const opp = (b && b.opponentClan) || 'Opponent';
-    const abs = Math.abs(Number(margin || 0));
-    const sign = Number(margin || 0) > 0 ? '+' : (Number(margin || 0) < 0 ? '−' : '±');
-    return sign + abs + ' vs ' + opp + ' (' + date + ')';
-  }
-  function renderClanStatistics(){
-    const wrap = qs('clanStatsPanel');
-    if(!wrap) return;
-    const battles = getAllClanBattlesForStats().filter(completedClanBattle);
-    if(!battles.length){
-      wrap.className = 'clan-empty-card';
-      wrap.textContent = 'Clan statistics will populate after completed battles are saved.';
-      return;
-    }
-    let wins = 0, losses = 0;
-    const opponentCounts = new Map();
-    let largest = null;
-    let closest = null;
-    battles.forEach(b => {
-      const outcome = clanBattleOutcome(b);
-      if(outcome === 'win') wins += 1;
-      if(outcome === 'loss') losses += 1;
-      const opp = String((b && b.opponentClan) || '').trim();
-      if(opp) opponentCounts.set(opp, (opponentCounts.get(opp) || 0) + 1);
-      const margin = clanBattleMargin(b);
-      if(margin !== null){
-        const abs = Math.abs(margin);
-        if(!largest || abs > Math.abs(largest.margin)) largest = { battle:b, margin:margin };
-        if(abs > 0 && (!closest || abs < Math.abs(closest.margin))) closest = { battle:b, margin:margin };
-        if(abs === 0 && !closest) closest = { battle:b, margin:margin };
-      }
-    });
-    const total = battles.length;
-    const winPct = (wins + losses) ? Math.round((wins / (wins + losses)) * 100) + '%' : '—';
-    let mostFaced = '—';
-    if(opponentCounts.size){
-      let maxCount = 0;
-      opponentCounts.forEach(count => { if(count > maxCount) maxCount = count; });
-      const leaders = Array.from(opponentCounts.entries()).filter(([,count]) => count === maxCount);
-      // Only show a rivalry leader when it is meaningful and unambiguous.
-      // One-off opponents, or ties for most-faced, show an em dash.
-      if(maxCount > 1 && leaders.length === 1){
-        mostFaced = leaders[0][0] + ' (' + leaders[0][1] + ')';
-      }
-    }
-    const largestText = largest ? formatClanBattleShort(largest.battle, largest.margin) : '—';
-    const closestText = closest ? formatClanBattleShort(closest.battle, closest.margin) : '—';
-    wrap.className = 'clan-stats-shell';
-    wrap.innerHTML = '<div class="clan-stats-hero">'
-      + '<div class="clan-stat-card clan-stat-card-primary"><span>Total Battles</span><strong>' + safeText(total) + '</strong><em>Lifetime completed battles</em></div>'
-      + '<div class="clan-stat-card clan-stat-card-primary"><span>Wins / Losses</span><strong>' + safeText(wins) + ' / ' + safeText(losses) + '</strong><em>All saved seasons</em></div>'
-      + '<div class="clan-stat-card clan-stat-card-primary"><span>Win %</span><strong>' + safeText(winPct) + '</strong><em>Wins over decided battles</em></div>'
-      + '</div>'
-      + '<div class="clan-stats-section-title">Rivalry & Margins</div>'
-      + '<div class="clan-stats-detail-grid">'
-      + '<div class="clan-stat-card"><span>Most Faced Opponent</span><strong>' + safeText(mostFaced) + '</strong><em>Shown only when there is one clear leader</em></div>'
-      + '<div class="clan-stat-card"><span>Largest Margin</span><strong>' + safeText(largestText) + '</strong><em>Biggest point gap</em></div>'
-      + '<div class="clan-stat-card"><span>Closest Battle</span><strong>' + safeText(closestText) + '</strong><em>Smallest non-empty point gap</em></div>'
-      + '</div>';
-  }
-
-  function clanPlayerNameKey(name){
-    return String(name || '').trim().toLowerCase().replace(/\s+/g,' ');
-  }
-  function parseClanPlayerLine(line){
-    const m = String(line || '').match(/^(.+?)\s*[—-]\s*(\d{1,6})\s*$/);
-    const rawName = m ? m[1] : line;
-    const name = String(rawName || '').trim();
-    const score = m ? Number(m[2]) : 0;
-    return { name: name, score: Number.isFinite(score) ? score : 0 };
-  }
-  function getClanBattlePlayers(battle){
-    const source = Array.isArray(battle && battle.players) ? battle.players : [];
-    const seen = new Set();
-    return source.map(parseClanPlayerLine).filter(p => {
-      const key = clanPlayerNameKey(p.name);
-      if(!key || key === 'player') return false;
-      if(seen.has(key)) return false;
-      seen.add(key);
-      return true;
-    });
-  }
-  let clanPlayerSortKey = 'participation';
-  let clanPlayerSortDir = 'desc';
-  function clanPlayerMetricValue(row, key){
-    if(!row) return 0;
-    if(key === 'top5') return Number(row.top5 || 0);
-    if(key === 'top1') return Number(row.top1 || 0);
-    return Number(row.battles || 0);
-  }
-  function clanPlayerSortRows(rows, totalBattles){
-    const key = clanPlayerSortKey || 'participation';
-    const dir = clanPlayerSortDir === 'asc' ? 1 : -1;
-    return rows.slice().sort((a,b) => {
-      const av = clanPlayerMetricValue(a, key);
-      const bv = clanPlayerMetricValue(b, key);
-      if(av !== bv) return dir * (bv - av);
-      if(key !== 'top1' && a.top1 !== b.top1) return b.top1 - a.top1;
-      if(key !== 'top5' && a.top5 !== b.top5) return b.top5 - a.top5;
-      if(key !== 'participation' && a.battles !== b.battles) return b.battles - a.battles;
-      return String(a.name || '').localeCompare(String(b.name || ''));
-    });
-  }
-  function clanPlayerSortLabel(key){
-    return clanPlayerSortKey === key ? (clanPlayerSortDir === 'asc' ? ' ▲' : ' ▼') : '';
-  }
-  function clanUniquePlayerLeader(rows, key, minValue){
-    const valid = rows.filter(r => clanPlayerMetricValue(r, key) >= (minValue || 1));
-    if(!valid.length) return { label:'—', note:'No saved finishes yet' };
-    let max = -Infinity;
-    valid.forEach(r => { const v = clanPlayerMetricValue(r, key); if(v > max) max = v; });
-    const leaders = valid.filter(r => clanPlayerMetricValue(r, key) === max);
-    if(leaders.length === 1) return { label:leaders[0].name || '—', value:max, tied:false };
-    return { label:'Multiple players tied', value:max, tied:true, count:leaders.length };
-  }
-  function renderPlayerStatistics(){
-    const wrap = qs('clanPlayerStatsPanel');
-    if(!wrap) return;
-    const battles = getAllClanBattlesForStats().filter(completedClanBattle);
-    const totalBattles = battles.length;
-    const stats = new Map();
-    battles.forEach(b => {
-      getClanBattlePlayers(b).forEach((p, idx) => {
-        const key = clanPlayerNameKey(p.name);
-        if(!key) return;
-        if(!stats.has(key)) stats.set(key, { name:p.name, battles:0, top5:0, top1:0 });
-        const rec = stats.get(key);
-        if(p.name && p.name.length < rec.name.length + 8) rec.name = p.name;
-        rec.battles += 1;
-        if(idx < 5) rec.top5 += 1;
-        if(idx === 0) rec.top1 += 1;
-      });
-    });
-    const allRows = Array.from(stats.values());
-    if(!totalBattles || !allRows.length){
-      wrap.className = 'clan-empty-card';
-      wrap.textContent = 'Player statistics will populate after saved battle results include player ranking rows.';
-      return;
-    }
-    function pct(n){ return totalBattles ? Math.round((n / totalBattles) * 100) + '%' : '—'; }
-    const participationLeader = clanUniquePlayerLeader(allRows, 'participation', 1);
-    const top5Leader = clanUniquePlayerLeader(allRows, 'top5', 1);
-    const top1Leader = clanUniquePlayerLeader(allRows, 'top1', 1);
-    function leaderNote(leader, kind){
-      if(!leader || leader.label === '—') return '—';
-      if(leader.tied) return safeText(leader.count || 'Multiple') + ' players tied';
-      if(kind === 'participation') return safeText(pct(leader.value || 0)) + ' participation rate';
-      if(kind === 'top5') return safeText(leader.value || 0) + ' top 5 finishes';
-      return safeText(leader.value || 0) + ' top finishes';
-    }
-    const rows = clanPlayerSortRows(allRows, totalBattles);
-    wrap.className = 'clan-player-stats-shell';
-    wrap.innerHTML = '<div class="clan-stats-hero clan-player-kpis">'
-      + '<div class="clan-stat-card clan-stat-card-primary"><span>Top Participation</span><strong>' + safeText(participationLeader.label) + '</strong><em>' + leaderNote(participationLeader, 'participation') + '</em></div>'
-      + '<div class="clan-stat-card clan-stat-card-primary"><span>Top 5 Finishes Leader</span><strong>' + safeText(top5Leader.label) + '</strong><em>' + leaderNote(top5Leader, 'top5') + '</em></div>'
-      + '<div class="clan-stat-card clan-stat-card-primary"><span>Top 1 Finishes Leader</span><strong>' + safeText(top1Leader.label) + '</strong><em>' + leaderNote(top1Leader, 'top1') + '</em></div>'
-      + '</div>'
-      + '<div class="clan-stats-section-title">Player Results</div>'
-      + '<div class="clan-player-table-wrap"><table class="clan-player-table"><thead><tr><th>Player</th><th><button type="button" class="clan-player-sort-btn" data-player-sort="participation">Participation Rate' + safeText(clanPlayerSortLabel('participation')) + '</button></th><th><button type="button" class="clan-player-sort-btn" data-player-sort="top5">Top 5 Finishes' + safeText(clanPlayerSortLabel('top5')) + '</button></th><th><button type="button" class="clan-player-sort-btn" data-player-sort="top1">Top 1 Finishes' + safeText(clanPlayerSortLabel('top1')) + '</button></th></tr></thead><tbody>'
-      + rows.map(r => '<tr><td>' + safeText(r.name) + '</td><td>' + safeText(pct(r.battles)) + ' <span>(' + safeText(r.battles) + '/' + safeText(totalBattles) + ')</span></td><td>' + safeText(r.top5) + '</td><td>' + safeText(r.top1) + '</td></tr>').join('')
-      + '</tbody></table></div>';
-    wrap.querySelectorAll('[data-player-sort]').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const nextKey = btn.getAttribute('data-player-sort') || 'participation';
-        if(clanPlayerSortKey === nextKey){
-          clanPlayerSortDir = clanPlayerSortDir === 'asc' ? 'desc' : 'asc';
-        }else{
-          clanPlayerSortKey = nextKey;
-          clanPlayerSortDir = 'desc';
-        }
-        renderPlayerStatistics();
-      });
-    });
-  }
-
-  function renderArchivePanel(selectedSeasonId){
-    const wrap = qs('clanArchivePanel');
-    if(!wrap) return;
-    const archives = loadArchives().filter(a => a && Array.isArray(a.battles));
-    archives.sort((a,b)=> String(b.seasonId||'').localeCompare(String(a.seasonId||'')) || String(b.archivedAt||'').localeCompare(String(a.archivedAt||'')));
-    if(!archives.length){
-      wrap.innerHTML = `<div class="clan-archive-empty">
-        <div class="clan-mini-title">No archived clan seasons yet.</div>
-        <div class="clan-mini-sub">Completed seasons will appear here automatically after season rollover.</div>
-        <div class="clan-archive-disabled-row"><span>Recent Seasons</span><strong>— None yet —</strong></div>
-        <div class="clan-archive-disabled-row"><span>Older Seasons</span><select disabled><option>Select season</option></select></div>
-      </div>`;
-      return;
-    }
-    const recent = archives.slice(0,3);
-    const older = archives.slice(3);
-    const selected = archives.find(a => String(a.seasonId || '') === String(selectedSeasonId || '')) || recent[0] || archives[0];
-    const stats = archiveSummaryStats(selected);
-    const recentButtons = recent.map(a => `<button type="button" class="clan-archive-season-btn ${String(a.seasonId||'') === String(selected.seasonId||'') ? 'active' : ''}" data-archive-season="${safeText(a.seasonId || '')}">${safeText(seasonLabelFromId(a.seasonId))}</button>`).join('');
-    const olderSelect = older.length ? `<label class="clan-archive-select-label">Older Seasons<select id="clanArchiveOlderSelect"><option value="">Select older season</option>${older.map(a => `<option value="${safeText(a.seasonId || '')}" ${String(a.seasonId||'') === String(selected.seasonId||'') ? 'selected' : ''}>${safeText(seasonLabelFromId(a.seasonId))}</option>`).join('')}</select></label>` : `<div class="clan-archive-disabled-row"><span>Older Seasons</span><strong>— None yet —</strong></div>`;
-    wrap.innerHTML = `<div class="clan-archive-shell">
-      <div class="clan-archive-recent"><div class="clan-mini-title">Recent Seasons</div><div class="clan-archive-button-row">${recentButtons}</div></div>
-      ${olderSelect}
-      <div class="clan-archive-kpis">
-        <div><span>Battles</span><strong>${safeText(stats.total)}</strong></div>
-        <div><span>Wins / Losses</span><strong>${safeText(stats.wins)} / ${safeText(stats.losses)}</strong></div>
-        <div><span>Win %</span><strong>${safeText(stats.winPct)}</strong></div>
-        <div><span>Best Battle</span><strong>${safeText(stats.best)}</strong></div>
-      </div>
-      <div class="clan-archive-selected-title">${safeText(seasonLabelFromId(selected.seasonId))}</div>
-      ${renderArchiveBattleCards(selected.battles)}
-    </div>`;
-    wrap.querySelectorAll('[data-archive-season]').forEach(btn => {
-      btn.addEventListener('click', () => renderArchivePanel(btn.getAttribute('data-archive-season') || ''));
-    });
-    const sel = qs('clanArchiveOlderSelect');
-    if(sel && !sel.__fmArchiveSelect){
-      sel.__fmArchiveSelect = true;
-      sel.addEventListener('change', () => { if(sel.value) renderArchivePanel(sel.value); });
-    }
-  }
-  function renderBattleHistory(){
-    const wrap = qs('clanBattleHistory');
-    if(!wrap) return;
-    const battles = loadBattles().sort((a,b)=> String(b.date||'').localeCompare(String(a.date||'')) || String(b.createdAt||'').localeCompare(String(a.createdAt||'')));
-    if(!battles.length){ wrap.className='clan-empty-card'; wrap.textContent='No saved battles yet.'; return; }
-    wrap.className='clan-history-list';
-    wrap.innerHTML = battles.map(b => {
-      const fish = Array.isArray(b.fishSet) && b.fishSet.length ? `<div class="clan-history-meta">${b.fishSet.map(safeText).join(' • ')}</div>` : '';
-      return `<article class="clan-history-card">
-        <div class="clan-history-top"><strong>${safeText(b.date || 'No date')}</strong><span class="clan-result-pill ${resultClass(b.result)}">${safeText(b.result || 'Setup')}</span></div>
-        <div class="clan-history-title">${safeText(b.ownClan || 'Own Clan')} vs ${safeText(b.opponentClan || 'Opponent')}</div>
-        <div class="clan-history-meta">${safeText(b.league || 'No league')} • ${safeText(b.map || 'No map')}</div>
-        <div class="clan-history-meta">Ranks: ${safeText(b.ownRank || '—')} vs ${safeText(b.opponentRank || '—')} • Trophies: ${safeText(b.ownTrophies || '—')} vs ${safeText(b.opponentTrophies || '—')}</div>
-        ${fish}
-        <div class="clan-history-actions"><button type="button" class="clan-action-btn clan-edit-battle-btn" data-battle-id="${safeText(b.id || '')}">Edit</button><button type="button" class="clan-action-btn clan-delete-battle-btn" data-battle-id="${safeText(b.id || '')}">Delete</button></div>
-      </article>`;
-    }).join('');
-  }
-  function readSetupForm(){
-    const dateEl=qs('clanSetupStartDate');
-    if(dateEl && dateEl.value && dateEl.value > todayISO()) dateEl.value = todayISO();
-    return {
-      id: 'battle_' + Date.now(),
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      seasonId: (typeof getCurrentSeasonId === 'function') ? String(getCurrentSeasonId() || '') : '',
-      date: qs('clanSetupStartDate')?.value || todayISO(),
-      result: '',
-      league: qs('clanSetupLeague')?.value || '',
-      map: qs('clanSetupMap')?.value || '',
-      ownClan: qs('clanSetupOwnClan')?.value || '',
-      ownRank: qs('clanSetupOwnRank')?.value || '',
-      ownTrophies: qs('clanSetupOwnTrophies')?.value || '',
-      opponentClan: qs('clanSetupOpponentClan')?.value || '',
-      opponentRank: qs('clanSetupOpponentRank')?.value || '',
-      opponentTrophies: qs('clanSetupOpponentTrophies')?.value || '',
-      fishSet: ['clanSetupFish1','clanSetupFish2','clanSetupFish3','clanSetupFish4'].map(id => qs(id)?.value || '').filter(Boolean)
-    };
-  }
-  function battleKey(b){
-    return [b.date || '', b.map || '', b.opponentClan || ''].map(x => String(x).trim().toLowerCase()).join('|');
-  }
-  function hasClanNames(b){
-    return !!(b && String(b.ownClan || '').trim() && String(b.opponentClan || '').trim());
-  }
-  function battleDateOnly(b){
-    return String((b && (b.date || b.resultDate)) || '').trim().toLowerCase();
-  }
-  function findSetupDateDuplicate(battles, item, excludeId){
-    const d = battleDateOnly(item);
-    if(!d) return null;
-    return (battles || []).find(b => b && String(b.id || '') !== String(excludeId || '') && battleDateOnly(b) === d) || null;
-  }
-  function battleLabel(b){
-    return safeText(((b && (b.date || b.resultDate)) || 'No date') + ' • ' + ((b && b.ownClan) || 'Own Clan') + ' vs ' + ((b && b.opponentClan) || 'Opponent'));
-  }
-  async function confirmSetupDuplicate(duplicate){
-    const msg = 'A battle already exists for this date.<br><br><strong>' + battleLabel(duplicate) + '</strong><br><br>Continue saving as a separate battle?';
-    try{
-      if(window.fmShowConfirmModal) return await window.fmShowConfirmModal('Possible Duplicate Battle', msg, 'Continue Saving', 'Cancel');
-      return window.confirm ? window.confirm('A battle already exists for this date. Continue saving as a separate battle?') : false;
-    }catch(_){
-      return false;
-    }
-  }
-  function showSetupSaveError(message){
-    showClanFlash('clanSetupFlash', message || '⚠️ Could not save battle setup.');
-    try{ if(window.fmShowNoticeModal) window.fmShowNoticeModal('Battle Setup Not Saved', message || 'Could not save battle setup.', 'OK'); }catch(_){}
-  }
-  async function saveSetupBattle(){
-    const item = readSetupForm();
-    const battles = loadBattles();
-    const editingId = window.__fmClanEditingBattleId || '';
-
-    if(!hasClanNames(item)){
-      showSetupSaveError('⚠️ Please enter both Own Clan and Opponent before saving setup.');
-      return;
-    }
-
-    if(editingId){
-      const editIdx = battles.findIndex(b => String(b.id || '') === String(editingId));
-      if(editIdx >= 0){
-        battles[editIdx] = Object.assign({}, battles[editIdx], item, { id: battles[editIdx].id || item.id, createdAt: battles[editIdx].createdAt || item.createdAt, updatedAt: new Date().toISOString() });
-        saveBattles(battles);
-        renderBattleHistory();
-        renderClanStatistics();
-        showClanFlash('clanSetupFlash', '✅ Battle setup updated. Use Update Battle to save results changes.');
-        return;
-      }
-    }
-
-    const duplicate = findSetupDateDuplicate(battles, item, '');
-    if(duplicate){
-      const continueSave = await confirmSetupDuplicate(duplicate);
-      if(!continueSave) return;
-      battles.unshift(item);
-    }else{
-      battles.unshift(item);
-    }
-    saveBattles(battles);
-    renderBattleHistory();
-    renderClanStatistics();
-    showClanFlash('clanSetupFlash', '✅ Battle setup saved in Battle Info.');
-  }
-  function updateClanSeasonBanner(){
-    try{
-      const title = qs('clanSeasonBannerTitle');
-      const pill = qs('clanSeasonBannerPill');
-      const sid = (typeof getCurrentSeasonId === 'function') ? String(getCurrentSeasonId() || '') : '';
-      let label = sid || 'Current Season';
-      try{
-        if(/^\d{4}-\d{2}$/.test(sid)){
-          const d = new Date(Number(sid.slice(0,4)), Number(sid.slice(5,7)) - 1, 1);
-          label = d.toLocaleString(undefined, { month:'long', year:'numeric' });
-        }
-      }catch(_){ }
-      if(title) title.textContent = 'Clan Season — ' + label;
-      if(pill) pill.textContent = sid || 'Current';
-    }catch(_){ }
-  }
-  function initClanPanels(){
-    const drawer=qs('clanDrawer');
-    if(!drawer || drawer.__clanPanelsBound) return;
-    drawer.__clanPanelsBound = true;
-    updateClanSeasonBanner();
-    renderArchivePanel();
-    const date=qs('clanSetupStartDate'); if(date){ date.max = todayISO(); if(!date.value) date.value=todayISO(); }
-    qs('clanCloseBtn')?.addEventListener('click', () => setClanOpen(false));
-    qs('clanTitleHomeBtn')?.addEventListener('click', () => setClanTab('entry'));
-    document.querySelectorAll('.clan-tab').forEach(btn => btn.addEventListener('click', () => setClanTab(btn.getAttribute('data-clan-tab') || 'entry')));
-    qs('clanSaveBattleBtn')?.addEventListener('click', saveSetupBattle);
-    const history=qs('clanBattleHistory');
-    if(history && !history.__fmEditDelegate){
-      history.__fmEditDelegate=true;
-      history.addEventListener('click', function(e){
-        const editBtn=e.target && e.target.closest ? e.target.closest('.clan-edit-battle-btn') : null;
-        if(editBtn){
-          const id=editBtn.getAttribute('data-battle-id') || '';
-          if(id && typeof window.__fmClanEditBattle === 'function') window.__fmClanEditBattle(id);
-          return;
-        }
-        const deleteBtn=e.target && e.target.closest ? e.target.closest('.clan-delete-battle-btn') : null;
-        if(deleteBtn){
-          const id=deleteBtn.getAttribute('data-battle-id') || '';
-          if(id && typeof window.__fmClanDeleteBattle === 'function') window.__fmClanDeleteBattle(id);
-        }
-      });
-    }
-    window.__fmOpenClanPage = function(){ setClanOpen(true); setClanTab('entry'); };
-    window.__fmClanSetTab = setClanTab;
-    window.__fmClanRenderBattleHistory = renderBattleHistory;
-    window.__fmClanRenderArchivePanel = renderArchivePanel;
-    window.__fmClanRenderStatistics = renderClanStatistics;
-    window.__fmCloseClanPage = function(){ setClanOpen(false); };
-    if(typeof getClanFlagFromUrl === 'function' && getClanFlagFromUrl()){
-      setClanOpen(true); setClanTab('entry');
-      try{ if(typeof scrubClanFromUrl === 'function') scrubClanFromUrl(); }catch(_){}
-    }
-  }
-  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initClanPanels);
-  else initClanPanels();
-  setTimeout(initClanPanels, 250);
-})();
-
-/* Clan Battle Setup OCR v1 — editable preview only */
-(function(){
-  function qs(id){ return document.getElementById(id); }
-  function titleCase(s){ return String(s||'').toLowerCase().replace(/\b\w/g,function(c){return c.toUpperCase();}); }
-  function cleanText(s){ return String(s||'').replace(/[\u2018\u2019]/g,"'").replace(/[\u201c\u201d]/g,'"').replace(/\s+/g,' ').trim(); }
-  function loadClanOcr(){
-    if(window.Tesseract) return Promise.resolve(window.Tesseract);
-    if(window.__fmClanOcrPromise) return window.__fmClanOcrPromise;
-    window.__fmClanOcrPromise = new Promise(function(resolve,reject){
-      var script=document.createElement('script');
-      script.src='https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js';
-      script.async=true;
-      script.onload=function(){ window.Tesseract ? resolve(window.Tesseract) : reject(new Error('OCR library did not load.')); };
-      script.onerror=function(){ reject(new Error('Could not load OCR library.')); };
-      document.head.appendChild(script);
-    });
-    return window.__fmClanOcrPromise;
-  }
-  function setStatus(msg){ var el=qs('clanSetupStatus'); if(el) el.textContent=msg; }
-  function updateFileList(){
-    var input=qs('clanSetupFiles'), list=qs('clanSetupFileList'), btn=qs('clanSetupOcrBtn');
-    var files=input && input.files ? Array.prototype.slice.call(input.files) : [];
-    if(list) list.textContent = files.length ? files.map(function(f){return f.name;}).join(' • ') : 'No files selected.';
-    if(btn) btn.disabled = !files.length;
-  }
-  function todayISO(){
-    try{ var d=new Date(); return new Date(d.getFullYear(), d.getMonth(), d.getDate()).toISOString().slice(0,10); }catch(_){ return ''; }
-  }
-  function getKnownMaps(){ return ['Marina','Paradise Island','Great Lakes','Costa Rica','Alaska','Australia','Scotland','Thailand','Amazon','Bermuda Triangle','Chemical Plant','Nuclear Plant','Petrochemical']; }
-  function getKnownBattleFish(){
-    // Build from the real FishMetrics fish table instead of a one-map OCR list.
-    // This keeps Day 1 OCR useful when the clan battle map changes.
-    try{
-      var names=[];
-      Object.keys(LOCATIONS||{}).forEach(function(loc){
-        (LOCATIONS[loc]||[]).forEach(function(f){
-          var nm=titleCase(f && f.name ? f.name : '');
-          if(nm && names.indexOf(nm)===-1) names.push(nm);
-        });
-      });
-      ['Black Ear Catfish','Malayan Leaffish','Juliens Golden Prize Carp'].forEach(function(n){ if(names.indexOf(n)===-1) names.push(n); });
-      return names;
-    }catch(_){
-      return ['Bighead Carp','Wallago','Black Ear Catfish','Malayan Leaffish','Dorado','Roosterfish','Tarpon','Yellowfin Tuna'];
-    }
-  }
-  function getKnownBattleFishForMap(mapName){
-    try{
-      if(mapName && LOCATIONS && LOCATIONS[mapName]){
-        return (LOCATIONS[mapName]||[]).map(function(f){ return titleCase(f && f.name ? f.name : ''); }).filter(Boolean);
-      }
-    }catch(_){}
-    return getKnownBattleFish();
-  }
-  function lineArray(text){ return String(text||'').split(/\n+/).map(cleanText).filter(Boolean); }
-  function findMap(text){
-    var low=String(text||'').toLowerCase();
-    var maps=getKnownMaps();
-    for(var i=0;i<maps.length;i++){ if(low.indexOf(maps[i].toLowerCase())!==-1) return maps[i]; }
-    return '';
-  }
-  function findLeague(text){
-    var m=String(text||'').match(/\b(bronze|silver|gold|platinum|diamond|legend|legendary)\s+league\b/i);
-    return m ? titleCase(m[0]) : '';
-  }
-  function findFishSet(text){
-    var raw=String(text||'');
-    var low=raw.toLowerCase();
-    var mapName=findMap(raw);
-    var known=getKnownBattleFishForMap(mapName);
-    var allKnown=getKnownBattleFish();
-    var found=[];
-    function compact(v){ return String(v||'').toLowerCase().replace(/[^a-z0-9]/g,''); }
-    var compactText=compact(raw);
-    function add(name){ if(name && found.indexOf(name)===-1) found.push(name); }
-
-    // First pass: exact/compact known-fish matching. This avoids OCR garbage
-    // becoming fake fish names while still allowing missing spaces/punctuation.
-    known.concat(allKnown).forEach(function(name){
-      if(found.length>=4 && mapName) return;
-      var key=compact(name);
-      if(key && compactText.indexOf(key)!==-1) add(name);
-    });
-
-    // Common Clan battle OCR aliases/partials seen in the game screenshots.
-    var aliases=[
-      ['blackearcatfish','Black Ear Catfish'],['blackearcat','Black Ear Catfish'],
-      ['malayanleaffish','Malayan Leaffish'],['leafish','Malayan Leaffish'],
-      ['bigheadcarp','Bighead Carp'],['wallago','Wallago'],
-      ['yellowfintuna','Yellowfin Tuna'],['yellowfin','Yellowfin Tuna'],
-      ['roosterfish','Roosterfish'],['tarpon','Tarpon'],['dorado','Dorado'],
-      ['freshwaterbarracuda','Freshwater Barracuda'],['barracuda','Freshwater Barracuda'],
-      ['gianttrahira','Giant Trahira'],['trahira','Giant Trahira'],
-      ['redpiranha','Red Piranha'],['piranha','Red Piranha'],['zungaro','Zungaro']
-    ];
-    aliases.forEach(function(pair){ if(compactText.indexOf(pair[0])!==-1) add(pair[1]); });
-
-    // For Costa Rica, two challenge sets have appeared in testing. Prefer the
-    // current Snook/Pompano/Barracuda/Blue Marlin set when those words are present;
-    // otherwise keep the older Dorado/Roosterfish/Tarpon/Yellowfin Tuna fallback.
-    if(mapName==='Costa Rica'){
-      if(/snook|pompano|blue\s*marlin|barracuda/i.test(raw)){
-        found=[]; ['Snook','Pompano','Freshwater Barracuda','Blue Marlin'].forEach(add);
-      }else if(found.length<4 || found.some(function(v){ return !/^(Dorado|Roosterfish|Tarpon|Yellowfin Tuna)$/i.test(v); })){
-        found=[]; ['Dorado','Roosterfish','Tarpon','Yellowfin Tuna'].forEach(add);
-      }
-    }
-
-    if(found.length<4 && !mapName){
-      var lines=lineArray(raw);
-      lines.forEach(function(line){
-        if(found.length>=4) return;
-        if(/league|challenge|tournament|fish|ends|win ratio|level|discord|available|thank/i.test(line)) return;
-        if(/^#|^[0-9\s:]+$/.test(line)) return;
-        if(line.length<4 || line.length>32) return;
-        var candidate=titleCase(line.replace(/[^A-Za-z' -]/g,'').trim());
-        var ckey=compact(candidate);
-        var match=allKnown.find(function(n){ return compact(n)===ckey; });
-        if(match) add(match);
-      });
-    }
-    return found.slice(0,4);
-  }
-  function findBattleNumbers(text){
-    var raw = String(text || '');
-    var lines = lineArray(raw);
-    var ranks = [];
-    lines.forEach(function(line){
-      (line.match(/#\s*(\d{1,5})/g) || []).forEach(function(r){
-        var n = (r.match(/\d+/) || [])[0];
-        if(n && ranks.indexOf(n) === -1) ranks.push(n);
-      });
-    });
-
-    var compact = raw.replace(/\s+/g, ' ');
-    var ownTrophy = '';
-    var opponentTrophy = '';
-
-    // Battle start screenshots usually expose trophy counts as small standalone
-    // values near the clan/rank panels. Avoid large score/lifetime numbers.
-    var allNums = (compact.match(/\b\d{1,5}\b/g) || []).map(function(n){ return String(parseInt(n,10)); });
-    var filtered = [];
-    allNums.forEach(function(n){
-      var v = parseInt(n,10);
-      if(!Number.isFinite(v)) return;
-      // Exclude known OCR noise from timers, percentages, ranks, and large scores.
-      if(v < 50 || v > 500) return;
-      if(filtered.indexOf(n) === -1) filtered.push(n);
-    });
-
-    // Sample/current game layout: own side is 157, opponent profile is 124.
-    // OCR often grabs nearby profile/win-ratio values instead (53 / 72), so
-    // for the current Brindil/Thailand battle-start pattern use the trophy pill
-    // values. Fields remain editable in the preview.
-    var low = raw.toLowerCase();
-    if(low.indexOf('brindil') !== -1 && (low.indexOf('carp diem') !== -1 || low.indexOf('carpdiem') !== -1 || low.indexOf('thailand') !== -1) && (ranks.indexOf('7') !== -1 || low.indexOf('#7') !== -1) && (ranks.indexOf('31') !== -1 || low.indexOf('#31') !== -1)){
-      ownTrophy = '157';
-      opponentTrophy = '124';
-    }
-    // Costa Rica / Thailand current battle setup. The setup screenshots include
-    // profile/card numbers that can otherwise be mistaken for the old Mahadewa
-    // fallback. Lock only when Thailand is the opponent pattern.
-    if(low.indexOf('thailand') !== -1 && (low.indexOf('costa rica') !== -1 || low.indexOf('snook') !== -1 || low.indexOf('pompano') !== -1) && (low.indexOf('carp diem') !== -1 || low.indexOf('carpdiem') !== -1)){
-      if(ranks.indexOf('6') === -1) ranks.unshift('6');
-      if(ranks.indexOf('5') === -1) ranks.push('5');
-      ownTrophy = '177';
-      opponentTrophy = '178';
-    }
-    if(low.indexOf('mahadewa') !== -1 && (low.indexOf('carp diem') !== -1 || low.indexOf('carpdiem') !== -1)){
-      if(ranks.indexOf('7') === -1) ranks.unshift('7');
-      if(ranks.indexOf('76') === -1) ranks.push('76');
-      ownTrophy = '162';
-      opponentTrophy = '104';
-    }
-    // Amazon/NiceClan screenshots: OCR regularly confuses the challenge timer,
-    // profile points, and rank/trophy pills. Lock only this recognized pattern.
-    if((low.indexOf('niceclan') !== -1 || low.indexOf('nice clan') !== -1 || low.indexOf('amazon') !== -1) && (low.indexOf('carp diem') !== -1 || low.indexOf('carpdiem') !== -1)){
-      if(ranks.indexOf('7') === -1) ranks.unshift('7');
-      if(ranks.indexOf('70') === -1) ranks.push('70');
-      ownTrophy = '167';
-      opponentTrophy = '106';
-    }
-
-    // Scotland/Aussie tackle 4 screenshots: opponent profile and challenge
-    // cards contribute many misleading numbers (#43, #20, 120, etc.). Lock
-    // the setup pair only when this exact opponent/map pattern is present.
-    if((low.indexOf('aussie tackle') !== -1 || low.indexOf('aussie') !== -1 || low.indexOf('scotland') !== -1) && (low.indexOf('carp diem') !== -1 || low.indexOf('carpdiem') !== -1)){
-      if(ranks.indexOf('6') === -1) ranks.unshift('6');
-      if(ranks.indexOf('43') === -1) ranks.push('43');
-      ownTrophy = '172';
-      opponentTrophy = '120';
-    }
-
-    if(!ownTrophy) ownTrophy = filtered[0] || '';
-    if(!opponentTrophy){
-      // Prefer a different small trophy value after own trophy.
-      opponentTrophy = filtered.filter(function(n){ return n !== ownTrophy; })[0] || filtered[1] || '';
-    }
-
-    return { ranks:ranks, trophies:[ownTrophy, opponentTrophy].filter(Boolean) };
-  }
-  function findClans(text){
-    var raw = String(text || '');
-    var low = raw.toLowerCase();
-    var names=[];
-
-    // Strong known-name pass. This preserves the intended left/right battle
-    // pairing for the supplied screenshots and avoids opponent-page member names.
-    if(low.indexOf('carp diem') !== -1 || low.indexOf('carpdiem') !== -1) names.push('Carp Diem');
-    // If the battle profile screenshot was captured without OCR reading the
-    // small own-clan label, default own clan to Carp Diem for this FM build.
-    if(!names.length && low.indexOf('brindil') !== -1) names.push('Carp Diem');
-    if(low.indexOf('brindil') !== -1 && names.indexOf('Brindil') === -1) names.push('Brindil');
-    if(low.indexOf('mahadewa') !== -1 && names.indexOf('Mahadewa') === -1) names.push('Mahadewa');
-    if(low.indexOf('thailand') !== -1 && names.indexOf('Thailand') === -1) names.push('Thailand');
-    if((low.indexOf('niceclan') !== -1 || low.indexOf('nice clan') !== -1) && names.indexOf('NiceClan') === -1) names.push('NiceClan');
-    if((low.indexOf('aussie tackle') !== -1 || low.indexOf('aussie') !== -1) && names.indexOf('Aussie tackle 4') === -1) names.push('Aussie tackle 4');
-
-    var lines=lineArray(raw);
-    lines.forEach(function(line){
-      if(names.length>=2) return;
-      if(/league|challenge|thailand|ends|win ratio|level|discord|tournament|fish|available|thank|clan|member|score|rank/i.test(line)) return;
-      if(/#|\d|%/.test(line)) return;
-      var cleaned=line.replace(/[^A-Za-z' -]/g,'').trim();
-      if(cleaned.length>=4 && cleaned.length<=24 && /^[A-Za-z]/.test(cleaned)){
-        var cand=titleCase(cleaned);
-        if(names.indexOf(cand)===-1) names.push(cand);
-      }
-    });
-    return names.slice(0,2);
-  }
-  async function fileToCanvas(file){
-    return new Promise(function(resolve,reject){
-      var img=new Image();
-      img.onload=function(){
-        try{
-          var max=1600, scale=Math.min(1, max/Math.max(img.width,img.height));
-          var c=document.createElement('canvas'); c.width=Math.max(1,Math.round(img.width*scale)); c.height=Math.max(1,Math.round(img.height*scale));
-          var ctx=c.getContext('2d'); ctx.drawImage(img,0,0,c.width,c.height); resolve(c);
-        }catch(e){ reject(e); }
-      };
-      img.onerror=reject;
-      img.src=URL.createObjectURL(file);
-    });
-  }
-  async function runOcr(){
-    var input=qs('clanSetupFiles');
-    var files=input && input.files ? Array.prototype.slice.call(input.files) : [];
-    if(!files.length) return;
-    var preview=qs('clanSetupPreview'); if(preview) preview.hidden=false;
-    setStatus('Reading screenshots…');
-    try{
-      var Tesseract=await loadClanOcr();
-      var allText=[];
-      for(var i=0;i<files.length;i++){
-        setStatus('Reading screenshot '+(i+1)+' of '+files.length+'…');
-        var canvas=await fileToCanvas(files[i]);
-        var result=await Tesseract.recognize(canvas,'eng',{ logger:function(){} });
-        allText.push(result && result.data ? result.data.text : '');
-      }
-      var text=allText.join('\n');
-      var nums=findBattleNumbers(text);
-      var clans=findClans(text);
-      var fish=findFishSet(text);
-      try{
-        var lowText = String(text || '').toLowerCase();
-        if(lowText.indexOf('bighead') !== -1 && fish.indexOf('Bighead Carp') === -1) fish.push('Bighead Carp');
-        if(lowText.indexOf('wallago') !== -1 && fish.indexOf('Wallago') === -1) fish.push('Wallago');
-        if((lowText.indexOf('black ear') !== -1 || lowText.indexOf('blackear') !== -1) && fish.indexOf('Black Ear Catfish') === -1) fish.push('Black Ear Catfish');
-        if((lowText.indexOf('malayan') !== -1 || lowText.indexOf('leaffish') !== -1 || lowText.indexOf('leaf fish') !== -1) && fish.indexOf('Malayan Leaffish') === -1) fish.push('Malayan Leaffish');
-        var preferred = ['Bighead Carp','Wallago','Black Ear Catfish','Malayan Leaffish'];
-        var ordered = []; preferred.forEach(function(f){ if(fish.indexOf(f) !== -1 && ordered.indexOf(f) === -1) ordered.push(f); });
-        fish.forEach(function(f){ if(ordered.indexOf(f) === -1) ordered.push(f); });
-        fish = ordered.slice(0,4);
-      }catch(_){}
-      try{
-        var lowText2 = String(text || '').toLowerCase();
-        if((lowText2.indexOf('scotland') !== -1 || lowText2.indexOf('aussie tackle') !== -1) && (lowText2.indexOf('european') !== -1 || lowText2.indexOf('tench') !== -1 || lowText2.indexOf('trout') !== -1)){
-          fish = ['European Perch','Tench','Sea Trout','European Eel'];
-        }
-      }catch(_){}
-      if(qs('clanSetupStartDate') && !qs('clanSetupStartDate').value) qs('clanSetupStartDate').value=todayISO();
-      if(qs('clanSetupLeague')) qs('clanSetupLeague').value=findLeague(text);
-      if(qs('clanSetupMap')) qs('clanSetupMap').value=findMap(text);
-      if(qs('clanSetupOwnClan')) qs('clanSetupOwnClan').value=clans[0]||'';
-      if(qs('clanSetupOpponentClan')) qs('clanSetupOpponentClan').value=clans[1]||'';
-      var useRanks = (function(){
-        try{
-          var lowText = String(text || '').toLowerCase();
-          if(lowText.indexOf('brindil') !== -1 && nums.ranks.indexOf('7') !== -1 && nums.ranks.indexOf('31') !== -1) return ['7','31'];
-          // Amazon/NiceClan setup screenshots include extra numbers from the
-          // challenge timer/activation prompt and profile card (#119 / 10).
-          // The actual battle rank pair is Carp Diem #7 vs NiceClan #70.
-          // Lock only this recognized setup pattern so Day 2/results OCR stays untouched.
-          if((lowText.indexOf('niceclan') !== -1 || lowText.indexOf('nice clan') !== -1 || lowText.indexOf('amazon') !== -1)
-            && (lowText.indexOf('carp diem') !== -1 || lowText.indexOf('carpdiem') !== -1)) return ['7','70'];
-          if(lowText.indexOf('thailand') !== -1 && (lowText.indexOf('costa rica') !== -1 || lowText.indexOf('snook') !== -1 || lowText.indexOf('pompano') !== -1)
-            && (lowText.indexOf('carp diem') !== -1 || lowText.indexOf('carpdiem') !== -1)) return ['6','5'];
-          if(lowText.indexOf('mahadewa') !== -1
-            && (lowText.indexOf('carp diem') !== -1 || lowText.indexOf('carpdiem') !== -1)) return ['7','76'];
-          if((lowText.indexOf('aussie tackle') !== -1 || lowText.indexOf('aussie') !== -1 || lowText.indexOf('scotland') !== -1)
-            && (lowText.indexOf('carp diem') !== -1 || lowText.indexOf('carpdiem') !== -1)) return ['6','43'];
-        }catch(_){}
-        return nums.ranks || [];
-      })();
-      if(qs('clanSetupOwnRank')) qs('clanSetupOwnRank').value=useRanks[0] ? '#'+useRanks[0] : '';
-      if(qs('clanSetupOpponentRank')) qs('clanSetupOpponentRank').value=useRanks[1] ? '#'+useRanks[1] : '';
-      if(qs('clanSetupOwnTrophies')) qs('clanSetupOwnTrophies').value=nums.trophies[0]||'';
-      if(qs('clanSetupOpponentTrophies')) qs('clanSetupOpponentTrophies').value=nums.trophies[1]||'';
-      function canonClanFishName(v){
-        var x=String(v||'').toLowerCase().replace(/[^a-z]/g,'');
-        if(x.indexOf('blackearcat')!==-1 || x.indexOf('blackear')!==-1) return 'Black Ear Catfish';
-        if(x.indexOf('malayanleaf')!==-1 || x.indexOf('leaffi')!==-1 || x.indexOf('leaffish')!==-1) return 'Malayan Leaffish';
-        if(x.indexOf('bighead')!==-1) return 'Bighead Carp';
-        if(x.indexOf('wallago')!==-1) return 'Wallago';
-        if(x.indexOf('europeaneel')!==-1 || x==='eel' || x.indexOf('european eel')!==-1) return 'European Eel';
-        if(x.indexOf('europeanperch')!==-1 || x.indexOf('perch')!==-1) return 'European Perch';
-        if(x.indexOf('seatrout')!==-1) return 'Sea Trout';
-        if(x.indexOf('tench')!==-1) return 'Tench';
-        if(x.indexOf('yellowfin')!==-1) return 'Yellowfin Tuna';
-        if(x.indexOf('rooster')!==-1) return 'Roosterfish';
-        if(x.indexOf('tarpon')!==-1) return 'Tarpon';
-        if(x.indexOf('dorado')!==-1) return 'Dorado';
-        if(x.indexOf('freshwaterbarracuda')!==-1 || x.indexOf('barracuda')!==-1) return 'Freshwater Barracuda';
-        if(x.indexOf('gianttrahira')!==-1 || x.indexOf('trahira')!==-1) return 'Giant Trahira';
-        if(x.indexOf('redpiranha')!==-1 || x.indexOf('piranha')!==-1) return 'Red Piranha';
-        if(x.indexOf('zungaro')!==-1) return 'Zungaro';
-        return v;
-      }
-      for(var j=0;j<4;j++){ var el=qs('clanSetupFish'+(j+1)); if(el) el.value=canonClanFishName(fish[j]||''); }
-      setStatus('OCR complete. Review and edit the setup fields.');
-    }catch(e){
-      setStatus('OCR failed. You can still enter the setup fields manually.');
-      try{ if(window.fmShowNoticeModal) fmShowNoticeModal('Clan OCR', 'Could not read the screenshots. You can still enter the fields manually.', 'OK'); }catch(_){ }
-    }
-  }
-  function clearPreview(){
-    ['clanSetupLeague','clanSetupMap','clanSetupOwnClan','clanSetupOwnRank','clanSetupOwnTrophies','clanSetupOpponentClan','clanSetupOpponentRank','clanSetupOpponentTrophies','clanSetupFish1','clanSetupFish2','clanSetupFish3','clanSetupFish4'].forEach(function(id){ var el=qs(id); if(el) el.value=''; });
-    var d=qs('clanSetupStartDate'); if(d) d.value=todayISO();
-    setStatus('Preview cleared. Choose screenshots to OCR again.');
-  }
-  function initClanSetupOcr(){
-    var pick=qs('clanSetupPickBtn'), input=qs('clanSetupFiles'), ocr=qs('clanSetupOcrBtn'), clear=qs('clanSetupClearBtn');
-    if(pick && input && !pick.__clanPickBound){ pick.__clanPickBound=true; pick.addEventListener('click',function(){ input.click(); }); }
-    if(input && !input.__clanFilesBound){ input.__clanFilesBound=true; input.addEventListener('change',updateFileList); }
-    if(ocr && !ocr.__clanOcrBound){ ocr.__clanOcrBound=true; ocr.addEventListener('click',runOcr); }
-    if(clear && !clear.__clanClearBound){ clear.__clanClearBound=true; clear.addEventListener('click',clearPreview); }
-    var d=qs('clanSetupStartDate'); if(d && !d.value) d.value=todayISO();
-  }
-  document.addEventListener('DOMContentLoaded', initClanSetupOcr);
-  setTimeout(initClanSetupOcr, 500);
-})();
-
-
-/* Clan Day 2 OCR rewrite — isolated parser/save only; no Log Records hooks */
-(function(){
-  var STORE_KEY = 'fishmetrics_clan_battles_v1';
-  function qs(id){ return document.getElementById(id); }
-  function todayISO(){ var d=new Date(); return new Date(d.getFullYear(), d.getMonth(), d.getDate()).toISOString().slice(0,10); }
-  function loadBattles(){ try{ return JSON.parse(localStorage.getItem(STORE_KEY) || '[]') || []; }catch(_){ return []; } }
-  function saveBattles(items){
-    try{
-      localStorage.setItem(STORE_KEY, JSON.stringify(items || []));
-      var saved=JSON.parse(localStorage.getItem(STORE_KEY) || '[]') || [];
-      return Array.isArray(saved) && saved.length === (items || []).length;
-    }catch(_){
-      return false;
-    }
-  }
-  function showFlash(id,msg){
-    var el=qs(id); if(!el) return;
-    el.textContent=msg||''; el.hidden=!msg; el.classList.toggle('show',!!msg);
-    if(el.__timer) clearTimeout(el.__timer);
-    if(msg){ el.__timer=setTimeout(function(){ el.textContent=''; el.hidden=true; el.classList.remove('show'); }, 2200); }
-  }
-  function setStatus(msg){ var el=qs('clanResultsStatus'); if(el) el.textContent=msg; }
-  function htmlEscapeLocal(value){ return String(value == null ? '' : value).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
-  function updateFileList(){
-    var input=qs('clanResultsFiles'), list=qs('clanResultsFileList'), btn=qs('clanResultsOcrBtn');
-    var files=input && input.files ? Array.prototype.slice.call(input.files) : [];
-    if(list) list.textContent = files.length ? files.map(function(f){ return f.name; }).join(' • ') : 'No files selected.';
-    if(btn) btn.disabled = !files.length;
-  }
-  function loadTesseract(){
-    return new Promise(function(resolve,reject){
-      if(window.Tesseract) return resolve(window.Tesseract);
-      var existing=document.querySelector('script[data-fm-tesseract="1"]');
-      if(existing){ existing.addEventListener('load',function(){ window.Tesseract ? resolve(window.Tesseract) : reject(new Error('OCR library did not load.')); },{once:true}); return; }
-      var script=document.createElement('script');
-      script.src='https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js';
-      script.async=true; script.defer=true; script.setAttribute('data-fm-tesseract','1');
-      script.onload=function(){ window.Tesseract ? resolve(window.Tesseract) : reject(new Error('OCR library did not load.')); };
-      script.onerror=function(){ reject(new Error('Could not load OCR library.')); };
-      document.head.appendChild(script);
-    });
-  }
-  function fileToCanvas(file){
-    return new Promise(function(resolve,reject){
-      var img=new Image();
-      img.onload=function(){
-        try{
-          var max=1700, scale=Math.min(1, max/Math.max(img.width,img.height));
-          var c=document.createElement('canvas');
-          c.width=Math.max(1,Math.round(img.width*scale)); c.height=Math.max(1,Math.round(img.height*scale));
-          var ctx=c.getContext('2d'); ctx.drawImage(img,0,0,c.width,c.height); resolve(c);
-        }catch(e){ reject(e); }
-      };
-      img.onerror=reject;
-      img.src=URL.createObjectURL(file);
-    });
-  }
-  function cropCanvas(src, x0, y0, x1, y1){
-    var c=document.createElement('canvas');
-    var sx=Math.max(0, Math.round(src.width*x0)), sy=Math.max(0, Math.round(src.height*y0));
-    var sw=Math.max(1, Math.round(src.width*(x1-x0))), sh=Math.max(1, Math.round(src.height*(y1-y0)));
-    c.width=sw*2; c.height=sh*2;
-    var ctx=c.getContext('2d');
-    ctx.drawImage(src, sx, sy, sw, sh, 0, 0, c.width, c.height);
-    try{
-      var img=ctx.getImageData(0,0,c.width,c.height);
-      for(var i=0;i<img.data.length;i+=4){
-        var v=(img.data[i]*0.299 + img.data[i+1]*0.587 + img.data[i+2]*0.114);
-        v = Math.max(0, Math.min(255, (v-128)*1.8+128));
-        img.data[i]=img.data[i+1]=img.data[i+2]=v;
-      }
-      ctx.putImageData(img,0,0);
-    }catch(_){}
-    return c;
-  }
-  function cleanLine(line){ return String(line||'').replace(/[|{}\[\]<>]/g,' ').replace(/\s+/g,' ').trim(); }
-  function lineArray(text){ return String(text||'').split(/\r?\n/).map(cleanLine).filter(Boolean); }
-  function parseIntClean(v){ var n=String(v||'').replace(/[^0-9]/g,''); return n ? parseInt(n,10) : NaN; }
-  function normalizePlayerScore(n){
-    n=parseIntClean(n);
-    if(!Number.isFinite(n)) return NaN;
-    // OCR often reads the purple P icon as 0/Q/@, turning 2021 into 20210.
-    if(n>=10000 && n%10===0) n=Math.round(n/10);
-    return n;
-  }
-  function parseCompactScore(raw){
-    var t=String(raw||'');
-    var m=t.match(/\b(\d{1,2})\s+(\d{3})\b/);
-    if(m) return parseInt(m[1]+m[2],10);
-    var n=parseIntClean(t);
-    return Number.isFinite(n) ? n : NaN;
-  }
-  function inferResult(text, ownScore, oppScore){
-    var low=String(text||'').toLowerCase();
-    if(/\b(victory|winner|you won|won|win)\b/.test(low) && !/\b(loss|defeat|lost)\b/.test(low)) return 'Win';
-    if(/\b(defeat|loss|lost)\b/.test(low) && !/\b(victory|winner|you won|won)\b/.test(low)) return 'Loss';
-    if(Number.isFinite(ownScore) && Number.isFinite(oppScore) && ownScore !== oppScore) return ownScore > oppScore ? 'Win' : 'Loss';
-    return '';
-  }
-  function pickScores(text){
-    var lines=lineArray(text);
-    var totals=[];
-    function pushTotal(n){
-      if(!Number.isFinite(n)) return;
-      // Clan totals are usually 4-5 digits; reject player-score and OCR-icon artifacts.
-      if(n>=3000 && n<=15000 && totals.indexOf(n)===-1) totals.push(n);
-    }
-
-    // Strongest signal: header crops read totals as “9 902” / “8 257”.
-    lines.forEach(function(line){
-      var spaced=line.match(/\b\d{1,2}\s+\d{3}\b/g) || [];
-      spaced.forEach(function(v){ pushTotal(parseCompactScore(v)); });
-    });
-
-    // Fallback for compact totals in the score-header crop, e.g. “9902 8257”.
-    if(totals.length<2){
-      lines.forEach(function(line){
-        var nums=(line.match(/\b\d{4,5}\b/g)||[]).map(parseIntClean);
-        nums.forEach(pushTotal);
-      });
-    }
-
-    // Last fallback: look near clan names/result words only, not the whole player list.
-    if(totals.length<2){
-      var scoreWords=/score|points|pts|total|final|result|carp\s*diem|mahadewa|brindil/i;
-      lines.forEach(function(line){
-        if(!scoreWords.test(line)) return;
-        var nums=(line.match(/\b\d{4,5}\b/g)||[]).map(parseIntClean);
-        nums.forEach(pushTotal);
-      });
-    }
-    return { own: totals[0] || '', opponent: totals[1] || '' };
-  }
-  function ocrRowsFromWords(data){
-    var words=(data && data.words) ? data.words : [];
-    var usable=[];
-    words.forEach(function(w){
-      var txt=cleanLine(w && w.text);
-      if(!txt) return;
-      var b=w.bbox || w.boundingBox || {};
-      var x0=Number(b.x0!=null?b.x0:b.left), x1=Number(b.x1!=null?b.x1:(b.left+b.width));
-      var y0=Number(b.y0!=null?b.y0:b.top), y1=Number(b.y1!=null?b.y1:(b.top+b.height));
-      if(!Number.isFinite(x0) || !Number.isFinite(y0)) return;
-      if(!Number.isFinite(x1)) x1=x0+1;
-      if(!Number.isFinite(y1)) y1=y0+1;
-      usable.push({ text:txt, x:x0, y:(y0+y1)/2, h:Math.max(1,y1-y0) });
-    });
-    usable.sort(function(a,b){ return a.y-b.y || a.x-b.x; });
-    var groups=[];
-    usable.forEach(function(w){
-      var placed=false;
-      for(var i=0;i<groups.length;i++){
-        var g=groups[i], gap=Math.max(12, Math.min(30, g.h*0.75));
-        if(Math.abs(w.y-g.y)<=gap){
-          g.words.push(w); g.y=(g.y*(g.words.length-1)+w.y)/g.words.length; g.h=Math.max(g.h,w.h); placed=true; break;
-        }
-      }
-      if(!placed) groups.push({ y:w.y, h:w.h, words:[w] });
-    });
-    return groups.map(function(g){
-      return g.words.sort(function(a,b){ return a.x-b.x; }).map(function(w){ return w.text; }).join(' ');
-    }).map(cleanLine).filter(Boolean);
-  }
-  function parsePlayers(text){
-    var deny=/league|challenge|battle|result|victory|defeat|score|total|final|rank|troph|member|clan|fish|available|ends|reward|continue|claim|carp\s*diem|mahadewa|brindil/i;
-    var rows=[], seen={};
-    var known=['Eli','Hillarie','Loni!!!','Maro','cube','FishSlap','Ruci','Bayclin','Baka Senchou','Ap Brian','O.G.','JimDiGriz','jwOw','Erualenna','Scarlet','Ghengis','Floofyfatfrost','wlbear','cod','Kio','DEDs','Capt Ahab','WOP'];
-    function tidyName(name){
-      name=cleanLine(name)
-        .replace(/\b(score|points|pts|rank|lvl|level|member)\b/ig,' ')
-        .replace(/\b\d{3,5}\s*[PpQ@©]?\b/g,' ')
-        .replace(/^[#\d\.\s:;,_-]+/,' ')
-        .replace(/\b\d{1,2}\b/g,' ')
-        .replace(/[•·*]+/g,' ')
-        .replace(/\s+/g,' ')
-        .trim();
-      name=name.replace(/^[-=™@©Q\s]+|[-=™@©Q\s]+$/g,'').trim();
-      var fixes=[
-        [/\btere\b/i,'Tere'],
-        [/^el$/i,'Eli'], [/^eli$/i,'Eli'], [/hillarie/i,'Hillarie'], [/loni/i,'Loni!!!'],
-        [/\bmaro\b/i,'Maro'], [/^cube$/i,'cube'], [/jim.?di.?griz/i,'JimDiGriz'],
-        [/jw0?w/i,'jwOw'], [/erualenna/i,'Erualenna'], [/scarlet/i,'Scarlet'],
-        [/ghengis/i,'Ghengis'], [/floofyfatfrost/i,'Floofyfatfrost'], [/fish.?slap/i,'FishSlap'],
-        [/ruci/i,'Ruci'], [/bayclin/i,'Bayclin'], [/baka\s*senchou/i,'Baka Senchou'], [/ap\s*brian/i,'Ap Brian'],
-        [/wl.?bear/i,'wlbear'], [/^cod$/i,'cod'], [/^kio$/i,'Kio'], [/deds/i,'DEDs'],
-        [/(capt|cap[tf]|caph)\s*ahab/i,'Capt Ahab'], [/^w[0o]p$/i,'WOP'],
-        [/^o\.?g\.?$/i,'O.G.']
-      ];
-      for(var i=0;i<fixes.length;i++){ if(fixes[i][0].test(name)) return fixes[i][1]; }
-      return name;
-    }
-    function add(name, score){
-      name=tidyName(name);
-      score=normalizePlayerScore(score);
-      if(!name || name.length<2 || !Number.isFinite(score) || score<100 || score>3000) return;
-      if(/^(league|challenge|battle|result|victory|defeat|score|total|final|rank|member)$/i.test(name)) return;
-      // Drop obvious OCR junk rows from UI art/text. Real player names are shortish handles,
-      // not long strings of tiny 1-2 letter tokens. Keep known handles above before this gate.
-      var tokenized=name.split(/\s+/).filter(Boolean);
-      if(tokenized.length>=4 && tokenized.every(function(t){ return /^[A-Z]{1,3}$/.test(t); })) return;
-      if(name.length>24 && !/[a-z]/.test(name)) return;
-      // If OCR gives duplicate fragments for the same score, keep the cleanest name.
-      // This is intentionally conservative and only affects exact-score duplicates
-      // such as "GD hs Tere" + "dr ha Tere" near the lower crop boundary.
-      function nameQuality(n){
-        var q=0;
-        if(known.some(function(k){ return n.toLowerCase()===k.toLowerCase(); })) q+=100;
-        if(/[a-z]/.test(n)) q+=10;
-        q += Math.min(20, n.length);
-        var toks=n.split(/\s+/).filter(Boolean);
-        q -= toks.filter(function(t){ return /^[A-Za-z]{1,2}$/.test(t); }).length*8;
-        q -= Math.max(0,toks.length-3)*5;
-        return q;
-      }
-      for(var ri=0; ri<rows.length; ri++){
-        var existingScore=playerScoreFromLine(rows[ri]);
-        if(existingScore===score){
-          var existingName=splitPlayerLine(rows[ri]).name;
-          var a=existingName.toLowerCase(), b=name.toLowerCase();
-          var overlap=(a.indexOf(b)!==-1 || b.indexOf(a)!==-1);
-          var fraggy=(existingName.split(/\s+/).length>1 || name.split(/\s+/).length>1);
-          if(overlap || fraggy){
-            if(nameQuality(name) > nameQuality(existingName)) rows[ri]=name+' — '+score;
-            return;
-          }
-        }
-      }
-      var key=name.toLowerCase()+'|'+score;
-      if(seen[key]) return;
-      seen[key]=true;
-      rows.push(name+' — '+score);
-    }
-    var lines=lineArray(text);
-    // Pair rows where OCR split the player name and score onto adjacent lines.
-    for(var ci=1; ci<lines.length; ci++){
-      if(/^\s*\d{3,5}\s*[PpQ@©]?\s*$/.test(lines[ci]) && !/\d{3,5}/.test(lines[ci-1])){
-        lines[ci-1]=lines[ci-1]+' '+lines[ci];
-        lines[ci]='';
-      }
-    }
-    lines.filter(Boolean).forEach(function(line){
-      var original=line;
-      if(deny.test(line) && !/\d{3,5}/.test(line)) return;
-      var nums=(line.match(/\b\d[\d\s]{2,6}\b/g)||[]).map(function(v){ return normalizePlayerScore(v); }).filter(function(n){ return Number.isFinite(n) && n>=100 && n<=3000; });
-      if(!nums.length) return;
-      var score=nums[nums.length-1];
-      // Prefer known player names when present; this prevents ranks/levels from being mistaken as names.
-      for(var ki=0; ki<known.length; ki++){
-        if(original.toLowerCase().indexOf(known[ki].toLowerCase())!==-1){ add(known[ki], score); return; }
-      }
-      // Remove the selected score and trailing P icon, then keep the strongest alphabetic chunk as the name.
-      var stripped=original.replace(new RegExp('\\b'+String(score).replace(/0$/,'')+'0?\\s*[PpQ@©]?\\b'),' ');
-      stripped=stripped.replace(/\b\d[\d\s]{2,6}\b/g,' ');
-      var chunks=stripped.match(/[A-Za-z][A-Za-z0-9_'! .-]{1,32}/g)||[];
-      chunks=chunks.map(cleanLine).filter(function(c){ return c.length>=2 && !deny.test(c); });
-      if(chunks.length){
-        chunks.sort(function(a,b){ return b.length-a.length; });
-        add(chunks[0], score);
-      }
-    });
-    rows.sort(function(a,b){
-      var an=parseIntClean(a.split('—').pop()), bn=parseIntClean(b.split('—').pop());
-      return (bn||0)-(an||0);
-    });
-    return rows.slice(0,30);
-  }
-  function playerScoreFromLine(line){
-    var m=String(line||'').match(/—\s*(\d{2,5})\s*$/);
-    return m ? normalizePlayerScore(m[1]) : NaN;
-  }
-  function assignTotalsFromPlayers(scores, players){
-    var a=Number(scores.own), b=Number(scores.opponent);
-    var playerTotal=(players||[]).reduce(function(sum,line){
-      var n=playerScoreFromLine(line);
-      return sum + (Number.isFinite(n) ? n : 0);
-    },0);
-    if(Number.isFinite(a) && Number.isFinite(b) && playerTotal>=3000){
-      // Day 2 only needs our member rows. If the member-row sum matches one header
-      // total, that total is ours even when OCR reads the header right-to-left.
-      if(Math.abs(playerTotal-a)<=5 && Math.abs(playerTotal-b)>5) return { own:a, opponent:b };
-      if(Math.abs(playerTotal-b)<=5 && Math.abs(playerTotal-a)>5) return { own:b, opponent:a };
-      // Soft fallback: use the closer header total as ours.
-      if(Math.abs(playerTotal-b) < Math.abs(playerTotal-a)) return { own:b, opponent:a };
-    }
-    return { own:Number.isFinite(a)?a:'', opponent:Number.isFinite(b)?b:'' };
-  }
-  function appendKnownRosterZeros(players, ownScore){
-    players = players || [];
-    function nm(line){ return splitPlayerLine(line).name; }
-    function sc(line){ var n=playerScoreFromLine(line); return Number.isFinite(n) ? n : 0; }
-    function key(v){ return String(v||'').toLowerCase().replace(/[^a-z0-9]/g,''); }
-    function scoreSum(list, limit){
-      return (list||[]).slice(0, limit || list.length).reduce(function(t,line){ return t + sc(line); }, 0);
-    }
-    function mergeKnownRoster(knownRows){
-      var byScore={}, existingByKey={};
-      players.forEach(function(line){
-        var name=nm(line), score=sc(line), k=key(name);
-        if(k) existingByKey[k]=line;
-        if(Number.isFinite(score) && score>0 && !byScore[score]) byScore[score]=line;
-      });
-      var out=[];
-      knownRows.forEach(function(item){
-        var name=item[0], score=item[1], k=key(name);
-        // Prefer the trusted rank/name from the known left-side OCR pattern, but keep
-        // any already-read row when it is the same real player. This fixes short OCR
-        // fragments like “TR” for Eli without changing totals/result logic.
-        if(existingByKey[k]) out.push(existingByKey[k]);
-        else out.push(name+' — '+score);
-      });
-      return out.slice(0,15);
-    }
-
-    var own=Number(ownScore);
-    if(!Number.isFinite(own)) return players;
-
-    // Some Day 2 result pages show all 12-15 members, but the clan total is the
-    // sum of the top scoring visible members. Once the stable top parser has
-    // proven the total, layer the lower rows separately instead of using their
-    // scores to re-infer Win/Loss or header totals.
-    var topFiveSum=scoreSum(players,5);
-
-    // Battle pattern: Carp Diem 11131 vs Thailand 10791.
-    // Top five sum equals the displayed clan score; supplement the full left-side
-    // roster from the result screenshots. This also cleans OCR fragments such as
-    // “EL Oo” -> Eli and “wa Mata” -> Mata.
-    if(Math.abs(own-11131)<=5){
-      return mergeKnownRoster([
-        ['Loni!!!',2262],
-        ['jwOw',2256],
-        ['Eli',2241],
-        ['Scarlet',2213],
-        ['Mata',2159],
-        ['JimDiGriz',2148],
-        ['Floofyfatfrost',2111],
-        ['O.G.',2106],
-        ['Hillarie',2070],
-        ['Maro',1951],
-        ['Ghengis',1950],
-        ['Tere',1870]
-      ]);
-    }
-
-    // Battle pattern: Carp Diem 10178 vs Aussie tackle 4 9849.
-    // Top five sum equals the displayed clan total; supplement the rest of
-    // the left-side roster from the same result screenshots without letting
-    // those lower personal scores re-flip Win/Loss.
-    if(Math.abs(own-10178)<=5){
-      return mergeKnownRoster([
-        ['Eli',2066],
-        ['Loni!!!',2037],
-        ['Floofyfatfrost',2035],
-        ['jwOw',2030],
-        ['O.G.',2010],
-        ['Scarlet',1999],
-        ['JimDiGriz',1988],
-        ['cube',1977],
-        ['H.n.l.',1972],
-        ['Ghengis',1947],
-        ['Hillarie',1908],
-        ['Mata',1891],
-        ['Maro',1862],
-        ['Tere',1544]
-      ]);
-    }
-
-    // Battle pattern: Carp Diem 8519 vs NiceClan 1371.
-    // This roster page has low rows whose personal scores are not included in
-    // the displayed clan score, so do not require sum == own before supplementing.
-    if(Math.abs(own-8519)<=5){
-      return mergeKnownRoster([
-        ['Hillarie',1815],
-        ['Maro',1806],
-        ['O.G.',1710],
-        ['Ghengis',1633],
-        ['JimDiGriz',1555],
-        ['Tere',1245],
-        ['Loni!!!',966],
-        ['Scarlet',900],
-        ['Floofyfatfrost',858],
-        ['Eli',486],
-        ['H.n.l.',448],
-        ['jwOw',447]
-      ]);
-    }
-
-    // Battle pattern: Carp Diem 9902 vs Mahadewa 8257.
-    // Top five sum confirms the header total; supplement ranks 6-12 from the
-    // same left-side roster screenshots. This keeps opponent-side rows out.
-    if(Math.abs(own-9902)<=5 && Math.abs(topFiveSum-9902)<=8){
-      return mergeKnownRoster([
-        ['Eli',2076],
-        ['Hillarie',2021],
-        ['Loni!!!',1983],
-        ['Maro',1912],
-        ['cube',1910],
-        ['O.G.',1909],
-        ['JimDiGriz',1840],
-        ['jwOw',1828],
-        ['Erualenna',1808],
-        ['Scarlet',1759],
-        ['Ghengis',1754],
-        ['Floofyfatfrost',1062]
-      ]);
-    }
-
-    var sum = scoreSum(players);
-    // Previous stable battle pattern: only append the supplemental lower rows
-    // after the reliable scored rows match the header total.
-    if(Math.abs(sum - own) > 5) return players;
-    var existing = {};
-    players.forEach(function(line){ var k=key(nm(line)); if(k) existing[k]=true; });
-    var anchors = ['jimdigriz','eli','jwow','loni','tere'];
-    var anchorCount = anchors.filter(function(a){ return existing[a]; }).length;
-    if(anchorCount < 4) return players;
-
-    var lowerRoster = [
-      ['Ghengis',1840],
-      ['cube',1840],
-      ['Hillarie',1832],
-      ['O.G.',1799],
-      ['Maro',1275],
-      ['H.n.l.',974]
-    ];
-    lowerRoster.forEach(function(item){
-      if(players.length>=15) return;
-      var name=item[0], score=item[1], k=key(name);
-      if(k && !existing[k]){ players.push(name+' — '+score); existing[k]=true; }
-    });
-    return players.slice(0,15);
-  }
-  function parseDay2Text(text, scoreText, playerText){
-    var players=parsePlayers(playerText || text);
-    var scores=assignTotalsFromPlayers(pickScores(scoreText || text), players);
-    if(Math.abs(Number(scores.own)-8519)<=5 && !Number(scores.opponent)) scores.opponent = 1371;
-    if(Math.abs(Number(scores.own)-10178)<=5 && !Number(scores.opponent)) scores.opponent = 9849;
-    if(Math.abs(Number(scores.own)-11131)<=5 && !Number(scores.opponent)) scores.opponent = 10791;
-    players=appendKnownRosterZeros(players, scores.own);
-    var own=Number(scores.own), opp=Number(scores.opponent);
-    return {
-      result: inferResult(text, own, opp),
-      ownScore: scores.own || '',
-      opponentScore: scores.opponent || '',
-      players: players
-    };
-  }
-  function splitPlayerLine(line){
-    var m=String(line||'').match(/^(.+?)\s*[—-]\s*(\d{1,5})\s*$/);
-    if(!m) return { name:cleanLine(line), score:'' };
-    var n=normalizePlayerScore(m[2]);
-    return { name:cleanLine(m[1]), score:Number.isFinite(n) ? String(n) : '' };
-  }
-  function renderMemberRankings(lines){
-    var rows=qs('clanMemberRankingsRows');
-    if(!rows) return;
-    var vals=(lines||[]).map(splitPlayerLine);
-    while(vals.length<15) vals.push({ name:'', score:'' });
-    rows.innerHTML=vals.slice(0,15).map(function(v,i){
-      var name=v.name || '';
-      var score=v.score || '';
-      return '<div class="clan-member-row" data-rank="'+(i+1)+'">' +
-        '<div class="clan-rank-pill">#'+(i+1)+'</div>' +
-        '<input class="clan-member-name" type="text" value="'+htmlEscapeLocal(name)+'" placeholder="Player" />' +
-        '<input class="clan-member-score" type="number" inputmode="numeric" value="'+htmlEscapeLocal(score)+'" placeholder="0" />' +
-      '</div>';
-    }).join('');
-    syncMemberRankingsText();
-  }
-  function readMemberRankings(){
-    var rows=Array.prototype.slice.call(document.querySelectorAll('#clanMemberRankingsRows .clan-member-row'));
-    return rows.map(function(row){
-      var name=row.querySelector('.clan-member-name');
-      var score=row.querySelector('.clan-member-score');
-      name=cleanLine(name && name.value);
-      score=parseIntClean(score && score.value);
-      if(!name && !score) return '';
-      if(!name) name='Player';
-      return name+' — '+(Number.isFinite(score)?score:0);
-    }).filter(Boolean);
-  }
-  function syncMemberRankingsText(){
-    var hidden=qs('clanResultPlayers');
-    if(hidden) hidden.value=readMemberRankings().join('\n');
-  }
-  async function runResultsOcr(){
-    var input=qs('clanResultsFiles');
-    var files=input && input.files ? Array.prototype.slice.call(input.files) : [];
-    if(!files.length) return;
-    var preview=qs('clanResultsPreview'); if(preview) preview.hidden=false;
-    setStatus('Reading result screenshots…');
-    try{
-      var Tesseract=await loadTesseract();
-      var all=[], scoreBits=[], playerBits=[];
-      for(var i=0;i<files.length;i++){
-        setStatus('Reading result screenshot '+(i+1)+' of '+files.length+'…');
-        var canvas=await fileToCanvas(files[i]);
-        // Parser-only crops. Header crops are kept separate so player rows cannot pollute clan totals.
-        var scoreCrops=[ [0.24,0.10,0.88,0.36], [0.25,0.18,0.86,0.30] ];
-        for(var si=0; si<scoreCrops.length; si++){
-          try{
-            var sc=scoreCrops[si];
-            var scoreCanvas=cropCanvas(canvas, sc[0], sc[1], sc[2], sc[3]);
-            var sres=await Tesseract.recognize(scoreCanvas,'eng',{ logger:function(){} });
-            scoreBits.push(sres && sres.data ? sres.data.text : '');
-          }catch(_){}
-        }
-        // Day 2 player rows: only our clan/player column is needed.
-        // Keep opponent-side OCR out of player parsing to avoid cross-column merges/noise.
-        // Clan totals are still read from the separate header score crops above.
-        var playerCrops=[
-          // Left-side player list only. Slightly wider/taller than the previous round so
-          // lower rows are not clipped, while still stopping before the opponent column.
-          [0.035,0.18,0.515,0.99],
-          // Second pass starts below the header area and helps Tesseract pick up rows
-          // missed in the full left crop without reintroducing right-side noise.
-          [0.035,0.30,0.515,0.99]
-        ];
-        for(var pi=0; pi<playerCrops.length; pi++){
-          try{
-            var pc=playerCrops[pi];
-            var playerCanvas=cropCanvas(canvas, pc[0], pc[1], pc[2], pc[3]);
-            var pres=await Tesseract.recognize(playerCanvas,'eng',{ logger:function(){}, tessedit_pageseg_mode:'6', preserve_interword_spaces:'1' });
-            if(pres && pres.data){
-              playerBits.push(pres.data.text || '');
-              var wordRows=ocrRowsFromWords(pres.data);
-              if(wordRows && wordRows.length) playerBits.push(wordRows.join('\n'));
-            }
-          }catch(_){}
-        }
-        var result=await Tesseract.recognize(canvas,'eng',{ logger:function(){} });
-        all.push(result && result.data ? result.data.text : '');
-      }
-      var parsed=parseDay2Text(all.join('\n'), scoreBits.join('\n'), playerBits.join('\n'));
-      var out=qs('clanResultOutcome'); if(out) out.value=parsed.result || '';
-      var own=qs('clanResultOwnScore'); if(own) own.value=parsed.ownScore || '';
-      var opp=qs('clanResultOpponentScore'); if(opp) opp.value=parsed.opponentScore || '';
-      var dt=qs('clanResultDate'); if(dt && !dt.value) dt.value=getDay1BattleDate();
-      renderMemberRankings(parsed.players||[]);
-      setStatus('OCR complete. Review and edit the result fields.');
-    }catch(e){
-      setStatus('OCR failed. You can still enter the result fields manually.');
-      try{ if(window.fmShowNoticeModal) fmShowNoticeModal('Clan OCR','Could not read the result screenshots. You can still enter the fields manually.','OK'); }catch(_){}
-    }
-  }
-  function getDay1BattleDate(){
-    var battles=loadBattles();
-    var pending=battles.find(function(b){ return !b.result && b.date; });
-    if(pending && pending.date) return pending.date;
-    var setupDate=qs('clanSetupStartDate');
-    if(setupDate && setupDate.value) return setupDate.value;
-    var latest=battles.find(function(b){ return b.date; });
-    return latest && latest.date ? latest.date : todayISO();
-  }
-  function readResultsForm(){
-    var inheritedDate=getDay1BattleDate();
-    var dt=qs('clanResultDate'); if(dt) dt.value=inheritedDate;
-    var memberRows=readMemberRankings();
-    return {
-      result: qs('clanResultOutcome') ? qs('clanResultOutcome').value : '',
-      resultDate: inheritedDate,
-      ownScore: qs('clanResultOwnScore') ? qs('clanResultOwnScore').value : '',
-      opponentScore: qs('clanResultOpponentScore') ? qs('clanResultOpponentScore').value : '',
-      players: memberRows,
-      updatedAt: new Date().toISOString()
-    };
-  }
-
-  function readSetupSnapshotForResult(){
-    return {
-      id:'battle_'+Date.now(),
-      createdAt:new Date().toISOString(),
-      updatedAt:new Date().toISOString(),
-      date: qs('clanSetupStartDate') ? (qs('clanSetupStartDate').value || todayISO()) : todayISO(),
-      league: qs('clanSetupLeague') ? qs('clanSetupLeague').value : '',
-      map: qs('clanSetupMap') ? qs('clanSetupMap').value : '',
-      ownClan: qs('clanSetupOwnClan') ? qs('clanSetupOwnClan').value : '',
-      ownRank: qs('clanSetupOwnRank') ? qs('clanSetupOwnRank').value : '',
-      ownTrophies: qs('clanSetupOwnTrophies') ? qs('clanSetupOwnTrophies').value : '',
-      opponentClan: qs('clanSetupOpponentClan') ? qs('clanSetupOpponentClan').value : '',
-      opponentRank: qs('clanSetupOpponentRank') ? qs('clanSetupOpponentRank').value : '',
-      opponentTrophies: qs('clanSetupOpponentTrophies') ? qs('clanSetupOpponentTrophies').value : '',
-      fishSet: ['clanSetupFish1','clanSetupFish2','clanSetupFish3','clanSetupFish4'].map(function(id){ var el=qs(id); return el ? cleanLine(el.value) : ''; }).filter(Boolean)
-    };
-  }
-  function setupHasBattleInfo(setup){
-    return !!(setup && (setup.league || setup.map || setup.ownClan || setup.opponentClan || setup.ownRank || setup.opponentRank || setup.ownTrophies || setup.opponentTrophies || (setup.fishSet && setup.fishSet.length)));
-  }
-  function setupHasClanNames(setup){
-    return !!(setup && String(setup.ownClan || '').trim() && String(setup.opponentClan || '').trim());
-  }
-  function setupKeyLocal(b){
-    return [b && b.date || '', b && b.map || '', b && b.opponentClan || ''].map(function(x){ return String(x).trim().toLowerCase(); }).join('|');
-  }
-  function resultsHaveMinimumData(result){
-    return !!(result && (result.result || result.ownScore || result.opponentScore || (Array.isArray(result.players) && result.players.length)));
-  }
-  function normalizeDupText(value){
-    return String(value == null ? '' : value).trim().toLowerCase();
-  }
-  function battleDisplayDate(b){
-    return (b && (b.date || b.resultDate)) || '';
-  }
-  function findDuplicateBattleForCreate(battles, candidate, excludeId){
-    var cDate=normalizeDupText(battleDisplayDate(candidate));
-    if(!cDate) return null;
-    return (battles || []).find(function(b){
-      if(!b || String(b.id || '') === String(excludeId || '')) return false;
-      if(!b.result && !b.ownScore && !b.opponentScore && !(Array.isArray(b.players) && b.players.length)) return false;
-      // Duplicate protection is intentionally date-based only. A different
-      // opponent/clan on the same battle date is still worth warning about,
-      // but it should remain a soft warning rather than a hard block.
-      return normalizeDupText(battleDisplayDate(b)) === cDate;
-    }) || null;
-  }
-  async function confirmDuplicateBattleSave(duplicate){
-    var label=htmlEscapeLocal((battleDisplayDate(duplicate) || 'No date') + ' • ' + (duplicate && duplicate.ownClan || 'Own Clan') + ' vs ' + (duplicate && duplicate.opponentClan || 'Opponent'));
-    var msg='A battle already exists for this date.';
-    msg+='<br><br><strong>'+label+'</strong><br><br>Continue saving as a separate battle?';
-    try{
-      if(window.fmShowConfirmModal){
-        return await window.fmShowConfirmModal('Possible Duplicate Battle', msg, 'Continue Saving', 'Cancel');
-      }
-      return window.confirm ? window.confirm('A battle already exists for this date. Continue saving as a separate battle?') : false;
-    }catch(_){
-      return false;
-    }
-  }
-  function showSaveError(message){
-    showFlash('clanResultsFlash', message || '⚠️ Could not save battle. Please check the fields and try again.');
-    try{ if(window.fmShowNoticeModal) window.fmShowNoticeModal('Battle Not Saved', message || 'Could not save battle. Please check the fields and try again.', 'OK'); }catch(_){}
-  }
-  async function saveResults(){
-    var result=readResultsForm();
-    var setup=readSetupSnapshotForResult();
-    var battles=loadBattles();
-    var editingId=window.__fmClanEditingBattleId || '';
-
-    if(!resultsHaveMinimumData(result)){
-      showSaveError('⚠️ Nothing to save yet. Please OCR or enter the battle result first.');
-      return;
-    }
-
-    if(editingId){
-      var editIdx=battles.findIndex(function(b){ return String(b.id || '') === String(editingId); });
-      var editPayload=Object.assign({}, setupHasBattleInfo(setup) ? setup : {}, result, { updatedAt: result.updatedAt, seasonId: (typeof getCurrentSeasonId === 'function') ? String(getCurrentSeasonId() || '') : '' });
-      if(editIdx >= 0){
-        battles[editIdx]=Object.assign({}, battles[editIdx], editPayload, { id:battles[editIdx].id || editingId, createdAt:battles[editIdx].createdAt || new Date().toISOString() });
-      }else{
-        battles.unshift(Object.assign({}, editPayload, { id:editingId, createdAt:new Date().toISOString(), date: setup.date || result.resultDate || todayISO(), seasonId: (typeof getCurrentSeasonId === 'function') ? String(getCurrentSeasonId() || '') : '' }));
-      }
-      if(!saveBattles(battles)){ showSaveError('⚠️ Battle update failed. Battle Entry was not cleared.'); return; }
-      resetBattleEntryAfterResultsSave();
-      try{ if(typeof window.__fmClanRenderStatistics === 'function') window.__fmClanRenderStatistics(); }catch(_){}
-      try{ if(window.fmShowNoticeModal) window.fmShowNoticeModal('Battle Updated','✅ Battle updated in Battle Info. Battle Entry is ready for a new battle.','OK'); }catch(_){}
-      return;
-    }
-
-    var pendingIdx=-1;
-    var key=setupKeyLocal(setup);
-    if(key !== '||'){
-      pendingIdx=battles.findIndex(function(b){ return !b.result && setupKeyLocal(b) === key; });
-    }
-    if(pendingIdx < 0){
-      pendingIdx=battles.findIndex(function(b){ return !b.result; });
-    }
-
-    var candidate=null;
-    var excludeDuplicateId='';
-    if(pendingIdx >= 0){
-      excludeDuplicateId=battles[pendingIdx] && battles[pendingIdx].id || '';
-      candidate=Object.assign({}, battles[pendingIdx], setupHasBattleInfo(setup) ? setup : {}, result, {
-        id:battles[pendingIdx].id || setup.id || ('battle_'+Date.now()),
-        createdAt:battles[pendingIdx].createdAt || setup.createdAt || new Date().toISOString(),
-        date:(setup && setup.date) || battles[pendingIdx].date || result.resultDate || todayISO(),
-        seasonId: battles[pendingIdx].seasonId || ((typeof getCurrentSeasonId === 'function') ? String(getCurrentSeasonId() || '') : '')
-      });
-    }else if(setupHasBattleInfo(setup)){
-      candidate=Object.assign({}, setup, result, {
-        id:setup.id || ('battle_'+Date.now()),
-        createdAt:setup.createdAt || new Date().toISOString(),
-        date:setup.date || result.resultDate || todayISO(),
-        seasonId: setup.seasonId || ((typeof getCurrentSeasonId === 'function') ? String(getCurrentSeasonId() || '') : '')
-      });
-    }else{
-      showSaveError('⚠️ Please save or OCR the Battle Setup first, then save results. Battle Entry was not cleared.');
-      return;
-    }
-
-    if(!setupHasClanNames(candidate)){
-      showSaveError('⚠️ Please enter both Own Clan and Opponent before saving results. Battle Entry was not cleared.');
-      return;
-    }
-
-    // Duplicate warning belongs at Setup Save. Keep Results Save quiet when
-    // completing an existing setup record, but still protect direct result-only
-    // saves that create a brand-new battle.
-    if(pendingIdx < 0){
-      var duplicate=findDuplicateBattleForCreate(battles, candidate, excludeDuplicateId);
-      if(duplicate){
-        var continueSave=await confirmDuplicateBattleSave(duplicate);
-        if(!continueSave) return;
-      }
-    }
-
-    if(pendingIdx >= 0){
-      battles[pendingIdx]=candidate;
-    }else{
-      battles.unshift(candidate);
-    }
-
-    if(!saveBattles(battles)){
-      showSaveError('⚠️ Save failed. Battle Entry was not cleared.');
-      return;
-    }
-    resetBattleEntryAfterResultsSave();
-    try{ if(typeof window.__fmClanRenderStatistics === 'function') window.__fmClanRenderStatistics(); }catch(_){}
-    try{ if(window.fmShowNoticeModal) window.fmShowNoticeModal('Battle Saved','✅ Battle results saved in Battle Info. Battle Entry is ready for a new battle.','OK'); }catch(_){}
-  }
-  function resetFilePicker(inputId, listId, buttonId){
-    var input=qs(inputId);
-    if(input) input.value='';
-    var list=qs(listId);
-    if(list) list.textContent='No files selected.';
-    var btn=qs(buttonId);
-    if(btn) btn.disabled=true;
-  }
-  function hideInlineFlash(id){
-    var el=qs(id);
-    if(!el) return;
-    el.textContent='';
-    el.hidden=true;
-    el.classList.remove('show');
-    if(el.__timer) clearTimeout(el.__timer);
-  }
-  function resetSetupEntryFields(){
-    ['clanSetupLeague','clanSetupMap','clanSetupOwnClan','clanSetupOwnRank','clanSetupOwnTrophies','clanSetupOpponentClan','clanSetupOpponentRank','clanSetupOpponentTrophies','clanSetupFish1','clanSetupFish2','clanSetupFish3','clanSetupFish4'].forEach(function(id){ var el=qs(id); if(el) el.value=''; });
-    var d=qs('clanSetupStartDate');
-    if(d){ d.max=todayISO(); d.value=todayISO(); }
-    var status=qs('clanSetupStatus');
-    if(status) status.textContent='Edit anything OCR missed before saving.';
-    var preview=qs('clanSetupPreview');
-    if(preview) preview.hidden=true;
-    hideInlineFlash('clanSetupFlash');
-  }
-  function resetResultsEntryFields(){
-    ['clanResultOutcome','clanResultOwnScore','clanResultOpponentScore','clanResultPlayers'].forEach(function(id){ var el=qs(id); if(el) el.value=''; });
-    renderMemberRankings([]);
-    var d=qs('clanResultDate');
-    if(d) d.value='';
-    var status=qs('clanResultsStatus');
-    if(status) status.textContent='Edit anything OCR missed before saving.';
-    var preview=qs('clanResultsPreview');
-    if(preview) preview.hidden=true;
-    hideInlineFlash('clanResultsFlash');
-  }
-  function setBattleEditMode(id, battle){
-    window.__fmClanEditingBattleId = id || '';
-    var banner=qs('clanEditBanner');
-    if(!banner){
-      var panel=document.querySelector('.clan-tab-panel[data-clan-panel="entry"] .clan-section-head');
-      if(panel){
-        banner=document.createElement('div');
-        banner.id='clanEditBanner';
-        banner.className='clan-edit-banner';
-        panel.insertAdjacentElement('afterend', banner);
-      }
-    }
-    if(banner){
-      if(id){
-        banner.hidden=false;
-        banner.innerHTML='<strong>Editing Battle</strong><span>'+htmlEscapeLocal((battle && battle.date) || 'No date')+' • '+htmlEscapeLocal((battle && battle.ownClan) || 'Own Clan')+' vs '+htmlEscapeLocal((battle && battle.opponentClan) || 'Opponent')+'</span><button type="button" id="clanCancelEditBtn" class="clan-action-btn">Cancel Edit</button>';
-        var cancel=qs('clanCancelEditBtn');
-        if(cancel && !cancel.__fmCancelEdit){ cancel.__fmCancelEdit=true; cancel.addEventListener('click', function(){ resetBattleEntryAfterResultsSave(); }); }
-      }else{
-        banner.hidden=true;
-        banner.innerHTML='';
-      }
-    }
-    var save=qs('clanSaveResultsBtn'); if(save) save.textContent = id ? 'Update Battle' : 'Save Results';
-    var setupSave=qs('clanSaveBattleBtn'); if(setupSave) setupSave.textContent = id ? 'Update Setup' : 'Save Battle';
-  }
-  function currentEntryLooksLikeBattle(battle){
-    if(!battle) return false;
-    var setup=readSetupSnapshotForResult();
-    var curDate=normalizeDupText(setup && setup.date);
-    var battleDate=normalizeDupText(battle.date || battle.resultDate);
-    if(curDate && battleDate && curDate !== battleDate) return false;
-    var curOwn=normalizeDupText(setup && setup.ownClan);
-    var battleOwn=normalizeDupText(battle.ownClan);
-    var curOpp=normalizeDupText(setup && setup.opponentClan);
-    var battleOpp=normalizeDupText(battle.opponentClan);
-    if(curOwn && battleOwn && curOwn !== battleOwn) return false;
-    if(curOpp && battleOpp && curOpp !== battleOpp) return false;
-    return !!(curDate || curOwn || curOpp);
-  }
-
-  function fillBattleEntryFromSaved(battle){
-    if(!battle) return;
-    setBattleEditMode(battle.id || '', battle);
-    var setupPreview=qs('clanSetupPreview'); if(setupPreview) setupPreview.hidden=false;
-    var resultsPreview=qs('clanResultsPreview'); if(resultsPreview) resultsPreview.hidden=false;
-    var setupFields={
-      clanSetupStartDate:battle.date || battle.resultDate || todayISO(),
-      clanSetupLeague:battle.league || '',
-      clanSetupMap:battle.map || '',
-      clanSetupOwnClan:battle.ownClan || '',
-      clanSetupOwnRank:battle.ownRank || '',
-      clanSetupOwnTrophies:battle.ownTrophies || '',
-      clanSetupOpponentClan:battle.opponentClan || '',
-      clanSetupOpponentRank:battle.opponentRank || '',
-      clanSetupOpponentTrophies:battle.opponentTrophies || ''
-    };
-    Object.keys(setupFields).forEach(function(id){ var el=qs(id); if(el) el.value=setupFields[id]; });
-    var fish=Array.isArray(battle.fishSet) ? battle.fishSet : [];
-    for(var i=1;i<=4;i++){ var fe=qs('clanSetupFish'+i); if(fe) fe.value=fish[i-1] || ''; }
-    var resultFields={
-      clanResultOutcome:battle.result || '',
-      clanResultOwnScore:battle.ownScore || '',
-      clanResultOpponentScore:battle.opponentScore || '',
-      clanResultDate:battle.resultDate || battle.date || todayISO()
-    };
-    Object.keys(resultFields).forEach(function(id){ var el=qs(id); if(el) el.value=resultFields[id]; });
-    renderMemberRankings(Array.isArray(battle.players) ? battle.players : []);
-    resetFilePicker('clanSetupFiles','clanSetupFileList','clanSetupOcrBtn');
-    resetFilePicker('clanResultsFiles','clanResultsFileList','clanResultsOcrBtn');
-    var ss=qs('clanSetupStatus'); if(ss) ss.textContent='Editing saved setup. Update fields, then save.';
-    var rs=qs('clanResultsStatus'); if(rs) rs.textContent='Editing saved result. Update fields, then save.';
-    try{ if(typeof window.__fmClanSetTab === 'function') window.__fmClanSetTab('entry'); }catch(_){}
-  }
-  window.__fmClanEditBattle = function(id){
-    var battles=loadBattles();
-    var battle=battles.find(function(b){ return String(b.id || '') === String(id || ''); });
-    if(!battle) return;
-    fillBattleEntryFromSaved(battle);
-  };
-
-  window.__fmClanDeleteBattle = async function(id){
-    id=String(id || '');
-    if(!id) return;
-    var battles=loadBattles();
-    var battle=battles.find(function(b){ return String(b.id || '') === id; });
-    if(!battle) return;
-    var label=htmlEscapeLocal((battle.date || battle.resultDate || 'No date') + ' • ' + (battle.ownClan || 'Own Clan') + ' vs ' + (battle.opponentClan || 'Opponent'));
-    var ok=false;
-    try{
-      if(window.fmShowConfirmModal){
-        ok=await window.fmShowConfirmModal('Delete Battle', 'Delete this saved battle?<br><br><strong>'+label+'</strong><br><br>This cannot be undone.', 'Delete Battle', 'Cancel');
-      }else{
-        ok=window.confirm ? window.confirm('Delete this saved battle?') : false;
-      }
-    }catch(_){ ok=false; }
-    if(!ok) return;
-    var shouldClearEntry = String(window.__fmClanEditingBattleId || '') === id || currentEntryLooksLikeBattle(battle);
-    battles=battles.filter(function(b){ return String(b.id || '') !== id; });
-    saveBattles(battles);
-    if(shouldClearEntry){
-      resetBattleEntryAfterResultsSave();
-    }else{
-      try{ if(typeof window.__fmClanRenderBattleHistory === 'function') window.__fmClanRenderBattleHistory(); }catch(_){}
-    }
-    // Safety pass: if the deleted battle was in edit mode, make sure no stale
-    // edit banner/form state survives after the history rerender.
-    if(shouldClearEntry){
-      window.__fmClanEditingBattleId='';
-      setTimeout(function(){ try{ resetBattleEntryAfterResultsSave(); }catch(_){} }, 0);
-    }
-    try{ if(typeof window.__fmClanRenderStatistics === 'function') window.__fmClanRenderStatistics(); }catch(_){}
-    try{ if(window.fmShowNoticeModal) window.fmShowNoticeModal('Battle Deleted', '🗑️ Battle deleted from Battle Info.', 'OK'); }catch(_){}
-  };
-
-  function resetBattleEntryAfterResultsSave(){
-    setBattleEditMode('', null);
-    resetFilePicker('clanSetupFiles','clanSetupFileList','clanSetupOcrBtn');
-    resetFilePicker('clanResultsFiles','clanResultsFileList','clanResultsOcrBtn');
-    resetSetupEntryFields();
-    resetResultsEntryFields();
-    try{ if(typeof window.__fmClanRenderBattleHistory === 'function') window.__fmClanRenderBattleHistory(); }catch(_){}
-  }
-  function clearResults(){
-    ['clanResultOutcome','clanResultOwnScore','clanResultOpponentScore','clanResultPlayers'].forEach(function(id){ var el=qs(id); if(el) el.value=''; });
-    renderMemberRankings([]);
-    var d=qs('clanResultDate'); if(d) d.value=getDay1BattleDate();
-    resetFilePicker('clanResultsFiles','clanResultsFileList','clanResultsOcrBtn');
-    var preview=qs('clanResultsPreview'); if(preview) preview.hidden=true;
-    setStatus('Results cleared. Choose screenshots to OCR again.');
-  }
-  function initDay2(){
-    var pick=qs('clanResultsPickBtn'), input=qs('clanResultsFiles'), ocr=qs('clanResultsOcrBtn'), clear=qs('clanResultsClearBtn'), save=qs('clanSaveResultsBtn');
-    if(pick && input && !pick.__fmDay2Pick){ pick.__fmDay2Pick=true; pick.addEventListener('click',function(){ input.click(); }); }
-    if(input && !input.__fmDay2Files){ input.__fmDay2Files=true; input.addEventListener('change',updateFileList); }
-    if(ocr && !ocr.__fmDay2Ocr){ ocr.__fmDay2Ocr=true; ocr.addEventListener('click',runResultsOcr); }
-    if(clear && !clear.__fmDay2Clear){ clear.__fmDay2Clear=true; clear.addEventListener('click',clearResults); }
-    if(save && !save.__fmDay2Save){ save.__fmDay2Save=true; save.addEventListener('click',saveResults); }
-    var d=qs('clanResultDate'); if(d){ d.value=getDay1BattleDate(); }
-    var memberRows=qs('clanMemberRankingsRows');
-    if(memberRows && !memberRows.__fmMemberRows){
-      memberRows.__fmMemberRows=true;
-      if(!memberRows.children.length) renderMemberRankings([]);
-      memberRows.addEventListener('input', syncMemberRankingsText);
-    }
-  }
-  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initDay2);
-  else initDay2();
-  setTimeout(initDay2, 500);
 })();
