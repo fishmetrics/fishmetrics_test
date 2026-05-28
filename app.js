@@ -12033,6 +12033,38 @@ function getFilteredPlannerRows(){
     return catchValueEntryKeyFromParts(row && row.scope, row && row.location, row && row.fish);
   }
 
+  function getCatchValueFishMeta(rowOrEntry){
+    try{
+      const scope = String(rowOrEntry && rowOrEntry.scope || '').toUpperCase();
+      const location = String(rowOrEntry && rowOrEntry.location || '').trim();
+      const fishKey = canonicalizeFishName(rowOrEntry && (rowOrEntry.name || rowOrEntry.fish));
+      const pools = scope === 'VIP' ? [LOCATIONS_VIP] : (scope === 'MAIN' ? [LOCATIONS] : [LOCATIONS, LOCATIONS_VIP]);
+      for(const pool of pools){
+        const locNames = location ? [location] : Object.keys(pool || {});
+        for(const loc of locNames){
+          const found = ((pool || {})[loc] || []).find((fish) => canonicalizeFishName(fish && fish.name) === fishKey);
+          if(found) return found;
+        }
+      }
+    }catch(_){ }
+    return null;
+  }
+
+  function catchValuePointsFor(weight, rowOrEntry){
+    try{
+      const lbs = clampCatchValueNumber(weight);
+      const meta = getCatchValueFishMeta(rowOrEntry);
+      if(lbs === null || !meta || typeof calculatePoints !== 'function') return null;
+      const pts = calculatePoints(lbs, meta);
+      return Number.isFinite(pts) && pts > 0 ? pts : null;
+    }catch(_){ return null; }
+  }
+
+  function formatCatchValuePoints(weight, rowOrEntry){
+    const pts = catchValuePointsFor(weight, rowOrEntry);
+    return pts === null ? '—' : fmtInt(Math.round(pts));
+  }
+
   function catchValueRowStatsFor(entries, row){
     const key = keyForRow(row);
     const legacyFish = canonicalizeFishName(row && row.name);
@@ -12047,7 +12079,9 @@ function getFilteredPlannerRows(){
     const best = scoped.reduce((max, entry) => Math.max(max, Number(entry.price || 0)), 0);
     const weightTotal = scoped.reduce((sum, entry) => sum + Number(entry.weight || 0), 0);
     const avgWeight = scoped.length ? weightTotal / scoped.length : 0;
-    return { entries: scoped.length, avg, best, avgWeight };
+    const pointRows = scoped.map((entry) => catchValuePointsFor(entry.weight, Object.assign({}, row, entry))).filter((pts) => pts !== null);
+    const pointsAvg = pointRows.length ? pointRows.reduce((sum, pts) => sum + pts, 0) / pointRows.length : 0;
+    return { entries: scoped.length, avg, best, avgWeight, pointsAvg };
   }
   function getCatchValueEntriesForRow(row){
     const key = keyForRow(row);
@@ -12086,6 +12120,7 @@ function getFilteredPlannerRows(){
           ${entries.map((entry) => `
             <div class="catchvalue-manage-row" role="listitem">
               <span class="catchvalue-manage-weight">${Number(entry.weight || 0).toFixed(2)} lbs</span>
+              <span class="catchvalue-manage-points">${formatCatchValuePoints(entry.weight, Object.assign({}, row, entry))} pts</span>
               <span class="catchvalue-manage-price">${fmtInt(Math.round(Number(entry.price || 0)))} gold</span>
               <button type="button" class="planner-action-btn catchvalue-manage-delete" data-catchvalue-delete="${escapeAttr(entry.id)}">Delete</button>
             </div>`).join('')}
@@ -12158,11 +12193,13 @@ function getFilteredPlannerRows(){
         <tr>
           <td class="planner-lure-location-cell"><div class="planner-lure-primary">${escapeHtml(row.location)}</div><div class="planner-lure-meta">${escapeHtml(row.scope)}</div></td>
           <td><div class="planner-lure-fish">${escapeHtml(toTitleCase(row.name))}</div><div class="planner-lure-meta">${escapeHtml(row.category || '')}</div></td>
+          <td class="planner-lure-num">${rowStats.entries && rowStats.pointsAvg ? fmtInt(Math.round(rowStats.pointsAvg)) : '—'}</td>
           <td class="planner-lure-num">${rowStats.entries ? fmtInt(Math.round(rowStats.avg)) : '—'}</td>
           <td class="planner-lure-num">${rowStats.entries ? fmtInt(Math.round(rowStats.best)) : '—'}</td>
           <td class="planner-lure-num">${rowStats.entries ? Number(rowStats.avgWeight || 0).toFixed(2) : '—'}</td>
           <td class="planner-lure-num">${fmtInt(rowStats.entries)}</td>
           <td><input class="planner-input planner-fish-input" type="number" min="0" step="0.01" placeholder="0.00" data-catchvalue-key="${escapeAttr(key)}" data-catchvalue-field="weight"></td>
+          <td class="planner-lure-num"><span class="catchvalue-points-cell" data-catchvalue-points-for="${escapeAttr(key)}">—</span></td>
           <td><input class="planner-input planner-fish-input" type="number" min="0" step="1" placeholder="0" data-catchvalue-key="${escapeAttr(key)}" data-catchvalue-field="price"></td>
           <td class="planner-lure-num planner-action-cell"><button type="button" class="planner-action-btn" data-catchvalue-row-add="${escapeAttr(key)}">Add</button>${rowStats.entries ? ` <button type="button" class="planner-action-btn" data-catchvalue-row-manage="${escapeAttr(key)}">Manage</button>` : ''}</td>
         </tr>`;
@@ -12213,11 +12250,21 @@ function getFilteredPlannerRows(){
         </div>
         <div class="planner-table-wrap">
           <table class="planner-table">
-            <thead><tr><th>Location</th><th>Fish</th><th>Avg Sale</th><th>Best Sale</th><th>Avg Weight</th><th>Entries</th><th>Weight</th><th>Sell Price</th><th>Action</th></tr></thead>
-            <tbody>${bodyRows || `<tr><td colspan="9" class="planner-empty-cell">No fish match the selected filters.</td></tr>`}</tbody>
+            <thead><tr><th>Location</th><th>Fish</th><th>Avg Points</th><th>Avg Sale</th><th>Best Sale</th><th>Avg Weight</th><th>Entries</th><th>Weight</th><th>Points</th><th>Sell Price</th><th>Action</th></tr></thead>
+            <tbody>${bodyRows || `<tr><td colspan="11" class="planner-empty-cell">No fish match the selected filters.</td></tr>`}</tbody>
           </table>
         </div>
       </section>`;
+  }
+
+  function updateCatchValuePointsPreview(body, key){
+    try{
+      const row = getPlannerRows().find((item) => keyForRow(item) === key);
+      const input = body.querySelector(`[data-catchvalue-key="${CSS.escape(key)}"][data-catchvalue-field="weight"]`);
+      const target = body.querySelector(`[data-catchvalue-points-for="${CSS.escape(key)}"]`);
+      if(!target) return;
+      target.textContent = row ? formatCatchValuePoints(input && input.value, row) : '—';
+    }catch(_){ }
   }
 
   function commitCatchValueEntryForRow(body, key){
@@ -12584,6 +12631,11 @@ if(rowSelectBtn){
     });
 
     body.addEventListener('input', (e) => {
+      const catchValueRowWeightLive = e.target.closest('[data-catchvalue-field="weight"][data-catchvalue-key]');
+      if(catchValueRowWeightLive){
+        updateCatchValuePointsPreview(body, catchValueRowWeightLive.getAttribute('data-catchvalue-key') || '');
+        return;
+      }
       const catchValueDateLive = e.target.closest('#catchValueDate');
       if(catchValueDateLive){
         plannerState.catchValueDate = normalizeISODate(catchValueDateLive.value) || todayISODate();
