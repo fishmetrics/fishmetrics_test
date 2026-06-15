@@ -418,6 +418,13 @@
   <div class="panel-title">Star Distribution (<span id="starDistRange">2–5★</span>)</div>
   <div class="star-dist-wrap">
     <div id="starDistributionBar" class="star-dist-bar" role="img" aria-label="Distribution of 2 to 5 star catches"></div>
+    <div class="star-dist-meta-row">
+      <div id="high4Chip" class="star-dist-chip" title="Counts 4★ catches at 85.5%+ of max points, below 5★.">
+        <span class="star-dist-chip-label">High 4★</span>
+        <strong id="high4Count">0</strong>
+        <span id="high4Pct" class="star-dist-chip-sub">0.0% • 85.5%+ max</span>
+      </div>
+    </div>
     <div id="starDistributionLegend" class="star-dist-legend" aria-hidden="true"></div>
   </div>
 </section>
@@ -642,7 +649,9 @@
     </label>
   </div>
 
-  
+  <div class="pref-divider" aria-hidden="true"></div>
+  <button type="button" class="backup-btn pref-action-btn" id="reviewSeasonPbUpdatesBtn">Review Season PB Updates</button>
+  <div class="pref-note pref-action-note">Scan Season records for catches that may improve your All-time PBs.</div>
 </div>
 </div>
       </p>
@@ -674,10 +683,6 @@
         </span>
       </p>
 
-      <div class="backup-actions" aria-label="Season rollover test tools">
-        <button type="button" class="backup-btn" id="seasonRolloverTestBtn">Test Season Rollover</button>
-        <div class="backup-msg" id="seasonRolloverTestMsg" aria-live="polite"></div>
-      </div>
 
 <hr class="instr-divider">
 
