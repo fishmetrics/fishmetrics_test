@@ -10341,6 +10341,10 @@ Requirement: ${currPct}% ${metricLabel}.`;
     lureSelectedFishKeys: [],
     lureCustomSelectionMode: false,
     lureRarity: 'ALL',
+    lureSortKey: '',
+    lureSortDir: 'ASC',
+    catchValueSortKey: '',
+    catchValueSortDir: 'DESC',
     currentValues: Object.create(null),
     targetValues: Object.create(null),
     lureCalcFrom: 0,
@@ -11717,6 +11721,50 @@ function getFilteredPlannerRows(orderType = 'season'){
     shell.body.innerHTML = plannerState.homeMarkup;
   }
 
+  function plannerSortArrow(activeKey, dir, key){
+    return activeKey === key ? (dir === 'ASC' ? ' ▲' : ' ▼') : ' ↕';
+  }
+
+  function compareNumericSort(a, b, dir){
+    const aa = Number(a);
+    const bb = Number(b);
+    const av = Number.isFinite(aa) ? aa : -Infinity;
+    const bv = Number.isFinite(bb) ? bb : -Infinity;
+    const cmp = av === bv ? 0 : (av < bv ? -1 : 1);
+    return dir === 'ASC' ? cmp : -cmp;
+  }
+
+  function applyLureTableSort(rows, isCurrent){
+    const key = String(plannerState.lureSortKey || '');
+    const dir = plannerState.lureSortDir === 'ASC' ? 'ASC' : 'DESC';
+    if(!['currentLure','fishInHand','goldNeeded'].includes(key)) return rows;
+    return rows.slice().sort((a,b) => {
+      const ac = isCurrent ? getCurrentCell(a) : getTargetCell(a);
+      const bc = isCurrent ? getCurrentCell(b) : getTargetCell(b);
+      let cmp = 0;
+      if(key === 'currentLure') cmp = compareNumericSort(ac.start, bc.start, dir);
+      else if(key === 'fishInHand') cmp = compareNumericSort(ac.fishInHand, bc.fishInHand, dir);
+      else if(key === 'goldNeeded') cmp = compareNumericSort(ac.goldNeeded, bc.goldNeeded, dir);
+      return cmp || comparePlannerGameOrder(a, b, 'lure');
+    });
+  }
+
+  function applyCatchValueSort(rows, entries){
+    const key = String(plannerState.catchValueSortKey || '');
+    const dir = plannerState.catchValueSortDir === 'ASC' ? 'ASC' : 'DESC';
+    if(!['avgPoints','avgSale','bestSale','avgWeight'].includes(key)) return rows;
+    return rows.slice().sort((a,b) => {
+      const as = catchValueRowStatsFor(entries, a);
+      const bs = catchValueRowStatsFor(entries, b);
+      let cmp = 0;
+      if(key === 'avgPoints') cmp = compareNumericSort(as.pointsAvg, bs.pointsAvg, dir);
+      else if(key === 'avgSale') cmp = compareNumericSort(as.avg, bs.avg, dir);
+      else if(key === 'bestSale') cmp = compareNumericSort(as.best, bs.best, dir);
+      else if(key === 'avgWeight') cmp = compareNumericSort(as.avgWeight, bs.avgWeight, dir);
+      return cmp || comparePlannerGameOrder(a, b, 'season');
+    });
+  }
+
   function renderLurePlanner(){
     const shell = plannerShell();
     if(!shell.body) return;
@@ -11726,10 +11774,11 @@ function getFilteredPlannerRows(orderType = 'season'){
     syncPlannerCustomSelectionMode();
     clearPlannerSelectedFishForScope();
     const allRows = getPlannerRows('lure');
-    const rows = getFilteredPlannerRows('lure');
+    const baseRows = getFilteredPlannerRows('lure');
     const mapOptions = getMapOptions();
     const isCurrent = plannerState.mode === 'CURRENT';
-    const currentKpis = isCurrent ? getLurePlannerCurrentKPIs(rows) : null;
+    const currentKpis = isCurrent ? getLurePlannerCurrentKPIs(baseRows) : null;
+    const rows = applyLureTableSort(baseRows, isCurrent);
 
     let totalFishNeeded = 0;
     let totalGoldNeeded = 0;
@@ -11853,14 +11902,14 @@ function getFilteredPlannerRows(orderType = 'season'){
                 ${plannerState.lureCustomSelectionMode ? '<th>Select</th>' : ''}
                 <th>Location</th>
                 <th>Fish</th>
-                <th>Current Lure</th>
-                <th>Fish in Hand</th>
+                <th class="planner-sortable-head" data-lure-sort="currentLure">Current Lure${plannerSortArrow(plannerState.lureSortKey, plannerState.lureSortDir, 'currentLure')}</th>
+                <th class="planner-sortable-head" data-lure-sort="fishInHand">Fish in Hand${plannerSortArrow(plannerState.lureSortKey, plannerState.lureSortDir, 'fishInHand')}</th>
                 ${isCurrent
                   ? `<th>Reachable</th>
-                     <th>Gold Needed</th>`
+                     <th class="planner-sortable-head" data-lure-sort="goldNeeded">Gold Needed${plannerSortArrow(plannerState.lureSortKey, plannerState.lureSortDir, 'goldNeeded')}</th>`
                   : `<th>Target Lure</th>
                      <th>Fish Needed</th>
-                     <th>Gold Needed</th>`}
+                     <th class="planner-sortable-head" data-lure-sort="goldNeeded">Gold Needed${plannerSortArrow(plannerState.lureSortKey, plannerState.lureSortDir, 'goldNeeded')}</th>`}
               </tr>
             </thead>
             <tbody>${bodyRows}</tbody>
@@ -12517,6 +12566,7 @@ function getFilteredPlannerRows(orderType = 'season'){
     if(q){
       rows = rows.filter((row) => String(row.name || '').toLowerCase().includes(q));
     }
+    rows = applyCatchValueSort(rows, entries);
     const bodyRows = rows.map((row) => {
       const key = keyForRow(row);
       const rowStats = catchValueRowStatsFor(entries, row);
@@ -12581,7 +12631,7 @@ function getFilteredPlannerRows(orderType = 'season'){
         </div>
         <div class="planner-table-wrap">
           <table class="planner-table">
-            <thead><tr><th>Location</th><th>Fish</th><th>Avg Points</th><th>Avg Sale</th><th>Best Sale</th><th>Avg Weight</th><th>Entries</th><th>Weight</th><th>Points</th><th>Sell Price</th><th>Action</th></tr></thead>
+            <thead><tr><th>Location</th><th>Fish</th><th class="planner-sortable-head" data-catchvalue-sort="avgPoints">Avg Points${plannerSortArrow(plannerState.catchValueSortKey, plannerState.catchValueSortDir, 'avgPoints')}</th><th class="planner-sortable-head" data-catchvalue-sort="avgSale">Avg Sale${plannerSortArrow(plannerState.catchValueSortKey, plannerState.catchValueSortDir, 'avgSale')}</th><th class="planner-sortable-head" data-catchvalue-sort="bestSale">Best Sale${plannerSortArrow(plannerState.catchValueSortKey, plannerState.catchValueSortDir, 'bestSale')}</th><th class="planner-sortable-head" data-catchvalue-sort="avgWeight">Avg Weight${plannerSortArrow(plannerState.catchValueSortKey, plannerState.catchValueSortDir, 'avgWeight')}</th><th>Entries</th><th>Weight</th><th>Points</th><th>Sell Price</th><th>Action</th></tr></thead>
             <tbody>${bodyRows || `<tr><td colspan="11" class="planner-empty-cell">No fish match the selected filters.</td></tr>`}</tbody>
           </table>
         </div>
@@ -12915,6 +12965,34 @@ if(rowSelectBtn){
         queuePlannerStateSave();
         renderPlannerView();
         return;
+      }
+      const lureSortBtn = e.target.closest('[data-lure-sort]');
+      if(lureSortBtn){
+        const key = String(lureSortBtn.getAttribute('data-lure-sort') || '');
+        if(['currentLure','fishInHand','goldNeeded'].includes(key)){
+          if(plannerState.lureSortKey === key){
+            plannerState.lureSortDir = plannerState.lureSortDir === 'ASC' ? 'DESC' : 'ASC';
+          }else{
+            plannerState.lureSortKey = key;
+            plannerState.lureSortDir = 'ASC';
+          }
+          renderPlannerView();
+          return;
+        }
+      }
+      const catchValueSortBtn = e.target.closest('[data-catchvalue-sort]');
+      if(catchValueSortBtn){
+        const key = String(catchValueSortBtn.getAttribute('data-catchvalue-sort') || '');
+        if(['avgPoints','avgSale','bestSale','avgWeight'].includes(key)){
+          if(plannerState.catchValueSortKey === key){
+            plannerState.catchValueSortDir = plannerState.catchValueSortDir === 'ASC' ? 'DESC' : 'ASC';
+          }else{
+            plannerState.catchValueSortKey = key;
+            plannerState.catchValueSortDir = 'DESC';
+          }
+          renderPlannerView();
+          return;
+        }
       }
       const modeBtn = e.target.closest('[data-planner-mode]');
       if(modeBtn){

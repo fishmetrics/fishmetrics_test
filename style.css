@@ -16,12 +16,12 @@
   --font-sans: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
   --font-display: 'Orbitron', system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
 
-  /* richer variation across the red family for the Star Catches chart */
-  --red1: #fff7cc;
-  --red2: #ffd24d;
-  --red3: #ff9f1a;
-  --red4: #ff5a1f; /* orange-red */
-  --red5: #d61f2c; /* lighter deep red */
+  /* Star Distribution palette: distinct achievement hues without dark reds */
+  --red1: #5DADE2; /* 1★ soft blue */
+  --red2: #4ECDC4; /* 2★ teal */
+  --red3: #A7D96C; /* 3★ yellow-green */
+  --red4: #D9A404; /* 4★ darker gold */
+  --red5: #D9782A; /* 5★ darker orange */
 
   --bg:#0b1b3a;
   --bg2:#0a2a5a;
@@ -2067,10 +2067,10 @@ input[type=number] {
 }
 .toggle .slider:before{
   content:""; position:absolute; top:3px; left:3px;
-  width:16px; height:16px; border-radius:50%;
+  width:20px; height:20px; border-radius:50%;
   background:#fff; transition: all 0.2s ease;
 }
-.toggle input:checked + .slider:before{ transform: translateX(20px); }
+.toggle input:checked + .slider:before{ transform: translateX(16px); }
 .toggle-label{ font-size:0.9em; opacity:0.9; }
 
 
