@@ -446,7 +446,7 @@ html.vip-mode .mode-toggle .mode-btn.active{
 /* Mobile: Career Targets controls should wrap instead of overflowing */
 @media (max-width: 520px){
   .career-targets-title{
-    flex-direction: column;
+    flex-direction: row; align-items:center;
     align-items: flex-start;
   }
 
