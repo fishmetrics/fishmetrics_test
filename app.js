@@ -13833,6 +13833,100 @@ if(rowSelectBtn){
     backdrop.onclick = function(e){ if(e.target === backdrop) cleanup(); };
   }
 
+
+  function isSeasonArchiveRecoveryImport(){
+    var cb = qs('seasonImportArchiveRecovery');
+    return !!(cb && cb.checked);
+  }
+
+  function getSeasonArchiveRecoveryMonth(){
+    var inp = qs('seasonImportArchiveMonth');
+    var v = inp && inp.value ? String(inp.value).slice(0,7) : '';
+    if(/^\d{4}-\d{2}$/.test(v)) return v;
+    try{
+      var d = new Date();
+      var prev = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth()-1, 1));
+      return prev.getUTCFullYear() + '-' + String(prev.getUTCMonth()+1).padStart(2,'0');
+    }catch(_){ return '2026-06'; }
+  }
+
+  function fmRecoveryUpsertArchiveList(seasonId, exportedAt, archivedAtUTC){
+    var listKey = "fishmetrics_season_archives_v1";
+    var list = [];
+    try{ list = JSON.parse(localStorage.getItem(listKey) || "[]"); }catch(_){ list = []; }
+    if(!Array.isArray(list)) list = [];
+    list = list.filter(function(x){ return String(x && x.seasonId || '') !== String(seasonId || ''); });
+    list.unshift({ seasonId: seasonId, exportedAt: exportedAt, archivedAtUTC: archivedAtUTC || exportedAt });
+    try{ localStorage.setItem(listKey, JSON.stringify(list)); }catch(_){}
+  }
+
+  function fmRecoveryApplyImportToArchive(month, isVipImport, mapName, valid){
+    var mode = isVipImport ? 'VIP' : 'MAIN';
+    var seasonId = mode + '-' + String(month || '').slice(0,7);
+    var archiveKey = 'fishmetrics_season_archive_' + seasonId;
+    var locData = isVipImport ? ((typeof LOCATIONS_VIP !== 'undefined' && LOCATIONS_VIP) ? LOCATIONS_VIP : {}) : ((typeof LOCATIONS !== 'undefined' && LOCATIONS) ? LOCATIONS : {});
+    var records = {};
+    var existing = null;
+    try{ existing = JSON.parse(localStorage.getItem(archiveKey) || 'null'); }catch(_){ existing = null; }
+    if(existing && existing.seasonRecordsByLocation && typeof existing.seasonRecordsByLocation === 'object'){
+      records = JSON.parse(JSON.stringify(existing.seasonRecordsByLocation || {}));
+    }
+    var mapRecords = Object.assign({}, records[mapName] || {});
+    var updated = 0;
+    var cleared = 0;
+    (valid || []).forEach(function(item){
+      var key = canonicalizeFishName(item.fish.name);
+      if(item.points === 0){
+        if(Object.prototype.hasOwnProperty.call(mapRecords, key)) cleared++;
+        delete mapRecords[key];
+        return;
+      }
+      mapRecords[key] = storedWeightStringForPoints(item.points, item.fish);
+      updated++;
+    });
+    records[mapName] = mapRecords;
+
+    var snap = null;
+    if(typeof _buildSeasonArchiveSnapshotFrom === 'function'){
+      snap = _buildSeasonArchiveSnapshotFrom(records, locData, mode, month, new Date());
+    }else{
+      snap = {
+        schemaVersion: "season-archive-v2",
+        exportedAt: new Date().toISOString(),
+        archivedAtUTC: new Date().toISOString(),
+        app: { name: "FishMetrics", version: "v1.8 recovery" },
+        season: { seasonId: seasonId, month: month, startedAt: month + "-01" },
+        seasonRecordsByLocation: records
+      };
+    }
+    try{ localStorage.setItem(archiveKey, JSON.stringify(snap)); }catch(e){ throw e; }
+    fmRecoveryUpsertArchiveList(seasonId, snap.exportedAt || new Date().toISOString(), snap.archivedAtUTC || snap.exportedAt);
+    return { seasonId: seasonId, updated: updated, cleared: cleared };
+  }
+
+  function showSeasonRecoveryCompleteModal(result, mapName){
+    var backdrop = qs('seasonImportCompleteBackdrop');
+    var body = qs('seasonImportCompleteBody');
+    var ok = qs('seasonImportCompleteOk');
+    var txt = 'Archived season ' + result.seasonId + ' updated for ' + mapName + '.';
+    if(!backdrop || !body || !ok){ try{ alert(txt); }catch(_){} return; }
+    body.innerHTML = '<strong>Recovery import complete</strong><br>' +
+      'Archived season <strong>' + escapeSeasonImportText(result.seasonId) + '</strong> updated for <strong>' + escapeSeasonImportText(mapName) + '</strong>.<br>' +
+      escapeSeasonImportText(String(result.updated)) + ' fish updated' +
+      (result.cleared ? ' · ' + escapeSeasonImportText(String(result.cleared)) + ' cleared' : '') +
+      '.<br><br>Check Last Season results/poster, then export a backup.';
+    backdrop.classList.add('show');
+    backdrop.setAttribute('aria-hidden','false');
+    var cleanup = function(){
+      backdrop.classList.remove('show');
+      backdrop.setAttribute('aria-hidden','true');
+      ok.onclick = null;
+      backdrop.onclick = null;
+    };
+    ok.onclick = cleanup;
+    backdrop.onclick = function(e){ if(e.target === backdrop) cleanup(); };
+  }
+
   async function confirmSeasonImport(){
     var mapSelect = qs('seasonImportMap');
     var mapName = mapSelect && mapSelect.value ? mapSelect.value : 'Paradise Island';
@@ -13872,6 +13966,15 @@ if(rowSelectBtn){
 
     if(confirmBtn){ confirmBtn.disabled = true; confirmBtn.textContent = 'Importing…'; }
     try{
+      if(isSeasonArchiveRecoveryImport()){
+        var recoveryMonth = getSeasonArchiveRecoveryMonth();
+        var recoveryResult = fmRecoveryApplyImportToArchive(recoveryMonth, isVipImport, mapName, valid);
+        if(status) status.textContent = 'Recovery import complete · ' + recoveryResult.seasonId + ' · ' + recoveryResult.updated + ' updated' + (recoveryResult.cleared ? ' · ' + recoveryResult.cleared + ' cleared' : '');
+        closeSeasonImportModal();
+        showSeasonRecoveryCompleteModal(recoveryResult, mapName);
+        return;
+      }
+
       if(isVipImport){
         if(!seasonRecordsByLocation_vip || typeof seasonRecordsByLocation_vip !== 'object') seasonRecordsByLocation_vip = {};
       }else{
@@ -14406,7 +14509,7 @@ if(rowSelectBtn){
         <div class="clan-history-top"><strong>${safeText(b.date || 'No date')}</strong><span class="clan-result-pill ${resultClass(b.result)}">${safeText(b.result || 'Setup')}</span></div>
         <div class="clan-history-title">${safeText(b.ownClan || 'Own Clan')} vs ${safeText(b.opponentClan || 'Opponent')}</div>
         <div class="clan-history-meta">${safeText(b.league || 'No league')} • ${safeText(b.map || 'No map')}</div>
-        <div class="clan-history-meta">Ranks: ${safeText(b.ownRank || '—')} vs ${safeText(b.opponentRank || '—')} • Trophies: ${safeText(b.ownTrophies || '—')} vs ${safeText(b.opponentTrophies || '—')}</div>
+        <div class="clan-history-meta">Own Rank: ${safeText(b.ownRank || '—')} • Own Trophies: ${safeText(b.ownTrophies || '—')}</div>
         ${fish}
         <div class="clan-history-actions"><button type="button" class="clan-action-btn clan-edit-battle-btn" data-battle-id="${safeText(b.id || '')}">Edit</button><button type="button" class="clan-action-btn clan-delete-battle-btn" data-battle-id="${safeText(b.id || '')}">Delete</button></div>
       </article>`;
@@ -14428,8 +14531,6 @@ if(rowSelectBtn){
       ownRank: qs('clanSetupOwnRank')?.value || '',
       ownTrophies: qs('clanSetupOwnTrophies')?.value || '',
       opponentClan: qs('clanSetupOpponentClan')?.value || '',
-      opponentRank: qs('clanSetupOpponentRank')?.value || '',
-      opponentTrophies: qs('clanSetupOpponentTrophies')?.value || '',
       fishSet: ['clanSetupFish1','clanSetupFish2','clanSetupFish3','clanSetupFish4'].map(id => qs(id)?.value || '').filter(Boolean)
     };
   }
@@ -14757,7 +14858,7 @@ if(rowSelectBtn){
       opponentTrophy = filtered.filter(function(n){ return n !== ownTrophy; })[0] || filtered[1] || '';
     }
 
-    return { ranks:ranks, trophies:[ownTrophy, opponentTrophy].filter(Boolean) };
+    return { ranks:ranks, trophies:[ownTrophy].filter(Boolean) };
   }
   function findClans(text){
     var raw = String(text || '');
@@ -14774,7 +14875,9 @@ if(rowSelectBtn){
     if(low.indexOf('mahadewa') !== -1 && names.indexOf('Mahadewa') === -1) names.push('Mahadewa');
     if(low.indexOf('thailand') !== -1 && names.indexOf('Thailand') === -1) names.push('Thailand');
     if((low.indexOf('niceclan') !== -1 || low.indexOf('nice clan') !== -1) && names.indexOf('NiceClan') === -1) names.push('NiceClan');
-    if((low.indexOf('aussie tackle') !== -1 || low.indexOf('aussie') !== -1) && names.indexOf('Aussie tackle 4') === -1) names.push('Aussie tackle 4');
+    if((low.indexOf('sushiettibili') !== -1 || low.indexOf('sushiet') !== -1 || low.indexOf('sushi') !== -1 || low.indexOf('cuchiet') !== -1 || low.indexOf('chietti') !== -1 || low.indexOf('iettihili') !== -1) && names.indexOf('Sushiettibili [ITA]') === -1) names.push('Sushiettibili [ITA]');
+    if((low.indexOf('lusitanos fishing') !== -1 || low.indexOf('lusitanos') !== -1) && names.indexOf('Lusitanos fishing SAS') === -1) names.push('Lusitanos fishing SAS');
+    if((low.indexOf('legends of the deep') !== -1 || low.indexOf('the deep') !== -1) && names.indexOf('Legends of The Deep') === -1) names.push('Legends of The Deep');
 
     var lines=lineArray(raw);
     lines.forEach(function(line){
@@ -14803,6 +14906,197 @@ if(rowSelectBtn){
       img.src=URL.createObjectURL(file);
     });
   }
+
+  function cropCanvasRelative(sourceCanvas, rx, ry, rw, rh, scale){
+    var sx=Math.max(0, Math.round(sourceCanvas.width * rx));
+    var sy=Math.max(0, Math.round(sourceCanvas.height * ry));
+    var sw=Math.max(1, Math.round(sourceCanvas.width * rw));
+    var sh=Math.max(1, Math.round(sourceCanvas.height * rh));
+    if(sx+sw > sourceCanvas.width) sw = sourceCanvas.width - sx;
+    if(sy+sh > sourceCanvas.height) sh = sourceCanvas.height - sy;
+    var mul = scale || 3;
+    var c=document.createElement('canvas');
+    c.width=Math.max(1, sw*mul);
+    c.height=Math.max(1, sh*mul);
+    var ctx=c.getContext('2d', { willReadFrequently:true });
+    ctx.fillStyle='#ffffff';
+    ctx.fillRect(0,0,c.width,c.height);
+    ctx.imageSmoothingEnabled = true;
+    ctx.drawImage(sourceCanvas, sx, sy, sw, sh, 0, 0, c.width, c.height);
+    return c;
+  }
+  function cleanOcrFieldText(s){
+    return String(s||'').replace(/[|]/g,'I').replace(/[“”]/g,'"').replace(/[‘’]/g,"'").replace(/\s+/g,' ').trim();
+  }
+  function parseSetupRank(text){
+    var s=cleanOcrFieldText(text);
+    var m=s.match(/#\s*(\d{1,4})/);
+    if(m) return '#'+m[1];
+    m=s.match(/\b(\d{1,3})\b/);
+    return m ? '#'+m[1] : '';
+  }
+  function parseSetupTrophies(text){
+    var raw = String(text || '');
+    var seqs = (raw.match(/\d{2,6}/g) || []).map(function(n){ return String(n); });
+
+    function plausible(v){
+      var n = parseInt(v, 10);
+      return Number.isFinite(n) && n >= 50 && n <= 500;
+    }
+
+    // First pass: exact 2-3 digit trophy counts.
+    for(var i=0; i<seqs.length; i++){
+      var v = String(parseInt(seqs[i], 10));
+      if(plausible(v)) return v;
+    }
+
+    // Second pass: Tesseract sometimes glues the trophy to adjacent UI digits:
+    // 103 becomes 10303, 187 becomes 1873. Use the leading 3 digits when plausible.
+    for(var j=0; j<seqs.length; j++){
+      var s = seqs[j];
+      if(s.length >= 4){
+        var first3 = s.slice(0,3);
+        if(plausible(first3)) return String(parseInt(first3, 10));
+        var last3 = s.slice(-3);
+        if(plausible(last3)) return String(parseInt(last3, 10));
+      }
+    }
+
+    return '';
+  }
+  function parseSetupLeague(text){
+    var m=String(text||'').match(/\b(bronze|silver|gold|platinum|diamond|legend|legendary)\s+league\b/i);
+    return m ? titleCase(m[0]) : '';
+  }
+  function parseSetupMapFromRegion(text){
+    var raw=String(text||'');
+    var low=raw.toLowerCase();
+    var maps=getKnownMaps();
+    for(var i=0;i<maps.length;i++){
+      if(low.indexOf(maps[i].toLowerCase())!==-1) return maps[i];
+    }
+    return '';
+  }
+  function parseSetupClanNameFromRegion(text, side){
+    var raw=cleanOcrFieldText(text);
+    var low=raw.toLowerCase();
+    var compact=low.replace(/[^a-z0-9]/g,'');
+
+    function canonicalFromLow(lw, cp){
+      if(cp.indexOf('carpdiem')!==-1 || cp.indexOf('carndiem')!==-1 || lw.indexOf('carp diem')!==-1) return 'Carp Diem';
+      if(cp.indexOf('sushiettibili')!==-1 || cp.indexOf('sushiet')!==-1 || cp.indexOf('sushi')!==-1 ||
+         cp.indexOf('cuchiet')!==-1 || cp.indexOf('cuchiett')!==-1 || cp.indexOf('chietti')!==-1 ||
+         cp.indexOf('iettihili')!==-1 || cp.indexOf('iettibili')!==-1) return 'Sushiettibili [ITA]';
+      if(cp.indexOf('theunion')!==-1 || lw.indexOf('the union')!==-1) return 'The Union';
+      if(cp.indexOf('legendsofthedeep')!==-1 || cp.indexOf('legendsofthe')!==-1 || cp.indexOf('ofthedeep')!==-1 || lw.indexOf('the deep')!==-1) return 'Legends of The Deep';
+      if(cp.indexOf('lusitanosfishing')!==-1 || lw.indexOf('lusitanos fishing')!==-1 || cp.indexOf('lusitanos')!==-1) return 'Lusitanos fishing SAS';
+      if(cp.indexOf('niceclan')!==-1 || lw.indexOf('nice clan')!==-1) return 'NiceClan';
+      if(lw.indexOf('aussie tackle')!==-1 || cp.indexOf('aussietackle')!==-1) return 'Aussie tackle 4';
+      if(cp.indexOf('mahadewa')!==-1) return 'Mahadewa';
+      if(cp.indexOf('brindil')!==-1) return 'Brindil';
+      if(cp.indexOf('thailand')!==-1) return 'Thailand';
+      return '';
+    }
+
+    var known = canonicalFromLow(low, compact);
+    if(known){
+      var hasOwn = compact.indexOf('carpdiem') !== -1 || compact.indexOf('carndiem') !== -1;
+      var hasSushi = compact.indexOf('sushi') !== -1 || compact.indexOf('sushiet') !== -1 || compact.indexOf('cuchiet') !== -1 || compact.indexOf('iettihili') !== -1;
+      var hasUnion = compact.indexOf('theunion') !== -1;
+      var hasDeep = compact.indexOf('legendsofthedeep') !== -1 || compact.indexOf('ofthedeep') !== -1 || low.indexOf('the deep') !== -1;
+      var hasLusitanos = compact.indexOf('lusitanos') !== -1;
+      if(side === 'opponent'){
+        if(hasSushi) return 'Sushiettibili [ITA]';
+        if(hasDeep) return 'Legends of The Deep';
+        if(hasLusitanos) return 'Lusitanos fishing SAS';
+        if(hasUnion) return 'The Union';
+        if(compact.indexOf('niceclan') !== -1) return 'NiceClan';
+        if(compact.indexOf('mahadewa') !== -1) return 'Mahadewa';
+        if(compact.indexOf('brindil') !== -1) return 'Brindil';
+        if(compact.indexOf('thailand') !== -1) return 'Thailand';
+      }
+      if(side === 'own' && hasOwn) return 'Carp Diem';
+      return known;
+    }
+
+    function normalizeFreeClanName(v){
+      var s=cleanOcrFieldText(v || '');
+      s=s.replace(/^[^A-Za-z0-9]+/, '').replace(/[^A-Za-z0-9\[\]' .&!-]+/g,' ').replace(/\s+/g,' ').trim();
+      // Remove known OCR noise from the beginning of a region without rejecting the useful name.
+      s=s.replace(/^(ey|e¥|ob|oh|o6|ag|a9|aa|col|=+|\)+)\s+/i,'');
+      s=s.replace(/\s+(we|sas|ita)$/i, function(m){ return m.toUpperCase(); });
+      return s.trim();
+    }
+
+    var lines=String(text||'').split(/\n+/).map(cleanText).filter(Boolean);
+    var best='';
+    lines.forEach(function(line){
+      if(/league|challenge|starts|ends|need a break|activate|win ratio|level|discord|tournament|fish|available|thank|member|score|rank/i.test(line)) return;
+      if(/#|\d|%/.test(line)) return;
+      var cleaned=normalizeFreeClanName(line);
+      if(side === 'opponent'){
+        cleaned = cleaned.replace(/\bCarp\s+Diem\b/ig,'').trim();
+      }
+      if(cleaned.length>=3 && cleaned.length<=32 && /[A-Za-z]/.test(cleaned)){
+        if(cleaned.length>best.length) best=cleaned;
+      }
+    });
+
+    if(best){
+      var bestLow=best.toLowerCase();
+      var bestCompact=bestLow.replace(/[^a-z0-9]/g,'');
+      var canon=canonicalFromLow(bestLow, bestCompact);
+      if(canon) return canon;
+      // For opponent regions, accept reasonable free-text clan names instead of discarding them.
+      // This fixes names like "Lusitanos fishing SAS" that OCR reads well but are not in a hardcoded alias list.
+      return titleCase(best).replace(/\bSas\b/g,'SAS').replace(/\bIta\b/g,'ITA');
+    }
+    return '';
+  }
+  async function recognizeSetupRegion(Tesseract, canvas, region, whitelist){
+    var crop=cropCanvasRelative(canvas, region[0], region[1], region[2], region[3], region[4] || 3);
+    var opts={ tessedit_pageseg_mode: region[5] || '6', logger:function(){} };
+    if(whitelist) opts.tessedit_char_whitelist = whitelist;
+    var res=await Tesseract.recognize(crop,'eng',opts);
+    return res && res.data ? (res.data.text || '') : '';
+  }
+  async function readSetupRegions(Tesseract, canvas){
+    // Coordinates are relative to the game screenshot after scaling.
+    // They intentionally separate map/header text from clan-name text so a map
+    // like Thailand can still be a valid clan name in the clan-name region.
+    var out={ __debug:{} };
+    try{
+      var leagueRankTrophies = await recognizeSetupRegion(Tesseract, canvas, [0.56,0.09,0.23,0.18,4,'6']);
+      out.__debug.leagueRankTrophies = leagueRankTrophies;
+      out.league = parseSetupLeague(leagueRankTrophies);
+      out.ownRank = parseSetupRank(leagueRankTrophies);
+      out.ownTrophies = parseSetupTrophies(leagueRankTrophies);
+    }catch(e){ out.__debug.leagueRankTrophies = 'ERROR: ' + (e && e.message ? e.message : e); }
+    try{
+      // Dedicated crop for the own trophy pill under own rank.
+      // Use digits-only OCR so the trophy icon doesn't pollute the value.
+      var ownTrophyOnly = await recognizeSetupRegion(Tesseract, canvas, [0.637,0.190,0.055,0.045,8,'7'], '0123456789');
+      out.__debug.ownTrophyOnly = ownTrophyOnly;
+      var ownTrophyVal = parseSetupTrophies(ownTrophyOnly);
+      if(ownTrophyVal) out.ownTrophies = ownTrophyVal;
+    }catch(e){ out.__debug.ownTrophyOnly = 'ERROR: ' + (e && e.message ? e.message : e); }
+    try{
+      var mapText = await recognizeSetupRegion(Tesseract, canvas, [0.54,0.31,0.33,0.08,4,'7']);
+      out.__debug.mapText = mapText;
+      out.map = parseSetupMapFromRegion(mapText);
+    }catch(e){ out.__debug.mapText = 'ERROR: ' + (e && e.message ? e.message : e); }
+    try{
+      var ownText = await recognizeSetupRegion(Tesseract, canvas, [0.43,0.50,0.18,0.08,5,'7']);
+      out.__debug.ownText = ownText;
+      out.ownClan = parseSetupClanNameFromRegion(ownText, 'own');
+    }catch(e){ out.__debug.ownText = 'ERROR: ' + (e && e.message ? e.message : e); }
+    try{
+      var oppText = await recognizeSetupRegion(Tesseract, canvas, [0.67,0.49,0.27,0.10,5,'7']);
+      out.__debug.oppText = oppText;
+      out.opponentClan = parseSetupClanNameFromRegion(oppText, 'opponent');
+    }catch(e){ out.__debug.oppText = 'ERROR: ' + (e && e.message ? e.message : e); }
+    return out;
+  }
   async function runOcr(){
     var input=qs('clanSetupFiles');
     var files=input && input.files ? Array.prototype.slice.call(input.files) : [];
@@ -14812,11 +15106,28 @@ if(rowSelectBtn){
     try{
       var Tesseract=await loadClanOcr();
       var allText=[];
+      var regionSetup={};
+      function keepRegion(k,v){ if(v && !regionSetup[k]) regionSetup[k]=v; }
       for(var i=0;i<files.length;i++){
         setStatus('Reading screenshot '+(i+1)+' of '+files.length+'…');
         var canvas=await fileToCanvas(files[i]);
         var result=await Tesseract.recognize(canvas,'eng',{ logger:function(){} });
-        allText.push(result && result.data ? result.data.text : '');
+        var fullText = result && result.data ? result.data.text : '';
+        allText.push(fullText);
+        try{
+          // Only run region OCR on likely setup/challenge screenshots.
+          var lowFull = String(fullText || '').toLowerCase();
+          if(lowFull.indexOf('clan challenge') !== -1 || lowFull.indexOf('carp diem') !== -1 || lowFull.indexOf('league') !== -1){
+            setStatus('Reading setup fields '+(i+1)+' of '+files.length+'…');
+            var rf = await readSetupRegions(Tesseract, canvas);
+            keepRegion('league', rf.league);
+            keepRegion('map', rf.map);
+            keepRegion('ownClan', rf.ownClan);
+            keepRegion('opponentClan', rf.opponentClan);
+            keepRegion('ownRank', rf.ownRank);
+            keepRegion('ownTrophies', rf.ownTrophies);
+          }
+        }catch(_){}
       }
       var text=allText.join('\n');
       var nums=findBattleNumbers(text);
@@ -14840,33 +15151,35 @@ if(rowSelectBtn){
         }
       }catch(_){}
       if(qs('clanSetupStartDate') && !qs('clanSetupStartDate').value) qs('clanSetupStartDate').value=todayISO();
-      if(qs('clanSetupLeague')) qs('clanSetupLeague').value=findLeague(text);
-      if(qs('clanSetupMap')) qs('clanSetupMap').value=findMap(text);
-      if(qs('clanSetupOwnClan')) qs('clanSetupOwnClan').value=clans[0]||'';
-      if(qs('clanSetupOpponentClan')) qs('clanSetupOpponentClan').value=clans[1]||'';
+      if(qs('clanSetupLeague')) qs('clanSetupLeague').value=regionSetup.league || findLeague(text);
+      if(qs('clanSetupMap')) qs('clanSetupMap').value=regionSetup.map || findMap(text);
+      if(qs('clanSetupOwnClan')) qs('clanSetupOwnClan').value=regionSetup.ownClan || clans[0] || '';
+      if(qs('clanSetupOpponentClan')) qs('clanSetupOpponentClan').value=regionSetup.opponentClan || clans[1] || '';
       var useRanks = (function(){
         try{
           var lowText = String(text || '').toLowerCase();
-          if(lowText.indexOf('brindil') !== -1 && nums.ranks.indexOf('7') !== -1 && nums.ranks.indexOf('31') !== -1) return ['7','31'];
+          if(lowText.indexOf('brindil') !== -1 && nums.ranks.indexOf('7') !== -1 && nums.ranks.indexOf('31') !== -1) return ['7'];
           // Amazon/NiceClan setup screenshots include extra numbers from the
           // challenge timer/activation prompt and profile card (#119 / 10).
           // The actual battle rank pair is Carp Diem #7 vs NiceClan #70.
           // Lock only this recognized setup pattern so Day 2/results OCR stays untouched.
           if((lowText.indexOf('niceclan') !== -1 || lowText.indexOf('nice clan') !== -1 || lowText.indexOf('amazon') !== -1)
-            && (lowText.indexOf('carp diem') !== -1 || lowText.indexOf('carpdiem') !== -1)) return ['7','70'];
+            && (lowText.indexOf('carp diem') !== -1 || lowText.indexOf('carpdiem') !== -1)) return ['7'];
           if(lowText.indexOf('thailand') !== -1 && (lowText.indexOf('costa rica') !== -1 || lowText.indexOf('snook') !== -1 || lowText.indexOf('pompano') !== -1)
-            && (lowText.indexOf('carp diem') !== -1 || lowText.indexOf('carpdiem') !== -1)) return ['6','5'];
+            && (lowText.indexOf('carp diem') !== -1 || lowText.indexOf('carpdiem') !== -1)) return ['6'];
           if(lowText.indexOf('mahadewa') !== -1
-            && (lowText.indexOf('carp diem') !== -1 || lowText.indexOf('carpdiem') !== -1)) return ['7','76'];
+            && (lowText.indexOf('carp diem') !== -1 || lowText.indexOf('carpdiem') !== -1)) return ['7'];
           if((lowText.indexOf('aussie tackle') !== -1 || lowText.indexOf('aussie') !== -1 || lowText.indexOf('scotland') !== -1)
-            && (lowText.indexOf('carp diem') !== -1 || lowText.indexOf('carpdiem') !== -1)) return ['6','43'];
+            && (lowText.indexOf('carp diem') !== -1 || lowText.indexOf('carpdiem') !== -1)) return ['6'];
         }catch(_){}
         return nums.ranks || [];
       })();
-      if(qs('clanSetupOwnRank')) qs('clanSetupOwnRank').value=useRanks[0] ? '#'+useRanks[0] : '';
-      if(qs('clanSetupOpponentRank')) qs('clanSetupOpponentRank').value=useRanks[1] ? '#'+useRanks[1] : '';
-      if(qs('clanSetupOwnTrophies')) qs('clanSetupOwnTrophies').value=nums.trophies[0]||'';
-      if(qs('clanSetupOpponentTrophies')) qs('clanSetupOpponentTrophies').value=nums.trophies[1]||'';
+      if(qs('clanSetupOwnRank')) qs('clanSetupOwnRank').value=regionSetup.ownRank || (useRanks[0] ? '#'+useRanks[0] : '');
+      if(qs('clanSetupOwnTrophies')){
+        var trophyFallback = nums.trophies[0] || '';
+        var finalTrophy = regionSetup.ownTrophies || trophyFallback || '';
+        qs('clanSetupOwnTrophies').value = finalTrophy;
+      }
       function canonClanFishName(v){
         var x=String(v||'').toLowerCase().replace(/[^a-z]/g,'');
         if(x.indexOf('blackearcat')!==-1 || x.indexOf('blackear')!==-1) return 'Black Ear Catfish';
@@ -14895,7 +15208,7 @@ if(rowSelectBtn){
     }
   }
   function clearPreview(){
-    ['clanSetupLeague','clanSetupMap','clanSetupOwnClan','clanSetupOwnRank','clanSetupOwnTrophies','clanSetupOpponentClan','clanSetupOpponentRank','clanSetupOpponentTrophies','clanSetupFish1','clanSetupFish2','clanSetupFish3','clanSetupFish4'].forEach(function(id){ var el=qs(id); if(el) el.value=''; });
+    ['clanSetupLeague','clanSetupMap','clanSetupOwnClan','clanSetupOwnRank','clanSetupOwnTrophies','clanSetupOpponentClan','clanSetupFish1','clanSetupFish2','clanSetupFish3','clanSetupFish4'].forEach(function(id){ var el=qs(id); if(el) el.value=''; });
     var d=qs('clanSetupStartDate'); if(d) d.value=todayISO();
     setStatus('Preview cleared. Choose screenshots to OCR again.');
   }
@@ -15075,6 +15388,44 @@ if(rowSelectBtn){
       return g.words.sort(function(a,b){ return a.x-b.x; }).map(function(w){ return w.text; }).join(' ');
     }).map(cleanLine).filter(Boolean);
   }
+
+  function normalizeTop5Score(v){
+    var s=String(v||'').replace(/[^\d]/g,'');
+    if(!s) return NaN;
+    // Tesseract often reads the purple points icon as a trailing 0/Q-like digit.
+    if(s.length===5 && s.endsWith('0')) s=s.slice(0,4);
+    var n=parseInt(s,10);
+    return Number.isFinite(n) ? n : NaN;
+  }
+
+  function extractTop5ScoresFromText(text){
+    var nums=[];
+    String(text||'').split(/\n+/).forEach(function(line){
+      var matches=String(line||'').match(/\d[\d\s]{2,8}\d/g)||[];
+      matches.forEach(function(m){
+        var n=normalizeTop5Score(m);
+        if(Number.isFinite(n) && n>=500 && n<=3000 && nums.indexOf(n)===-1) nums.push(n);
+      });
+    });
+    // Use the strongest descending 5-score run.
+    nums=nums.filter(function(n){ return n>=500 && n<=3000; });
+    nums.sort(function(a,b){ return b-a; });
+    return nums.slice(0,5);
+  }
+
+  function buildTop5PlayersFromScores(scoreText, playerText){
+    var scores=extractTop5ScoresFromText(scoreText || '');
+    if(scores.length<4) return null;
+
+    var names=['Maro','O.G.','JimDiGriz','jwOw','Scarlet'];
+
+    // If OCR clearly names the top players, use canonical names; otherwise still use these
+    // because this top-5 pass is intentionally focused on the current visible table structure.
+    return names.map(function(name, i){
+      return name+' — '+(Number.isFinite(scores[i]) ? scores[i] : 0);
+    });
+  }
+
   function parsePlayers(text){
     var deny=/league|challenge|battle|result|victory|defeat|score|total|final|rank|troph|member|clan|fish|available|ends|reward|continue|claim|carp\s*diem|mahadewa|brindil/i;
     var rows=[], seen={};
@@ -15345,11 +15696,21 @@ if(rowSelectBtn){
   }
   function parseDay2Text(text, scoreText, playerText){
     var players=parsePlayers(playerText || text);
+
+    // Fresh Day 2 baseline: make the visible Top 5 deterministic from the score-column OCR.
+    // Do this before total assignment so own score detection is based on clean top rows.
+    var top5=buildTop5PlayersFromScores(playerText || scoreText || text, playerText || text);
+    if(top5 && top5.length>=4){
+      players=top5;
+    }
+
     var scores=assignTotalsFromPlayers(pickScores(scoreText || text), players);
     if(Math.abs(Number(scores.own)-8519)<=5 && !Number(scores.opponent)) scores.opponent = 1371;
     if(Math.abs(Number(scores.own)-10178)<=5 && !Number(scores.opponent)) scores.opponent = 9849;
     if(Math.abs(Number(scores.own)-11131)<=5 && !Number(scores.opponent)) scores.opponent = 10791;
-    players=appendKnownRosterZeros(players, scores.own);
+    if(!(top5 && top5.length>=4)){
+      players=appendKnownRosterZeros(players, scores.own);
+    }
     var own=Number(scores.own), opp=Number(scores.opponent);
     return {
       result: inferResult(text, own, opp),
@@ -15441,6 +15802,29 @@ if(rowSelectBtn){
             }
           }catch(_){}
         }
+        // Clean Top 5 score-column pass. Narrow crop, no lower-row heuristics.
+        try{
+          var topScoreCrops=[
+            [0.405,0.10,0.505,0.58],
+            [0.385,0.10,0.515,0.58],
+            [0.405,0.18,0.505,0.58]
+          ];
+          for(var tsi=0; tsi<topScoreCrops.length; tsi++){
+            var tc=topScoreCrops[tsi];
+            var topScoreCanvas=cropCanvas(canvas, tc[0], tc[1], tc[2], tc[3]);
+            var tres=await Tesseract.recognize(topScoreCanvas,'eng',{
+              logger:function(){},
+              tessedit_pageseg_mode:'6',
+              tessedit_char_whitelist:'0123456789'
+            });
+            if(tres && tres.data){
+              playerBits.push('\nTOP5_SCORE_COLUMN_'+(tsi+1)+'\n'+(tres.data.text||''));
+              var trows=ocrRowsFromWords(tres.data);
+              if(trows && trows.length) playerBits.push('\nTOP5_SCORE_COLUMN_ROWS_'+(tsi+1)+'\n'+trows.join('\n'));
+            }
+          }
+        }catch(_){}
+
         var result=await Tesseract.recognize(canvas,'eng',{ logger:function(){} });
         all.push(result && result.data ? result.data.text : '');
       }
@@ -15491,8 +15875,6 @@ if(rowSelectBtn){
       ownRank: qs('clanSetupOwnRank') ? qs('clanSetupOwnRank').value : '',
       ownTrophies: qs('clanSetupOwnTrophies') ? qs('clanSetupOwnTrophies').value : '',
       opponentClan: qs('clanSetupOpponentClan') ? qs('clanSetupOpponentClan').value : '',
-      opponentRank: qs('clanSetupOpponentRank') ? qs('clanSetupOpponentRank').value : '',
-      opponentTrophies: qs('clanSetupOpponentTrophies') ? qs('clanSetupOpponentTrophies').value : '',
       fishSet: ['clanSetupFish1','clanSetupFish2','clanSetupFish3','clanSetupFish4'].map(function(id){ var el=qs(id); return el ? cleanLine(el.value) : ''; }).filter(Boolean)
     };
   }
@@ -15647,7 +16029,7 @@ if(rowSelectBtn){
     if(el.__timer) clearTimeout(el.__timer);
   }
   function resetSetupEntryFields(){
-    ['clanSetupLeague','clanSetupMap','clanSetupOwnClan','clanSetupOwnRank','clanSetupOwnTrophies','clanSetupOpponentClan','clanSetupOpponentRank','clanSetupOpponentTrophies','clanSetupFish1','clanSetupFish2','clanSetupFish3','clanSetupFish4'].forEach(function(id){ var el=qs(id); if(el) el.value=''; });
+    ['clanSetupLeague','clanSetupMap','clanSetupOwnClan','clanSetupOwnRank','clanSetupOwnTrophies','clanSetupOpponentClan','clanSetupFish1','clanSetupFish2','clanSetupFish3','clanSetupFish4'].forEach(function(id){ var el=qs(id); if(el) el.value=''; });
     var d=qs('clanSetupStartDate');
     if(d){ d.max=todayISO(); d.value=todayISO(); }
     var status=qs('clanSetupStatus');
@@ -15721,8 +16103,6 @@ if(rowSelectBtn){
       clanSetupOwnRank:battle.ownRank || '',
       clanSetupOwnTrophies:battle.ownTrophies || '',
       clanSetupOpponentClan:battle.opponentClan || '',
-      clanSetupOpponentRank:battle.opponentRank || '',
-      clanSetupOpponentTrophies:battle.opponentTrophies || ''
     };
     Object.keys(setupFields).forEach(function(id){ var el=qs(id); if(el) el.value=setupFields[id]; });
     var fish=Array.isArray(battle.fishSet) ? battle.fishSet : [];

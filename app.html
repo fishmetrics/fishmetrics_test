@@ -19,6 +19,10 @@
 
 </head>
 <body>
+<div class="fm-recovery-banner">
+  PRIVATE RECOVERY BUILD — archived-season imports are enabled. Do not use for regular FishMetrics releases.
+</div>
+
 <header class="topbar">
 <div class="topbar-inner">
 <button type="button" id="homeBtn" class="menu-btn home-left" aria-label="Home" title="Home">
@@ -201,8 +205,6 @@
             <label>Own Rank<input id="clanSetupOwnRank" type="text" placeholder="#7" /></label>
             <label>Own Trophies<input id="clanSetupOwnTrophies" type="number" inputmode="numeric" placeholder="157" /></label>
             <label>Opponent Clan<input id="clanSetupOpponentClan" type="text" placeholder="Brindil" /></label>
-            <label>Opponent Rank<input id="clanSetupOpponentRank" type="text" placeholder="#31" /></label>
-            <label>Opponent Trophies<input id="clanSetupOpponentTrophies" type="number" inputmode="numeric" placeholder="124" /></label>
           </div>
           <div class="clan-fishset-editor">
             <div class="clan-mini-title">Battle Fish Set</div>
@@ -865,6 +867,18 @@ Not affiliated with any company or organization of a similar name.</div>
       <div class="modal-title" id="seasonImportTitle">Import Season Screenshots</div>
       <div class="modal-body">
         <p class="season-import-helper">Upload one or more in-game Season Ranking screenshots. This reads fish and points only. Review/edit the preview, then confirm to update Season records for this map.</p>
+        <div class="fm-recovery-box">
+          <strong>Private recovery option</strong>
+          <label class="modal-check fm-recovery-check">
+            <input type="checkbox" id="seasonImportArchiveRecovery" />
+            Import into archived season instead of current season
+          </label>
+          <label class="season-import-field fm-recovery-month">
+            <span>Archived month</span>
+            <input type="month" id="seasonImportArchiveMonth" value="2026-06" />
+          </label>
+          <div class="modal-note">Temporary friend-only build. Use this for June recovery, then export a backup.</div>
+        </div>
         <label class="season-import-field">
           <span>Map</span>
           <select id="seasonImportMap">
