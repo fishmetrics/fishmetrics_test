@@ -1,3 +1,9 @@
+
+/* === PRIVATE RECOVERY BUILD: pretend active CotD season is June 2026 === */
+window.FM_PRIVATE_RECOVERY_MONTH = "2026-06";
+window.FM_PRIVATE_RECOVERY_MODE = true;
+/* === END PRIVATE RECOVERY BUILD FLAG === */
+
 const APP_VERSION = "1.8.0";
 
 // === Seasonality (Out-of-Season) Support ===
@@ -4774,11 +4780,15 @@ let __fmSeasonRolloverTimer = null;
 
 function getCotDSeasonId(date = new Date()){
   try{
+    if(typeof window !== 'undefined' && window.FM_PRIVATE_RECOVERY_MODE && window.FM_PRIVATE_RECOVERY_MONTH){
+      return String(window.FM_PRIVATE_RECOVERY_MONTH).slice(0,7);
+    }
     const d = (date instanceof Date) ? date : new Date(date);
     const y = d.getUTCFullYear();
     const m = String(d.getUTCMonth() + 1).padStart(2,'0');
     return `${y}-${m}`;
   }catch(_){
+    if(typeof window !== 'undefined' && window.FM_PRIVATE_RECOVERY_MONTH) return String(window.FM_PRIVATE_RECOVERY_MONTH).slice(0,7);
     const d = new Date();
     return `${d.getUTCFullYear()}-${String(d.getUTCMonth()+1).padStart(2,'0')}`;
   }
@@ -4786,9 +4796,15 @@ function getCotDSeasonId(date = new Date()){
 
 function getCotDSeasonMonthNumber(date = new Date()){
   try{
+    if(typeof window !== 'undefined' && window.FM_PRIVATE_RECOVERY_MODE && window.FM_PRIVATE_RECOVERY_MONTH){
+      return Number(String(window.FM_PRIVATE_RECOVERY_MONTH).slice(5,7)) || 6;
+    }
     const d = (date instanceof Date) ? date : new Date(date);
     return d.getUTCMonth() + 1;
-  }catch(_){ return (new Date()).getUTCMonth() + 1; }
+  }catch(_){
+    if(typeof window !== 'undefined' && window.FM_PRIVATE_RECOVERY_MONTH) return Number(String(window.FM_PRIVATE_RECOVERY_MONTH).slice(5,7)) || 6;
+    return (new Date()).getUTCMonth() + 1;
+  }
 }
 
 function getNextCotDSeasonResetUTC(date = new Date()){
@@ -4940,7 +4956,59 @@ function _startNewSeasonNow(){
   }catch(_){ }
 }
 
+
+async function fmPrivateRecoverySeedJuneSeasonFromArchive(){
+  try{
+    if(!(typeof window !== 'undefined' && window.FM_PRIVATE_RECOVERY_MODE && window.FM_PRIVATE_RECOVERY_MONTH)) return;
+    const month = String(window.FM_PRIVATE_RECOVERY_MONTH).slice(0,7);
+    localStorage.setItem('fm_season_month', month);
+    localStorage.setItem('fm_active_season_id', month);
+
+    const seededKey = 'fm_private_recovery_seeded_' + month;
+    if(localStorage.getItem(seededKey) === 'yes') return;
+
+    let mainRecords = null;
+    let vipRecords = null;
+    try{
+      const mainSnap = JSON.parse(localStorage.getItem('fishmetrics_season_archive_MAIN-' + month) || 'null');
+      if(mainSnap && mainSnap.seasonRecordsByLocation) mainRecords = mainSnap.seasonRecordsByLocation;
+    }catch(_){}
+    try{
+      const vipSnap = JSON.parse(localStorage.getItem('fishmetrics_season_archive_VIP-' + month) || 'null');
+      if(vipSnap && vipSnap.seasonRecordsByLocation) vipRecords = vipSnap.seasonRecordsByLocation;
+    }catch(_){}
+
+    if(mainRecords && typeof idbSaveAllSeasonRecordsToStore === 'function'){
+      await idbSaveAllSeasonRecordsToStore(IDB_STORE_SEASON, mainRecords || {});
+      seasonRecordsByLocation_main = mainRecords || {};
+      if(!(typeof isVipModeActive === 'function' && isVipModeActive())) seasonRecordsByLocation = seasonRecordsByLocation_main;
+    }
+    if(vipRecords && typeof idbSaveAllSeasonRecordsToStore === 'function'){
+      await idbSaveAllSeasonRecordsToStore(IDB_STORE_SEASON_VIP, vipRecords || {});
+      seasonRecordsByLocation_vip = vipRecords || {};
+      if(typeof isVipModeActive === 'function' && isVipModeActive()) seasonRecordsByLocation = seasonRecordsByLocation_vip;
+    }
+
+    localStorage.setItem(seededKey, 'yes');
+
+    try{ if(typeof renderTable === 'function') renderTable(); }catch(_){}
+    try{ if(typeof updateDashboard === 'function') updateDashboard(); }catch(_){}
+    try{ if(typeof updateSeasonProgress === 'function') updateSeasonProgress(); }catch(_){}
+    try{ if(typeof updateSeasonUncaughtCount === 'function') updateSeasonUncaughtCount(); }catch(_){}
+  }catch(e){
+    try{ console.warn('June recovery seed failed', e); }catch(_){}
+  }
+}
+
 async function autoRollSeasonMonthly(){
+  // Recovery build: freeze the active season to June 2026 and never auto-roll.
+  if(typeof window !== 'undefined' && window.FM_PRIVATE_RECOVERY_MODE && window.FM_PRIVATE_RECOVERY_MONTH){
+    try{
+      localStorage.setItem('fm_season_month', String(window.FM_PRIVATE_RECOVERY_MONTH).slice(0,7));
+      localStorage.setItem('fm_active_season_id', String(window.FM_PRIVATE_RECOVERY_MONTH).slice(0,7));
+    }catch(_){}
+    return;
+  }
   // CotD-locked seasons: one global rollover at 00:00 UTC on the 1st of each month.
   // This intentionally replaces the old local-midnight rollover.
   const now = new Date();
@@ -13833,100 +13901,6 @@ if(rowSelectBtn){
     backdrop.onclick = function(e){ if(e.target === backdrop) cleanup(); };
   }
 
-
-  function isSeasonArchiveRecoveryImport(){
-    var cb = qs('seasonImportArchiveRecovery');
-    return !!(cb && cb.checked);
-  }
-
-  function getSeasonArchiveRecoveryMonth(){
-    var inp = qs('seasonImportArchiveMonth');
-    var v = inp && inp.value ? String(inp.value).slice(0,7) : '';
-    if(/^\d{4}-\d{2}$/.test(v)) return v;
-    try{
-      var d = new Date();
-      var prev = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth()-1, 1));
-      return prev.getUTCFullYear() + '-' + String(prev.getUTCMonth()+1).padStart(2,'0');
-    }catch(_){ return '2026-06'; }
-  }
-
-  function fmRecoveryUpsertArchiveList(seasonId, exportedAt, archivedAtUTC){
-    var listKey = "fishmetrics_season_archives_v1";
-    var list = [];
-    try{ list = JSON.parse(localStorage.getItem(listKey) || "[]"); }catch(_){ list = []; }
-    if(!Array.isArray(list)) list = [];
-    list = list.filter(function(x){ return String(x && x.seasonId || '') !== String(seasonId || ''); });
-    list.unshift({ seasonId: seasonId, exportedAt: exportedAt, archivedAtUTC: archivedAtUTC || exportedAt });
-    try{ localStorage.setItem(listKey, JSON.stringify(list)); }catch(_){}
-  }
-
-  function fmRecoveryApplyImportToArchive(month, isVipImport, mapName, valid){
-    var mode = isVipImport ? 'VIP' : 'MAIN';
-    var seasonId = mode + '-' + String(month || '').slice(0,7);
-    var archiveKey = 'fishmetrics_season_archive_' + seasonId;
-    var locData = isVipImport ? ((typeof LOCATIONS_VIP !== 'undefined' && LOCATIONS_VIP) ? LOCATIONS_VIP : {}) : ((typeof LOCATIONS !== 'undefined' && LOCATIONS) ? LOCATIONS : {});
-    var records = {};
-    var existing = null;
-    try{ existing = JSON.parse(localStorage.getItem(archiveKey) || 'null'); }catch(_){ existing = null; }
-    if(existing && existing.seasonRecordsByLocation && typeof existing.seasonRecordsByLocation === 'object'){
-      records = JSON.parse(JSON.stringify(existing.seasonRecordsByLocation || {}));
-    }
-    var mapRecords = Object.assign({}, records[mapName] || {});
-    var updated = 0;
-    var cleared = 0;
-    (valid || []).forEach(function(item){
-      var key = canonicalizeFishName(item.fish.name);
-      if(item.points === 0){
-        if(Object.prototype.hasOwnProperty.call(mapRecords, key)) cleared++;
-        delete mapRecords[key];
-        return;
-      }
-      mapRecords[key] = storedWeightStringForPoints(item.points, item.fish);
-      updated++;
-    });
-    records[mapName] = mapRecords;
-
-    var snap = null;
-    if(typeof _buildSeasonArchiveSnapshotFrom === 'function'){
-      snap = _buildSeasonArchiveSnapshotFrom(records, locData, mode, month, new Date());
-    }else{
-      snap = {
-        schemaVersion: "season-archive-v2",
-        exportedAt: new Date().toISOString(),
-        archivedAtUTC: new Date().toISOString(),
-        app: { name: "FishMetrics", version: "v1.8 recovery" },
-        season: { seasonId: seasonId, month: month, startedAt: month + "-01" },
-        seasonRecordsByLocation: records
-      };
-    }
-    try{ localStorage.setItem(archiveKey, JSON.stringify(snap)); }catch(e){ throw e; }
-    fmRecoveryUpsertArchiveList(seasonId, snap.exportedAt || new Date().toISOString(), snap.archivedAtUTC || snap.exportedAt);
-    return { seasonId: seasonId, updated: updated, cleared: cleared };
-  }
-
-  function showSeasonRecoveryCompleteModal(result, mapName){
-    var backdrop = qs('seasonImportCompleteBackdrop');
-    var body = qs('seasonImportCompleteBody');
-    var ok = qs('seasonImportCompleteOk');
-    var txt = 'Archived season ' + result.seasonId + ' updated for ' + mapName + '.';
-    if(!backdrop || !body || !ok){ try{ alert(txt); }catch(_){} return; }
-    body.innerHTML = '<strong>Recovery import complete</strong><br>' +
-      'Archived season <strong>' + escapeSeasonImportText(result.seasonId) + '</strong> updated for <strong>' + escapeSeasonImportText(mapName) + '</strong>.<br>' +
-      escapeSeasonImportText(String(result.updated)) + ' fish updated' +
-      (result.cleared ? ' · ' + escapeSeasonImportText(String(result.cleared)) + ' cleared' : '') +
-      '.<br><br>Check Last Season results/poster, then export a backup.';
-    backdrop.classList.add('show');
-    backdrop.setAttribute('aria-hidden','false');
-    var cleanup = function(){
-      backdrop.classList.remove('show');
-      backdrop.setAttribute('aria-hidden','true');
-      ok.onclick = null;
-      backdrop.onclick = null;
-    };
-    ok.onclick = cleanup;
-    backdrop.onclick = function(e){ if(e.target === backdrop) cleanup(); };
-  }
-
   async function confirmSeasonImport(){
     var mapSelect = qs('seasonImportMap');
     var mapName = mapSelect && mapSelect.value ? mapSelect.value : 'Paradise Island';
@@ -13966,15 +13940,6 @@ if(rowSelectBtn){
 
     if(confirmBtn){ confirmBtn.disabled = true; confirmBtn.textContent = 'Importing…'; }
     try{
-      if(isSeasonArchiveRecoveryImport()){
-        var recoveryMonth = getSeasonArchiveRecoveryMonth();
-        var recoveryResult = fmRecoveryApplyImportToArchive(recoveryMonth, isVipImport, mapName, valid);
-        if(status) status.textContent = 'Recovery import complete · ' + recoveryResult.seasonId + ' · ' + recoveryResult.updated + ' updated' + (recoveryResult.cleared ? ' · ' + recoveryResult.cleared + ' cleared' : '');
-        closeSeasonImportModal();
-        showSeasonRecoveryCompleteModal(recoveryResult, mapName);
-        return;
-      }
-
       if(isVipImport){
         if(!seasonRecordsByLocation_vip || typeof seasonRecordsByLocation_vip !== 'object') seasonRecordsByLocation_vip = {};
       }else{
@@ -16197,3 +16162,11 @@ if(rowSelectBtn){
   else initDay2();
   setTimeout(initDay2, 500);
 })();
+
+/* Private June recovery boot hook */
+try{
+  document.addEventListener('DOMContentLoaded', function(){
+    setTimeout(function(){ try{ fmPrivateRecoverySeedJuneSeasonFromArchive(); }catch(_){} }, 800);
+    setTimeout(function(){ try{ fmPrivateRecoverySeedJuneSeasonFromArchive(); }catch(_){} }, 2200);
+  });
+}catch(_){}

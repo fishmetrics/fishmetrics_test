@@ -7214,33 +7214,17 @@ body.clan-page-active .clan-history-card{
   z-index:9999;
   padding:10px 14px;
   text-align:center;
-  font-weight:800;
+  font-weight:900;
   letter-spacing:.04em;
   color:#2b1300;
   background:linear-gradient(90deg,#ffd84d,#ff9f43);
   box-shadow:0 2px 12px rgba(0,0,0,.25);
 }
+
 .fm-recovery-box{
   margin:12px 0;
   padding:12px;
   border:1px dashed rgba(255,216,77,.55);
   border-radius:12px;
   background:rgba(255,216,77,.08);
-}
-.fm-recovery-check{
-  margin-top:8px;
-  display:flex;
-  gap:8px;
-  align-items:center;
-}
-.fm-recovery-month{
-  margin-top:10px;
-}
-.fm-recovery-month input{
-  width:100%;
-  padding:8px 10px;
-  border-radius:10px;
-  border:1px solid rgba(255,255,255,.18);
-  background:rgba(0,0,0,.18);
-  color:inherit;
 }
