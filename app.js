@@ -755,7 +755,7 @@ function setupShareButton(){
           return;
         }
         if(mode === 'last-season-poster'){
-          try{ downloadLastSeasonPosterFromArchive(); }catch(err){ console.error('Last season poster failed', err); try{ fmShowNoticeModal('Poster Not Available','FishMetrics could not generate the Season poster yet.','OK'); }catch(_){ alert('Could not generate Season poster.'); } }
+          try{ downloadLastSeasonPosterFromArchive(); }catch(err){ console.error('Last season poster failed', err); try{ fmShowNoticeModal('Poster Not Available','FishMetrics could not generate a Last Season poster from the archive yet.','OK'); }catch(_){ alert('Could not generate Last Season poster.'); } }
           return;
         }
         if(mode === 'location' && loc) downloadShareImage({ location: loc });
@@ -6875,43 +6875,68 @@ async function downloadAllTimePoster(){
   try{ await fmShowNoticeModal('Poster Generated', `${mode} All-time poster was generated.`, 'OK'); }catch(_){ }
 }
 
-async async function downloadLastSeasonPosterFromArchive(){
-  const mode = _fmArchiveModePrefix();
+async function downloadLastSeasonPosterFromArchive(){
 
-  // Private June recovery build:
-  // generate the poster from the currently uploaded/live Season records, not archived JSON.
+  // PRIVATE JUNE 2026 RECOVERY PATCH:
+  // In this build, "Last Season poster" should be generated from the live Season data
+  // the user has manually entered/imported while the app is pretending it is June 2026.
   if(typeof window !== 'undefined' && window.FM_PRIVATE_RECOVERY_MODE && window.FM_PRIVATE_RECOVERY_MONTH){
+    const mode = _fmArchiveModePrefix();
     const monthId = String(window.FM_PRIVATE_RECOVERY_MONTH).slice(0,7);
     const isVipPoster = String(mode || '').toUpperCase() === 'VIP';
-    const liveRecords = isVipPoster
-      ? (seasonRecordsByLocation_vip || {})
-      : (seasonRecordsByLocation_main || {});
+
+    let liveRecords = {};
+    try{
+      liveRecords = isVipPoster
+        ? (seasonRecordsByLocation_vip || seasonRecordsByLocation || {})
+        : (seasonRecordsByLocation_main || seasonRecordsByLocation || {});
+    }catch(_){
+      liveRecords = seasonRecordsByLocation || {};
+    }
+
     const locData = isVipPoster
       ? ((typeof LOCATIONS_VIP !== 'undefined' && LOCATIONS_VIP) ? LOCATIONS_VIP : {})
       : ((typeof LOCATIONS !== 'undefined' && LOCATIONS) ? LOCATIONS : {});
 
     let snap = null;
-    if(typeof _buildSeasonArchiveSnapshotFrom === 'function'){
+    try{
       snap = _buildSeasonArchiveSnapshotFrom(liveRecords || {}, locData, mode, monthId, new Date());
+    }catch(e){
+      console.error('Recovery live poster snapshot failed', e);
+      snap = null;
     }
-    if(!snap || !Array.isArray(snap.fishPoints) || !snap.fishPoints.length){
-      await fmShowNoticeModal('No June Season Data Found', `${mode} June recovery poster needs live Season records first.<br><br>Enter or import June Season points, then generate the poster again.`, 'OK');
+
+    if(!snap || !Array.isArray(snap.fishPoints) || !snap.fishPoints.some(function(x){ return Number(x && x.points) > 0; })){
+      await fmShowNoticeModal(
+        'No June Season Data Found',
+        mode + ' June recovery poster needs live Season records first.<br><br>Enter or import June Season points, then generate the poster again.',
+        'OK'
+      );
       return;
     }
 
     const c = generateLastSeasonPosterFromArchive(snap);
     await _fmDrawBestMapIconOnPoster(c);
-    const safeMonth = monthId.replace(/[^a-z0-9]+/gi,'_').replace(/^_+|_+$/g,'');
+
     const a = document.createElement('a');
     a.href = c.toDataURL('image/png');
-    a.download = `FishMetrics_${mode}_June2026_LiveSeason_Poster.png`;
+    a.download = 'FishMetrics_' + mode + '_June2026_LiveSeason_Poster.png';
     document.body.appendChild(a);
     a.click();
     a.remove();
-    try{ await fmShowNoticeModal('Poster Generated', `${mode} June recovery poster was generated from the live uploaded Season data.`, 'OK'); }catch(_){ }
+
+    try{
+      await fmShowNoticeModal(
+        'Poster Generated',
+        mode + ' June recovery poster was generated from the live Season data in this build.',
+        'OK'
+      );
+    }catch(_){}
     return;
   }
 
+
+  const mode = _fmArchiveModePrefix();
   const snap = _fmGetLatestSeasonArchiveForMode(mode);
   if(!snap){
     await fmShowNoticeModal('No Archived Season Found', `FishMetrics could not find a ${mode} archived season yet.<br><br>Wait for the next Season archive to generate this poster.`, 'OK');
