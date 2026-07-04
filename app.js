@@ -6717,7 +6717,6 @@ function generateLastSeasonPosterFromArchive(snap){
     ctx.textAlign='center';
     ctx.fillStyle=starColor(it[0]); ctx.font='950 28px system-ui'; ctx.fillText('★'.repeat(it[0]), x, 266);
     ctx.fillStyle=colors.text; ctx.font='950 30px system-ui'; ctx.fillText(String(it[2]), x, 301);
-    ctx.fillStyle=starColor(it[0]); ctx.font='850 15px system-ui'; ctx.fillText(it[1], x, 324);
     ctx.textAlign='left';
   });
 
