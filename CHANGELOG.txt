@@ -3,9 +3,3 @@ FishMetrics v1.8.0 duplicate-date + delete-edit cleanup fix
 - Duplicate battle warning now triggers for any existing saved battle on the same date, even when the opponent/clan is different.
 - Deleting a battle currently loaded in Battle Entry now clears the edit screen immediately.
 - OCR logic unchanged.
-
-Patch: Season PB review utility
-- Added Instructions > Preferences button: Review Season PB Updates.
-- Bulk Season import remains unchanged and does not update All-time PBs.
-- Manual Season entry PB preference behavior remains unchanged.
-- Review modal scans Season records, previews candidates, and applies selected PB updates with Imported from Season precision flag when needed.
