@@ -42,7 +42,7 @@
     </div>
     <div class="workspace-toggle workspace-single workspace-stack" aria-label="Workspace">
       <button type="button" id="plannerToggleBtn" class="planner-tag" aria-label="Open planner" aria-controls="plannerDrawer" aria-expanded="false" title="Planner">Planner</button>
-      <button type="button" id="clanToggleBtn" class="clan-tag" aria-label="Open clan" title="Clan">Clan</button>
+      <button type="button" id="clanToggleBtn" class="clan-tag" aria-label="Clans coming soon" title="Clans coming soon">Clan <span class="coming-soon-mini">Soon</span></button>
     </div>
 
     <div class="header-menu-wrap">
@@ -58,6 +58,7 @@
     <div id="shareDropdown" class="menu-dropdown share-dropdown" role="menu" aria-label="Sharecards">
       <button class="menu-item" type="button" role="menuitem" data-share="overall">Overall Scorecard</button>
       <button class="menu-item" type="button" role="menuitem" data-share="all-time-poster">All-time Poster</button>
+      <button class="menu-item" type="button" role="menuitem" data-share="current-season-poster">Current Season Poster</button>
       <button class="menu-item" type="button" role="menuitem" data-share="last-season-poster">Last Season Poster</button>
 
       <div class="menu-divider" role="separator" aria-hidden="true"></div>
@@ -201,8 +202,6 @@
             <label>Own Rank<input id="clanSetupOwnRank" type="text" placeholder="#7" /></label>
             <label>Own Trophies<input id="clanSetupOwnTrophies" type="number" inputmode="numeric" placeholder="157" /></label>
             <label>Opponent Clan<input id="clanSetupOpponentClan" type="text" placeholder="Brindil" /></label>
-            <label>Opponent Rank<input id="clanSetupOpponentRank" type="text" placeholder="#31" /></label>
-            <label>Opponent Trophies<input id="clanSetupOpponentTrophies" type="number" inputmode="numeric" placeholder="124" /></label>
           </div>
           <div class="clan-fishset-editor">
             <div class="clan-mini-title">Battle Fish Set</div>
@@ -390,6 +389,7 @@
 <div class="kpi">
 <div class="kpi-label">Average Star Rating</div>
 <div class="kpi-stars" id="avgStars">—</div>
+<div class="kpi-subnote season-only-note" id="avgStarsSeasonNote">In-season fish only</div>
 </div>
 
 
@@ -418,6 +418,13 @@
   <div class="panel-title">Star Distribution (<span id="starDistRange">2–5★</span>)</div>
   <div class="star-dist-wrap">
     <div id="starDistributionBar" class="star-dist-bar" role="img" aria-label="Distribution of 2 to 5 star catches"></div>
+    <div class="star-dist-meta-row">
+      <div id="high4Chip" class="star-dist-chip" title="Counts 4★ catches at 85.5%+ of max points, below 5★.">
+        <span class="star-dist-chip-label">High 4★</span>
+        <strong id="high4Count">0</strong>
+        <span id="high4Pct" class="star-dist-chip-sub">0.0% • 85.5%+ max</span>
+      </div>
+    </div>
     <div id="starDistributionLegend" class="star-dist-legend" aria-hidden="true"></div>
   </div>
 </section>
@@ -642,7 +649,9 @@
     </label>
   </div>
 
-  
+  <div class="pref-divider" aria-hidden="true"></div>
+  <button type="button" class="backup-btn pref-action-btn" id="reviewSeasonPbUpdatesBtn">Review Season PB Updates</button>
+  <div class="pref-note pref-action-note">Scan Season records for catches that may improve your All-time PBs.</div>
 </div>
 </div>
       </p>
@@ -674,10 +683,6 @@
         </span>
       </p>
 
-      <div class="backup-actions" aria-label="Season rollover test tools">
-        <button type="button" class="backup-btn" id="seasonRolloverTestBtn">Test Season Rollover</button>
-        <div class="backup-msg" id="seasonRolloverTestMsg" aria-live="polite"></div>
-      </div>
 
 <hr class="instr-divider">
 
@@ -807,7 +812,7 @@ Not affiliated with any company or organization of a similar name.</div>
   <li>Bulk upload added for Seasonal catches</li>
   <li>All-time and Seasonal poster generation added</li>
   <li>Fish Price Tracker added</li>
-  <li>Clan section added</li>
+  <li>XP Tracker interface refreshed</li>
 </ul>
 
 <h3>FishMetrics v1.7.0</h3>
