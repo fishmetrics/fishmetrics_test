@@ -5525,20 +5525,20 @@ body:not(.planner-page-active) .planner-overlay{
 }
 .clan-tag{
   appearance:none;
-  border:1px solid rgba(255, 150, 96, .30);
-  background:linear-gradient(180deg, #ff985e 0%, #d95f2e 100%);
+  border:1px solid rgba(255,150,96,.30);
+  background:linear-gradient(180deg, #ff8a4d, #d85a28);
   color:#1a1a1a;
   border-radius:13px;
   padding:6px 13px;
   min-width:104px;
-  min-height:27px;
+  min-height:29px;
   font-family:inherit;
-  font-size:11px;
-  font-weight:900;
-  letter-spacing:1px;
-  text-transform:uppercase;
+  font-size:12px;
+  font-weight:800;
+  letter-spacing:0;
+  text-transform:none;
   cursor:pointer;
-  box-shadow:0 8px 18px rgba(0,0,0,.18);
+  box-shadow:0 8px 18px rgba(255,105,45,.22);
   transition:transform .18s ease, filter .18s ease, box-shadow .18s ease;
 }
 .clan-tag:hover{
@@ -7210,15 +7210,19 @@ body.clan-page-active .clan-history-card{
 
 .coming-soon-mini{
   display:inline-block;
-  margin-left:4px;
-  padding:1px 5px;
+  margin-left:7px;
+  padding:2px 7px;
   border-radius:999px;
-  font-size:10px;
+  font-size:9px;
   font-weight:900;
   line-height:1.2;
-  background:rgba(255,216,77,.25);
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  background:rgba(255,216,77,.28);
   color:#ffd84d;
-  border:1px solid rgba(255,216,77,.45);
+  border:1px solid rgba(255,216,77,.55);
+  vertical-align:middle;
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.10);
 }
 
 .season-only-note{
