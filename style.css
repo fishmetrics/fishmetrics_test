@@ -1239,6 +1239,11 @@ body.no-sidebar .sidebar{
   border-radius:16px;
   font-weight:700;
   text-decoration:none;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  text-align:center;
+  white-space:nowrap;
 }
 .contact-btn:hover{ opacity:.85; }
 
@@ -5525,20 +5530,20 @@ body:not(.planner-page-active) .planner-overlay{
 }
 .clan-tag{
   appearance:none;
-  border:1px solid rgba(255,150,96,.30);
-  background:linear-gradient(180deg, #ff8a4d, #d85a28);
+  border:1px solid rgba(255, 150, 96, .30);
+  background:linear-gradient(180deg, #ff985e 0%, #d95f2e 100%);
   color:#1a1a1a;
   border-radius:13px;
   padding:6px 13px;
   min-width:104px;
-  min-height:29px;
+  min-height:27px;
   font-family:inherit;
-  font-size:12px;
-  font-weight:800;
-  letter-spacing:0;
-  text-transform:none;
+  font-size:11px;
+  font-weight:900;
+  letter-spacing:1px;
+  text-transform:uppercase;
   cursor:pointer;
-  box-shadow:0 8px 18px rgba(255,105,45,.22);
+  box-shadow:0 8px 18px rgba(0,0,0,.18);
   transition:transform .18s ease, filter .18s ease, box-shadow .18s ease;
 }
 .clan-tag:hover{
@@ -5725,7 +5730,7 @@ body.planner-page-active .planner-drawer-header{
 }
 body.planner-page-active .planner-drawer-body{
   overflow:visible;
-  padding-bottom:24px;
+  padding-bottom:52px;
 }
 @media (max-width: 900px){
   body.planner-page-active .planner-drawer{
@@ -7210,19 +7215,15 @@ body.clan-page-active .clan-history-card{
 
 .coming-soon-mini{
   display:inline-block;
-  margin-left:7px;
-  padding:2px 7px;
+  margin-left:4px;
+  padding:1px 5px;
   border-radius:999px;
-  font-size:9px;
+  font-size:10px;
   font-weight:900;
   line-height:1.2;
-  letter-spacing:.08em;
-  text-transform:uppercase;
-  background:rgba(255,216,77,.28);
+  background:rgba(255,216,77,.25);
   color:#ffd84d;
-  border:1px solid rgba(255,216,77,.55);
-  vertical-align:middle;
-  box-shadow:inset 0 0 0 1px rgba(255,255,255,.10);
+  border:1px solid rgba(255,216,77,.45);
 }
 
 .season-only-note{
@@ -7237,4 +7238,790 @@ body:not(.season-active) .season-only-note{
 
 #clanDrawer[aria-hidden="true"]{
   display:none !important;
+}
+
+
+/* v1.9 Battle Sets — built-in, read-only lure-planner presets */
+.planner-battle-set-chip{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  min-height:34px;
+  padding:6px 10px;
+  border:1px solid rgba(255,152,94,.34);
+  border-radius:12px;
+  background:linear-gradient(180deg, rgba(255,138,77,.16), rgba(216,90,40,.10));
+  color:var(--text, #f4f7fb);
+  white-space:nowrap;
+}
+.planner-battle-set-chip strong{
+  font-size:12px;
+  font-weight:900;
+}
+.planner-battle-set-chip span{
+  font-size:11px;
+  opacity:.76;
+}
+@media (max-width:720px){
+  .planner-battle-set-chip{
+    white-space:normal;
+    flex-wrap:wrap;
+  }
+}
+
+
+/* v1.9 Battle Lure Progress */
+.planner-lure-progress-card{
+  margin:16px 0;
+  padding:18px;
+  border:1px solid rgba(103,181,164,.28);
+  border-radius:20px;
+  background:linear-gradient(135deg, rgba(31,79,72,.07), rgba(255,255,255,.72));
+  box-shadow:0 10px 28px rgba(24,63,57,.07);
+}
+.planner-lure-progress-head{display:flex;justify-content:space-between;gap:16px;align-items:flex-start}
+.planner-lure-progress-title{font-size:1.05rem;font-weight:800;color:var(--ink, #183c37)}
+.planner-lure-progress-copy{margin-top:4px;font-size:.85rem;color:var(--muted, #657875)}
+.planner-lure-progress-kpis{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:16px}
+.planner-lure-progress-kpi{padding:14px 16px;border-radius:16px;background:rgba(255,255,255,.82);border:1px solid rgba(103,181,164,.22)}
+.planner-lure-progress-kpi span{display:block;font-size:.78rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted, #657875)}
+.planner-lure-progress-kpi strong{display:block;margin-top:3px;font-size:1.7rem;line-height:1.1;color:var(--ink, #183c37)}
+.planner-lure-goals{margin-top:14px;border-top:1px solid rgba(103,181,164,.22);padding-top:12px}
+.planner-lure-goals summary{cursor:pointer;font-weight:800;color:var(--ink, #183c37);list-style-position:inside}
+.planner-lure-goals-body{display:flex;align-items:flex-end;gap:12px;flex-wrap:wrap;padding-top:12px}
+.planner-lure-goal-field{display:flex;flex-direction:column;gap:5px;min-width:110px}
+.planner-lure-goal-field span{font-size:.78rem;font-weight:700;color:var(--muted, #657875)}
+.planner-lure-goal-field input{width:100%;min-height:40px;padding:8px 10px;border:1px solid rgba(75,120,112,.3);border-radius:11px;background:#fff;color:inherit;font:inherit}
+.planner-lure-goals-reset{margin-left:auto}
+@media (max-width:640px){
+  .planner-lure-progress-kpis{grid-template-columns:1fr 1fr}
+  .planner-lure-goal-field{flex:1 1 28%}
+  .planner-lure-goals-reset{width:100%;margin-left:0}
+}
+
+/* v1.9 Lure Progress visual integration */
+.planner-lure-progress-card{
+  margin:16px 0;
+  padding:18px;
+  border:1px solid rgba(255,255,255,.12);
+  border-radius:22px;
+  background:linear-gradient(180deg, rgba(2,31,88,.78), rgba(1,28,78,.88));
+  box-shadow:0 14px 30px rgba(0,0,0,.14);
+}
+.planner-lure-progress-title{
+  color:#fff;
+  font-size:1.05rem;
+  font-weight:900;
+}
+.planner-lure-progress-copy{
+  color:rgba(255,255,255,.76);
+}
+.planner-lure-progress-kpis{
+  gap:14px;
+  margin-top:14px;
+}
+.planner-lure-progress-kpi{
+  padding:14px 16px;
+  border-radius:16px;
+  border:1px solid rgba(255,255,255,.10);
+  background:linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.035));
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.035);
+}
+.planner-lure-progress-kpi span{
+  color:rgba(255,255,255,.68);
+  font-size:11px;
+  font-weight:800;
+  letter-spacing:1.5px;
+}
+.planner-lure-progress-kpi strong{
+  color:#fff;
+  font-size:1.55rem;
+  font-weight:900;
+}
+.planner-lure-goals{
+  margin-top:14px;
+  padding-top:12px;
+  border-top:1px solid rgba(255,255,255,.10);
+}
+.planner-lure-goals summary{
+  color:rgba(255,255,255,.92);
+}
+.planner-lure-goal-field span{
+  color:rgba(255,255,255,.72);
+}
+.planner-lure-goal-field input{
+  border:1px solid rgba(255,255,255,.14);
+  background:rgba(5,18,53,.76);
+  color:#fff;
+}
+
+
+/* v1.9 Lure Progress overview */
+.planner-lure-overview{
+  margin-top:14px;
+  padding-top:12px;
+  border-top:1px solid rgba(255,255,255,.10);
+}
+.planner-lure-overview summary{
+  cursor:pointer;
+  color:rgba(255,255,255,.92);
+  font-weight:800;
+  list-style-position:inside;
+}
+.planner-lure-overview-body{padding-top:12px}
+.planner-lure-overview-head,
+.planner-lure-overview-row{
+  display:grid;
+  grid-template-columns:minmax(150px,1.25fr) minmax(150px,1fr) minmax(150px,1fr);
+  gap:12px;
+  align-items:center;
+}
+.planner-lure-overview-head{
+  padding:0 12px 8px;
+}
+.planner-lure-overview-head button{
+  appearance:none;
+  border:0;
+  padding:0;
+  background:transparent;
+  color:rgba(255,255,255,.62);
+  font:inherit;
+  font-size:.72rem;
+  font-weight:800;
+  text-align:left;
+  text-transform:uppercase;
+  letter-spacing:.06em;
+  cursor:pointer;
+}
+.planner-lure-overview-row{
+  width:100%;
+  margin-top:6px;
+  padding:10px 12px;
+  border:1px solid rgba(255,255,255,.08);
+  border-radius:13px;
+  background:rgba(255,255,255,.035);
+  color:#fff;
+  font:inherit;
+  text-align:left;
+  cursor:pointer;
+  transition:background .15s ease,border-color .15s ease,transform .15s ease;
+}
+.planner-lure-overview-row:hover{
+  background:rgba(255,255,255,.075);
+  border-color:rgba(255,255,255,.16);
+  transform:translateY(-1px);
+}
+.planner-lure-overview-row.active{
+  background:rgba(103,181,164,.16);
+  border-color:rgba(127,218,198,.36);
+}
+.planner-lure-overview-map{font-weight:800}
+.planner-lure-overview-metric{
+  display:grid;
+  grid-template-columns:minmax(55px,1fr) 42px;
+  gap:9px;
+  align-items:center;
+}
+.planner-lure-overview-metric strong{
+  color:#fff;
+  font-size:.84rem;
+  text-align:right;
+}
+.planner-lure-overview-bar{
+  display:block;
+  height:7px;
+  overflow:hidden;
+  border-radius:999px;
+  background:rgba(255,255,255,.10);
+}
+.planner-lure-overview-bar i{
+  display:block;
+  height:100%;
+  border-radius:inherit;
+  background:rgba(127,218,198,.82);
+}
+@media (max-width:720px){
+  .planner-lure-overview-head{display:none}
+  .planner-lure-overview-row{
+    grid-template-columns:1fr;
+    gap:8px;
+  }
+  .planner-lure-overview-metric::before{
+    color:rgba(255,255,255,.6);
+    font-size:.7rem;
+    font-weight:800;
+    text-transform:uppercase;
+    letter-spacing:.05em;
+  }
+  .planner-lure-overview-metric:nth-child(2)::before{content:'Goal Progress'}
+  .planner-lure-overview-metric:nth-child(3)::before{content:'Maximum Progress'}
+  .planner-lure-overview-metric{grid-template-columns:105px minmax(55px,1fr) 42px}
+}
+
+
+/* v1.9 All Battle Fish focus */
+.planner-battle-focus{
+  margin-top:14px;
+  padding-top:12px;
+  border-top:1px solid rgba(255,255,255,.10);
+}
+.planner-battle-focus summary{
+  cursor:pointer;
+  color:rgba(255,255,255,.92);
+  font-weight:800;
+  list-style-position:inside;
+}
+.planner-battle-focus-body{padding-top:12px}
+.planner-battle-focus-grid{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:10px;
+}
+.planner-battle-focus-map{
+  padding:12px;
+  border:1px solid rgba(255,255,255,.08);
+  border-radius:14px;
+  background:rgba(255,255,255,.035);
+}
+.planner-battle-focus-map-name{
+  margin-bottom:8px;
+  font-weight:900;
+  color:#fff;
+}
+.planner-battle-focus-fish{
+  padding:8px 9px;
+  border-radius:10px;
+  border:1px solid rgba(255,255,255,.08);
+  background:rgba(5,18,53,.46);
+}
+.planner-battle-focus-fish + .planner-battle-focus-fish{margin-top:6px}
+.planner-battle-focus-fish-name{font-weight:800;color:rgba(255,255,255,.96)}
+.planner-battle-focus-levels{margin-top:2px;font-size:.82rem;color:rgba(255,255,255,.66)}
+.planner-battle-focus-levels span{padding:0 4px;font-weight:900;color:rgba(255,255,255,.54)}
+.planner-battle-focus-complete{
+  padding:10px 9px;
+  border-radius:10px;
+  border:1px solid rgba(127,218,198,.20);
+  background:rgba(103,181,164,.12);
+  color:rgba(210,255,244,.94);
+  font-weight:800;
+}
+@media (max-width:720px){
+  .planner-battle-focus-grid{grid-template-columns:1fr}
+}
+
+
+.planner-battle-focus-section + .planner-battle-focus-section{
+  margin-top:16px;
+  padding-top:16px;
+  border-top:1px solid rgba(255,255,255,.10);
+}
+.planner-battle-focus-section-title{
+  margin-bottom:10px;
+  color:rgba(255,255,255,.94);
+  font-size:.86rem;
+  font-weight:900;
+  letter-spacing:.02em;
+}
+.planner-battle-focus-closest-grid{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:8px;
+}
+.planner-battle-focus-closest-item{
+  padding:10px 11px;
+  border:1px solid rgba(255,255,255,.08);
+  border-radius:12px;
+  background:rgba(5,18,53,.46);
+}
+.planner-battle-focus-map-label{
+  margin-top:3px;
+  color:rgba(255,255,255,.54);
+  font-size:.76rem;
+}
+@media (max-width:720px){
+  .planner-battle-focus-closest-grid{grid-template-columns:1fr}
+}
+
+
+.planner-lure-progress-kpi small{
+  display:block;
+  margin-top:4px;
+  color:rgba(255,255,255,.58);
+  font-size:.72rem;
+  font-weight:700;
+  line-height:1.2;
+  white-space:nowrap;
+}
+.planner-lure-progress-kpi small + strong{
+  margin-top:7px;
+}
+
+
+/* v1.9 KPI helper hierarchy polish */
+.planner-lure-progress-kpi small{
+  font-size:.62rem;
+  font-weight:400;
+  color:rgba(255,255,255,.48);
+  letter-spacing:0;
+  text-transform:none;
+  line-height:1.15;
+}
+.planner-lure-progress-kpi small + strong{
+  margin-top:10px;
+}
+
+
+/* v1.8.1 Reachable Progress: three equal progress KPIs */
+.planner-lure-progress-kpis--three{
+  grid-template-columns:repeat(3,minmax(0,1fr));
+}
+@media (max-width: 900px){
+  .planner-lure-progress-kpis--three{
+    grid-template-columns:1fr;
+  }
+}
+
+
+/* Captain's Log */
+.captains-log-toggle{
+  position:fixed;
+  right:24px;
+  bottom:52px;
+  z-index:12600;
+  overflow:hidden;
+  width:58px;
+  height:58px;
+  display:grid;
+  place-items:center;
+  border:1px solid rgba(86,56,7,.58);
+  border-radius:16px;
+  background:
+    radial-gradient(circle at 28% 16%,rgba(255,244,184,.34),transparent 34%),
+    linear-gradient(145deg,#F2C85C 0%,#D8A93A 58%,#B88318 100%);
+  color:#082e6d;
+  box-shadow:
+    0 12px 34px rgba(0,15,48,.42),
+    inset 0 1px 0 rgba(255,247,200,.36),
+    inset 0 -2px 0 rgba(89,54,4,.22);
+  cursor:pointer;
+  transition:transform .18s ease, border-color .18s ease, box-shadow .18s ease;
+}
+.captains-log-toggle:hover{
+  transform:translateY(-2px);
+  border-color:rgba(68,42,5,.82);
+  box-shadow:
+    0 15px 38px rgba(0,15,48,.5),
+    0 0 0 3px rgba(125,84,14,.12),
+    inset 0 1px 0 rgba(255,247,200,.42);
+}
+.captains-log-toggle svg{
+  width:42px;
+  height:42px;
+  fill:none;
+  stroke:currentColor;
+  stroke-width:4;
+  stroke-linecap:round;
+  stroke-linejoin:round;
+}
+.captains-log-toggle .captains-log-book-cover{
+  fill:rgba(9,44,101,.12);
+}
+.captains-log-toggle .captains-log-book-spine,
+.captains-log-toggle .captains-log-book-base{
+  stroke-width:4.5;
+}
+.captains-log-toggle .captains-log-bookmark{
+  fill:#0b3a82;
+  stroke:#06275c;
+  stroke-width:2.3;
+}
+.captains-log-toggle::after{
+  content:attr(data-tooltip);
+  position:absolute;
+  right:68px;
+  top:50%;
+  transform:translateY(-50%) translateX(6px);
+  opacity:0;
+  pointer-events:none;
+  white-space:nowrap;
+  padding:7px 10px;
+  border:1px solid rgba(255,255,255,.14);
+  border-radius:8px;
+  background:rgba(12,14,17,.96);
+  color:rgba(255,255,255,.92);
+  font-size:.78rem;
+  font-weight:700;
+  transition:opacity .16s ease,transform .16s ease;
+}
+.captains-log-toggle:hover::after,
+.captains-log-toggle:focus-visible::after{
+  opacity:1;
+  transform:translateY(-50%) translateX(0);
+}
+
+.captains-log-backdrop{
+  position:fixed;
+  inset:0;
+  z-index:12610;
+  background:rgba(3,15,42,.58);
+  opacity:0;
+  visibility:hidden;
+  transition:opacity .2s ease,visibility .2s ease;
+}
+.captains-log-backdrop.open{
+  opacity:1;
+  visibility:visible;
+}
+.captains-log-drawer{
+  position:fixed;
+  top:0;
+  right:0;
+  bottom:0;
+  z-index:12620;
+  width:min(460px,94vw);
+  display:flex;
+  flex-direction:column;
+  background:
+    radial-gradient(circle at 80% 0%,rgba(43,111,210,.22),transparent 34%),
+    linear-gradient(180deg,#0e3470 0%,#09275a 42%,#071d46 100%);
+  border-left:1px solid rgba(255,209,90,.32);
+  box-shadow:-22px 0 55px rgba(0,10,35,.58);
+  transform:translateX(104%);
+  transition:transform .24s ease;
+}
+.captains-log-drawer.open{ transform:translateX(0); }
+.captains-log-header{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:14px;
+  padding:22px 20px 18px;
+  border-bottom:1px solid rgba(255,255,255,.09);
+}
+.captains-log-heading{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  min-width:0;
+}
+.captains-log-heading svg{
+  width:34px;
+  height:34px;
+  flex:0 0 auto;
+  fill:none;
+  stroke:#f3c86d;
+  stroke-width:3;
+  stroke-linecap:round;
+  stroke-linejoin:round;
+}
+.captains-log-title{
+  color:#fff;
+  font-size:1.16rem;
+  font-weight:900;
+  letter-spacing:.01em;
+}
+.captains-log-subtitle{
+  margin-top:2px;
+  color:rgba(255,255,255,.52);
+  font-size:.74rem;
+}
+.captains-log-close{
+  width:38px;
+  height:38px;
+  border:1px solid rgba(255,255,255,.12);
+  border-radius:10px;
+  background:rgba(255,255,255,.045);
+  color:rgba(255,255,255,.82);
+  font-size:1.5rem;
+  cursor:pointer;
+}
+.captains-log-tabs{
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:7px;
+  padding:14px 16px;
+  border-bottom:1px solid rgba(255,255,255,.08);
+}
+.captains-log-tab{
+  min-width:0;
+  padding:9px 7px;
+  border:1px solid rgba(255,255,255,.1);
+  border-radius:9px;
+  background:rgba(255,255,255,.035);
+  color:rgba(255,255,255,.64);
+  font-size:.76rem;
+  font-weight:800;
+  cursor:pointer;
+}
+.captains-log-tab.active{
+  border-color:rgba(243,200,109,.46);
+  background:rgba(243,200,109,.11);
+  color:#f3c86d;
+}
+.captains-log-body{
+  min-height:0;
+  flex:1;
+  display:flex;
+  flex-direction:column;
+  padding:18px;
+}
+.captains-log-label{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  margin-bottom:9px;
+  color:rgba(255,255,255,.83);
+  font-size:.82rem;
+  font-weight:850;
+}
+.captains-log-saved{
+  color:rgba(255,255,255,.42);
+  font-size:.68rem;
+  font-weight:650;
+}
+.captains-log-saved.saving{ color:#f3c86d; }
+.captains-log-text{
+  flex:1;
+  min-height:260px;
+  resize:none;
+  width:100%;
+  padding:16px;
+  border:1px solid rgba(255,255,255,.12);
+  border-radius:12px;
+  outline:none;
+  background:rgba(3,18,51,.58);
+  color:rgba(255,255,255,.92);
+  font:500 .92rem/1.55 inherit;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.025);
+}
+.captains-log-text:focus{
+  border-color:rgba(243,200,109,.48);
+  box-shadow:0 0 0 3px rgba(243,200,109,.08);
+}
+.captains-log-text::placeholder{ color:rgba(255,255,255,.28); }
+
+@media (max-width:640px){
+  .captains-log-toggle{
+    right:15px;
+    bottom:16px;
+    width:54px;
+    height:54px;
+  }
+  .captains-log-tabs{
+    grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+}
+
+
+/* Captain's Log polish */
+.captains-log-toggle .captains-log-shine{
+  position:absolute;
+  top:-30%;
+  bottom:-30%;
+  left:-55%;
+  width:38%;
+  transform:skewX(-22deg);
+  background:linear-gradient(
+    90deg,
+    transparent,
+    rgba(255,255,255,.12),
+    rgba(255,232,143,.88),
+    rgba(255,255,255,.14),
+    transparent
+  );
+  filter:blur(.4px);
+  opacity:0;
+  pointer-events:none;
+  animation:captainsLogShimmer 5.8s ease-in-out 1.2s infinite;
+}
+@keyframes captainsLogShimmer{
+  0%,72%{ left:-55%; opacity:0; }
+  76%{ opacity:.82; }
+  88%{ left:128%; opacity:.5; }
+  92%,100%{ left:128%; opacity:0; }
+}
+.captains-log-toggle:hover .captains-log-shine{
+  animation-duration:2.2s;
+}
+body.captains-log-open #companionPanel,
+body.captains-log-open #companionRestore{
+  z-index:100 !important;
+  filter:saturate(.75) brightness(.72);
+  pointer-events:none;
+}
+body.captains-log-open .captains-log-toggle{
+  opacity:0;
+  pointer-events:none;
+}
+.captains-log-header{
+  background:linear-gradient(180deg,rgba(20,64,132,.8),rgba(8,38,88,.45));
+}
+.captains-log-tabs{
+  background:rgba(3,22,58,.23);
+}
+.captains-log-tab{
+  background:rgba(3,23,58,.38);
+}
+.captains-log-tab.active{
+  border-color:rgba(255,209,90,.58);
+  background:linear-gradient(180deg,rgba(48,105,190,.72),rgba(20,68,146,.72));
+  color:#ffd15a;
+}
+
+
+/* Captain's Log mobile launch/close safety */
+@media (max-width:640px){
+  .captains-log-drawer{
+    top:0;
+    right:0;
+    bottom:auto;
+    width:100vw;
+    max-width:100vw;
+    height:100vh;
+    height:100dvh;
+    transform:translate3d(101%,0,0);
+    border-left:0;
+  }
+  .captains-log-drawer.open{
+    transform:translate3d(0,0,0);
+  }
+  .captains-log-header{
+    position:sticky;
+    top:0;
+    z-index:3;
+    padding-top:max(18px, env(safe-area-inset-top));
+    background:linear-gradient(180deg,#164887 0%,#0b326f 100%);
+  }
+  .captains-log-close{
+    position:relative;
+    z-index:4;
+    flex:0 0 44px;
+    width:44px;
+    height:44px;
+    min-width:44px;
+    min-height:44px;
+    touch-action:manipulation;
+  }
+  .captains-log-body{
+    padding-bottom:max(18px, env(safe-area-inset-bottom));
+  }
+}
+
+
+/* Captain's Log mobile hard-close fallback */
+@media (max-width:640px){
+  .captains-log-close{
+    position:fixed;
+    top:max(12px, env(safe-area-inset-top));
+    right:12px;
+    z-index:12650;
+    pointer-events:auto !important;
+  }
+}
+
+
+/* Lock Fishing Guide width */
+.companion-panel{
+  width:370px !important;
+  min-width:370px !important;
+  max-width:370px !important;
+  resize:none !important;
+  box-sizing:border-box;
+}
+
+
+/* Mobile-safe Fishing Guide width */
+@media (max-width: 640px){
+  .companion-panel{
+    width:calc(100vw - 24px) !important;
+    min-width:0 !important;
+    max-width:calc(100vw - 24px) !important;
+    left:auto !important;
+    right:12px !important;
+    box-sizing:border-box;
+  }
+}
+
+
+/* Hard mobile clamp for Fishing Guide */
+@media (max-width: 640px){
+  html, body{
+    max-width:100%;
+    overflow-x:hidden;
+  }
+  #companionPanel.companion-panel{
+    position:fixed !important;
+    width:auto !important;
+    min-width:0 !important;
+    max-width:none !important;
+    left:12px !important;
+    right:12px !important;
+    top:auto !important;
+    bottom:76px !important;
+    margin:0 !important;
+    transform:none !important;
+    box-sizing:border-box !important;
+    resize:none !important;
+  }
+}
+
+
+/* FR Safe Test 18: long French Fishing Guide recommendations must stay inside the panel.
+   Scope to French only so the established English HUD layout is unchanged. */
+html[lang="fr"] #companionRows .companion-row{
+  white-space: normal !important;
+  align-items:flex-start;
+  gap:16px;
+}
+html[lang="fr"] #companionRows .companion-row .label{
+  flex:0 0 38%;
+  min-width:0;
+  white-space:normal !important;
+}
+html[lang="fr"] #companionRows .companion-row .value{
+  flex:1 1 0;
+  min-width:0;
+  white-space:normal !important;
+  overflow-wrap:anywhere;
+  text-align:right;
+}
+
+/* FR Safe Test 20: keep the original Fishing Guide width, but let French rows
+   grow naturally when labels/recommendations wrap. English layout is unchanged. */
+html[lang="fr"] #companionRows .companion-row{
+  display:grid !important;
+  grid-template-columns:minmax(0, 38%) minmax(0, 62%);
+  column-gap:14px !important;
+  align-items:start !important;
+  white-space:normal !important;
+  padding:6px 0 !important;
+  line-height:1.3 !important;
+  height:auto !important;
+  min-height:0 !important;
+}
+html[lang="fr"] #companionRows .companion-row .label,
+html[lang="fr"] #companionRows .companion-row .value{
+  min-width:0 !important;
+  width:auto !important;
+  white-space:normal !important;
+  line-height:inherit !important;
+}
+html[lang="fr"] #companionRows .companion-row .label{
+  display:block;
+}
+html[lang="fr"] #companionRows .companion-row .value{
+  display:block;
+  overflow:visible !important;
+  text-overflow:clip !important;
+  overflow-wrap:break-word !important;
+  word-break:normal !important;
+  text-align:right !important;
+}
+html[lang="fr"] #companionPanel .companion-body,
+html[lang="fr"] #companionPanel #companionRows{
+  height:auto !important;
+  max-height:none !important;
+  overflow:visible !important;
 }

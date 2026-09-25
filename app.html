@@ -5,7 +5,7 @@
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <title>FISHMETRICS</title>
-<link href="style.css" rel="stylesheet"/>
+<link href="style.css?v=182-captainslog-notesfix1" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com" rel="preconnect"/>
 <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800&amp;display=swap" rel="stylesheet"/>
@@ -308,11 +308,11 @@
 <aside class="sidebar">
 <div class="sidebar-section">
 <div class="pane-mode-switch" role="group" aria-label="Main or VIP mode"><button type="button" id="modeMainBtn" class="mode-btn">Main</button><button type="button" id="modeVipBtn" class="mode-btn">VIP</button></div>
-<div class="sidebar-title">Locations</div>
+<div class="sidebar-title" id="locationsTitle">Locations</div>
 <div aria-label="Locations" class="btn-list" id="locationButtons"></div>
 </div>
 <div class="sidebar-section">
-<div class="sidebar-title">Rarity</div>
+<div class="sidebar-title" id="rarityTitle">Rarity</div>
 <div class="rarity-legend">
 <div class="legend-item"><span class="swatch common"></span>Common</div>
 <div class="legend-item"><span class="swatch rare"></span>Rare</div>
@@ -321,7 +321,7 @@
 </div>
 </div>
 <div class="sidebar-section progress">
-<div class="sidebar-title">Bestiary Progress</div>
+<div class="sidebar-title" id="bestiaryTitle">Bestiary Progress</div>
 <div aria-label="Bestiary progress" class="donut" role="img">
 <div class="donut-value" id="bestiaryProgress">0%</div>
 </div>
@@ -347,7 +347,7 @@
   <label class="toggle">
     <input type="checkbox" id="includeOOSDashboardToggle">
     <span class="slider"></span>
-    <span class="toggle-label">Include OOS</span>
+    <span class="toggle-label" id="includeOOSLabel">Include OOS</span>
   </label>
 </div>
 </div>
@@ -355,13 +355,13 @@
   <label class="toggle">
     <input type="checkbox" id="includeLegendaryToggle">
     <span class="slider"></span>
-    <span class="toggle-label">Include Legendary</span>
+    <span class="toggle-label" id="includeLegendaryLabel">Include Legendary</span>
   </label>
 </div>
 
 <section id="companionPanel" class="panel companion-panel">
   <div id="companionHeader" class="panel-title companion-header">
-    Fishing Guide <span id="companionChevron" class="chevron">▾</span>
+    <span id="fishingGuideTitle">Fishing Guide</span> <span id="companionChevron" class="chevron">▾</span>
     <button id="companionReset" class="companion-reset" aria-label="Reset position">↺</button>
     <button id="companionDismiss" class="companion-dismiss" aria-label="Dismiss">✕</button>
   </div>
@@ -387,40 +387,40 @@
 
 <section aria-label="Summary" class="kpis">
 <div class="kpi">
-<div class="kpi-label">Average Star Rating</div>
+<div class="kpi-label" id="avgStarRatingLabel">Average Star Rating</div>
 <div class="kpi-stars" id="avgStars">—</div>
 <div class="kpi-subnote season-only-note" id="avgStarsSeasonNote">In-season fish only</div>
 </div>
 
 
 <div class="kpi">
-<div class="kpi-label">Total Points</div>
+<div class="kpi-label" id="totalPointsLabel">Total Points</div>
 <div class="kpi-value" id="totalPoints">0</div>
 <div class="kpi-stamp" id="badgeStampPoints" aria-hidden="true"></div>
 </div>
 <div class="kpi">
-<div class="kpi-label">4 Star Catches</div>
+<div class="kpi-label" id="fourStarCatchesLabel">4 Star Catches</div>
 <div class="kpi-value" id="pct4">0.0%</div>
 <div class="kpi-stamp" id="badgeStamp4" aria-hidden="true"></div>
 </div>
 <div class="kpi">
-<div class="kpi-label">5 Star Catches</div>
+<div class="kpi-label" id="fiveStarCatchesLabel">5 Star Catches</div>
 <div class="kpi-value" id="pct5">0.0%</div>
 <div class="kpi-stamp" id="badgeStamp5" aria-hidden="true"></div>
 </div>
 <div class="kpi best-map">
-<div class="kpi-label">Best Map</div>
-<div class="kpi-subnote">Balanced across rarities</div>
+<div class="kpi-label" id="bestMapLabel">Best Map</div>
+<div class="kpi-subnote" id="bestMapSubLabel">Balanced across rarities</div>
 <div class="kpi-value" id="bestMap">—</div>
 </div>
 </section>
 <section class="panel star-dist-panel" aria-label="Star distribution">
-  <div class="panel-title">Star Distribution (<span id="starDistRange">2–5★</span>)</div>
+  <div class="panel-title"><span id="starDistributionTitle">Star Distribution</span> (<span id="starDistRange">2–5★</span>)</div>
   <div class="star-dist-wrap">
     <div id="starDistributionBar" class="star-dist-bar" role="img" aria-label="Distribution of 2 to 5 star catches"></div>
     <div class="star-dist-meta-row">
       <div id="high4Chip" class="star-dist-chip" title="Counts 4★ catches at 85.5%+ of max points, below 5★.">
-        <span class="star-dist-chip-label">High 4★</span>
+        <span class="star-dist-chip-label" id="high4Label">High 4★</span>
         <strong id="high4Count">0</strong>
         <span id="high4Pct" class="star-dist-chip-sub">0.0% • 85.5%+ max</span>
       </div>
@@ -430,19 +430,19 @@
 </section>
 <section class="grid"><div class="panel">
 
-<div class="panel-title">Total Points / Rarity</div>
+<div class="panel-title" id="pointsRarityTitle">Total Points / Rarity</div>
 <canvas id="pointsByRarityChart"></canvas>
 </div>
 <div class="panel">
-<div class="panel-title">Total Stars / Rarity</div>
+<div class="panel-title" id="starsRarityTitle">Total Stars / Rarity</div>
 <canvas id="starsByRarityChart"></canvas>
 </div>
 <div class="panel span-2">
-<div class="panel-title">Points / Map</div>
+<div class="panel-title" id="pointsMapTitle">Points / Map</div>
 <canvas id="pointsByMapChart"></canvas>
 </div>
 <div class="panel">
-<div class="panel-title">Star Catches</div>
+<div class="panel-title" id="starCatchesTitle">Star Catches</div>
 <canvas id="starCatchesChart"></canvas>
 </div>
 </section>
@@ -484,7 +484,7 @@
 </div>
     </div>
 
-    <div class="career-targets-sub"><span id="careerTargetsSubLabel">All-time best stars • In-season this month</span> • Sorted by <span id="careerTargetsSortLabel">closest to target</span></div>
+    <div class="career-targets-sub"><span id="careerTargetsSubLabel">All-time best stars • In-season this month</span> • <span id="careerTargetsSortedBy">Sorted by</span> <span id="careerTargetsSortLabel">closest to target</span></div>
 
     <div id="careerTargetsPanels" class="career-targets-panels" aria-live="polite"></div>
   </section>
@@ -493,7 +493,7 @@
 
 <div class="tab-view" id="focusView">
   <section class="panel">
-    <div class="panel-title">Focus Mode</div>
+    <div class="panel-title" id="focusTitle">Focus Mode</div>
 
     <div class="fm-helptext" id="focusDesc" class="fm-helptext" style="margin-top:10px; line-height:1.45;">
       Focus Mode helps you pick up to ten fish and see how close each one is to its next milestone. Find where the biggest point gains are and decide what to chase next.
@@ -501,17 +501,17 @@
 
     <div class="focus-controls" style="margin-top:12px;">
       <label class="focus-field">
-        <span class="focus-label">Location</span>
+        <span class="focus-label" id="focusLocationLabel">Location</span>
         <select id="focusLocationSelect" class="focus-select" aria-label="Focus location"></select>
       </label>
 
       <label class="focus-field">
-        <span class="focus-label">Category</span>
+        <span class="focus-label" id="focusCategoryLabel">Category</span>
         <select id="focusCategorySelect" class="focus-select" aria-label="Focus category" disabled></select>
       </label>
 
       <label class="focus-field">
-        <span class="focus-label">Fish</span>
+        <span class="focus-label" id="focusFishLabel">Fish</span>
         <select id="focusFishSelect" class="focus-select" aria-label="Focus fish" disabled></select>
       </label>
     </div>
@@ -539,12 +539,12 @@
 <div class="tab-view" id="fishView">
   <section class="grid">
     <div class="panel">
-<div class="panel-title">The Legendary</div>
+<div class="panel-title" id="legendaryTitle">The Legendary</div>
 <canvas id="legendaryChart"></canvas>
 </div>
 
     <div class="panel">
-  <div class="panel-title">The Fearsome Four</div>
+  <div class="panel-title" id="fearsomeTitle">The Fearsome Four</div>
   <canvas id="fearsomeChart"></canvas>
 </div>
 
@@ -564,7 +564,7 @@
     </div>
 
     <div class="panel personal-bests-panel">
-      <div class="panel-title">👑 Personal Bests</div>
+      <div class="panel-title" id="personalBestsTitle">👑 Personal Bests</div>
       <div id="personalBestsGrid" class="bests-grid" aria-label="Personal bests"></div>
     </div>
 
@@ -576,20 +576,20 @@
   <section class="grid">
 
     <div class="panel">
-      <div class="panel-title">Common Points Range <span class="oos-sub">(OOS catches not included)</span></div>
+      <div class="panel-title"><span id="commonRangeTitle">Common Points Range</span> <span class="oos-sub" id="commonRangeOos">(OOS catches not included)</span></div>
       <canvas id="commonDumbbellChart"></canvas>
     </div>
     <div class="panel">
-      <div class="panel-title">Rare Points Range <span class="oos-sub">(OOS catches not included)</span></div>
+      <div class="panel-title"><span id="rareRangeTitle">Rare Points Range</span> <span class="oos-sub" id="rareRangeOos">(OOS catches not included)</span></div>
       <canvas id="rareDumbbellChart"></canvas>
     </div>
     <div class="panel">
-      <div class="panel-title">Epic Points Range <span class="oos-sub">(OOS catches not included)</span></div>
+      <div class="panel-title"><span id="epicRangeTitle">Epic Points Range</span> <span class="oos-sub" id="epicRangeOos">(OOS catches not included)</span></div>
       <canvas id="epicDumbbellChart"></canvas>
     </div>
   
     <div class="panel">
-      <div class="panel-title">Points Range by Type <span class="oos-sub">(OOS catches not included)</span></div>
+      <div class="panel-title"><span id="typeRangeTitle">Points Range by Type</span> <span class="oos-sub" id="typeRangeOos">(OOS catches not included)</span></div>
       <canvas id="typeDumbbellChart"></canvas>
     </div>
 </section>
@@ -757,7 +757,255 @@ Not affiliated with any company or organization of a similar name.</div>
 </div>
 </section>
 </main>
-<script src="app.js"></script>
+<script src="app.js?v=182-fr-safe-test7"></script>
+<script>
+(function(){
+  const isFR=new URLSearchParams(location.search).get('lang')==='fr';
+  if(!isFR) return;
+  document.documentElement.lang='fr';
+  const set=(id,text)=>{const el=document.getElementById(id); if(el) el.textContent=text;};
+  // Static chrome only: no tables, rows, data attributes, render containers, or app state are touched.
+  // Planner home/chrome — labels only; module internals are translated in their render functions.
+  const pd=document.getElementById('plannerDrawer');
+  if(pd){
+    const eyebrow=pd.querySelector('.planner-eyebrow'); if(eyebrow) eyebrow.textContent='Outils de stratégie';
+    const home=pd.querySelector('#plannerTitleHomeBtn'); if(home){home.textContent='Accueil du planificateur'; home.setAttribute('aria-label','Accueil du planificateur'); home.title='Accueil du planificateur';}
+    const sub=pd.querySelector('.planner-sub'); if(sub) sub.textContent='Estimez le coût des leurres, planifiez les opportunités et prévoyez les points';
+    const close=pd.querySelector('#plannerCloseBtn'); if(close){close.textContent='Statistiques'; close.setAttribute('aria-label','Statistiques');}
+    const items=[
+      ['Planification de saison','Prévoyez les points cibles saisonniers par mois'],
+      ['Planification OOS','Ce qui est à risque en ce moment'],
+      ['Planification des leurres','Estimez les niveaux de leurre atteignables et leur coût'],
+      ['Calculateur du coût des leurres','Consultez le coût générique des améliorations de leurre'],
+      ['Suivi XP','Suivez votre progression vers un objectif XP'],
+      ['Suivi de la valeur des prises','Suivez le poids, les points et le prix de vente des poissons']
+    ];
+    pd.querySelectorAll('.planner-list-item').forEach((item,i)=>{ if(!items[i]) return; const t=item.querySelector('.planner-list-title'); const d=item.querySelector('.planner-list-sub'); if(t)t.textContent=items[i][0]; if(d)d.textContent=items[i][1]; });
+  }
+  set('modeCareerBtn','Tout');
+  set('modeSeasonBtn','Saison');
+  set('plannerToggleBtn','Planificateur');
+  // Inner Metrics header Clan badge (landing page has its own translation logic).
+  const clanBtn=document.getElementById('clanToggleBtn');
+  if(clanBtn){
+    const soon=clanBtn.querySelector('.coming-soon-mini');
+    if(soon) soon.textContent='Bientôt';
+    clanBtn.setAttribute('aria-label','Clans — bientôt');
+    clanBtn.title='Clans — bientôt';
+  }
+  set('tabOverview','Tableau de bord');
+  set('tabRecords','Journal');
+  set('tabMap','Plages de scores');
+  set('tabFish','Analyse des poissons');
+  set('tabCareerTargets','Objectifs de carrière');
+  set('tabFocus','Mode Focus');
+  set('tabInstructions','Mode d’emploi');
+  set('locationsTitle','Lieux');
+  set('rarityTitle','Rareté');
+  set('bestiaryTitle','Progression du bestiaire');
+  set('fishingGuideTitle','Guide de pêche');
+  set('includeOOSLabel','Inclure hors saison');
+  set('includeLegendaryLabel','Inclure les légendaires');
+  set('avgStarRatingLabel','Note moyenne en étoiles');
+  set('totalPointsLabel','Points totaux');
+  set('fourStarCatchesLabel','Prises 4 étoiles');
+  set('fiveStarCatchesLabel','Prises 5 étoiles');
+  set('bestMapLabel','Meilleur lieu');
+  set('bestMapSubLabel','Équilibré entre les raretés');
+  set('starDistributionTitle','Répartition des étoiles');
+  set('high4Label','4★ élevées');
+  set('pointsRarityTitle','Points totaux / rareté');
+  set('starsRarityTitle','Étoiles totales / rareté');
+  set('pointsMapTitle','Points / lieu');
+  set('starCatchesTitle','Prises par étoiles');
+  // Score Ranges — static headings only.
+  set('commonRangeTitle','Plage de points — Common');
+  set('rareRangeTitle','Plage de points — Rare');
+  set('epicRangeTitle','Plage de points — Epic');
+  set('typeRangeTitle','Plage de points par type');
+  set('commonRangeOos','(prises hors saison non incluses)');
+  set('rareRangeOos','(prises hors saison non incluses)');
+  set('epicRangeOos','(prises hors saison non incluses)');
+  set('typeRangeOos','(prises hors saison non incluses)');
+  // Fish Insights — names/categories used by the game remain canonical.
+  set('legendaryTitle','Les légendaires');
+  set('fearsomeTitle','Les Quatre Redoutables');
+  set('eliteEpicsTitle','Épiques d’élite');
+  set('shortLivedTitle','Les spéciales éphémères');
+  set('invisiblesTitle','Les invisibles');
+  set('personalBestsTitle','👑 Records personnels');
+  // Focus Mode — explicit static labels only; generated fish/map/category data stays canonical.
+  set('focusTitle','Mode Focus');
+  set('focusDesc','Le Mode Focus vous permet de choisir jusqu’à dix poissons et de voir à quel point chacun est proche de son prochain palier. Repérez les gains de points les plus importants et décidez quoi cibler ensuite.');
+  set('focusLocationLabel','Lieu');
+  set('focusCategoryLabel','Catégorie');
+  set('focusFishLabel','Poisson');
+  set('focusHint','Choisissez un lieu pour commencer.');
+  set('focusAddBtn','Ajouter');
+  set('focusListEmpty','Aucun poisson en focus pour le moment. Ajoutez-en un ci-dessus.');
+  // Career Targets — static interface labels only; fish/map/rarity data stays canonical.
+  const ct=document.getElementById('careerTargetsView');
+  if(ct){
+    const title=ct.querySelector('.career-targets-title > span'); if(title) title.textContent='Objectifs de carrière';
+    const oos1=ct.querySelector('[data-ct-target="oos1"]'); if(oos1) oos1.textContent='Hors saison le mois prochain';
+    const oos3=ct.querySelector('[data-ct-target="oos3"]'); if(oos3) oos3.textContent='Hors saison ≤ 3 mois';
+    const closest=ct.querySelector('.ct-sort-label[data-mode="closest"]'); if(closest) closest.textContent='Plus proche de l’objectif';
+    const climb=ct.querySelector('.ct-sort-label[data-mode="climb"]'); if(climb) climb.textContent='Plus grande progression';
+    const sort=ct.querySelector('.ct-secondary-sort-label'); if(sort) sort.textContent='Trier :';
+    const sel=ct.querySelector('#ctSecondarySortSelect'); if(sel){
+      const opts=sel.options; if(opts[0]) opts[0].textContent='Étoiles'; if(opts[1]) opts[1].textContent='Priorité hors saison';
+    }
+    const toggle=ct.querySelector('.ct-switch'); if(toggle) toggle.title='Changer le mode de tri';
+  }
+
+  function applySafeFrench(){
+    // Re-apply Focus after its own initializer has populated/reset controls.
+    set('focusTitle','Mode Focus');
+    set('focusDesc','Le Mode Focus vous permet de choisir jusqu’à dix poissons et de voir à quel point chacun est proche de son prochain palier. Repérez les gains de points les plus importants et décidez quoi cibler ensuite.');
+    set('focusLocationLabel','Lieu');
+    set('focusCategoryLabel','Catégorie');
+    set('focusFishLabel','Poisson');
+    set('focusHint','Choisissez un lieu pour commencer.');
+    set('focusAddBtn','Ajouter');
+    set('focusListEmpty','Aucun poisson en focus pour le moment. Ajoutez-en un ci-dessus.');
+
+    // Career Targets static controls may be redrawn/updated; keep their labels French.
+    const ct=document.getElementById('careerTargetsView');
+    if(ct){
+      const title=ct.querySelector('.career-targets-title > span'); if(title) title.textContent='Objectifs de carrière';
+      const oos1=ct.querySelector('[data-ct-target="oos1"]'); if(oos1) oos1.textContent='Hors saison le mois prochain';
+      const oos3=ct.querySelector('[data-ct-target="oos3"]'); if(oos3) oos3.textContent='Hors saison ≤ 3 mois';
+      const closest=ct.querySelector('.ct-sort-label[data-mode="closest"]'); if(closest) closest.textContent='Plus proche de l’objectif';
+      const climb=ct.querySelector('.ct-sort-label[data-mode="climb"]'); if(climb) climb.textContent='Plus grande progression';
+      const sort=ct.querySelector('.ct-secondary-sort-label'); if(sort) sort.textContent='Trier :';
+      const sel=ct.querySelector('#ctSecondarySortSelect'); if(sel){ const opts=sel.options; if(opts[0]) opts[0].textContent='Étoiles'; if(opts[1]) opts[1].textContent='Priorité hors saison'; }
+    }
+
+    // Career Targets sentence prefix.
+    set('careerTargetsSortedBy','Trier par :');
+
+    // Footer + Privacy + Release Notes.
+    const privacyBtn=document.querySelector('.privacy-btn'); if(privacyBtn){ privacyBtn.setAttribute('aria-label','Avis de confidentialité'); const l=privacyBtn.querySelector('.footer-label'); if(l) l.textContent='Confidentialité'; }
+    const contactBtn=document.querySelector('.contact-btn'); if(contactBtn){ contactBtn.setAttribute('aria-label','Contact'); const l=contactBtn.querySelector('.footer-label'); if(l) l.textContent='Contact'; }
+    const versionBtn=document.querySelector('.version-btn'); if(versionBtn) versionBtn.setAttribute('aria-label','Version et notes de version');
+    const pm=document.getElementById('privacyModal');
+    if(pm){
+      const h=pm.querySelector('h3'); if(h) h.textContent='Avis de confidentialité';
+      const ps=pm.querySelectorAll('p');
+      if(ps[0]) ps[0].textContent='FishMetrics n’utilise ni cookies de suivi ni traceurs publicitaires.';
+      if(ps[1]) ps[1].textContent='Vous pouvez supprimer à tout moment toutes les données stockées localement à l’aide du bouton ci-dessous.';
+      const clear=pm.querySelector('button[onclick="clearFishMetricsData()"]'); if(clear) clear.textContent='Effacer toutes les données locales';
+      if(ps[2]) ps[2].textContent='Conformité au RGPD : FishMetrics v1.8.2 – stockage des données uniquement en local.';
+      const close=pm.querySelector('.close-btn'); if(close) close.textContent='Fermer';
+    }
+    const rn=document.getElementById('releaseNotesModal');
+    if(rn){
+      const x=rn.querySelector('.release-notes-x'); if(x) x.setAttribute('aria-label','Fermer les notes de version');
+      const frNotes=[
+        'Ajout du Journal du capitaine pour les notes',
+        'Gestion des leurres améliorée','Horaires d’apparition des poissons mis à jour',
+        'Import groupé ajouté pour les prises de saison','Ajout de la génération d’affiches Toutes périodes et Saison','Ajout du suivi du prix des poissons','Interface du suivi XP actualisée',
+        'Ajout du Triangle des Bermudes VIP',
+        'Ajout de Petrochemical VIP','Ajout du Planificateur',
+        'Ajout des lieux VIP',
+        'Ajout de la répartition des étoiles','Nouveau bouton hors saison dans la vue Saison','Le Journal de saison suit l’ordre des poissons dans le jeu','Modifications mineures de l’interface et corrections de bugs','Les sauvegardes importées depuis d’anciennes versions peuvent présenter de légères variations de points en raison d’améliorations des calculs',
+        'Ajout des poissons de Marina','Ajout de la vue Saison','Ajout des Objectifs de carrière','Ajout du Mode Focus','Modifications mineures de l’interface'
+      ];
+      rn.querySelectorAll('.release-notes li').forEach((li,i)=>{ if(frNotes[i]) li.textContent=frNotes[i]; });
+    }
+
+    // Contact — use a visibly French action label ("Contact" itself is identical in French).
+    const contactBtn2=document.querySelector('.contact-btn');
+    if(contactBtn2){ const l=contactBtn2.querySelector('.footer-label'); if(l) l.textContent='Nous contacter'; contactBtn2.setAttribute('aria-label','Nous contacter'); }
+
+    // Captain's Log — static shell. Dynamic section titles/save status are handled in app.js.
+    set('captainsLogTitle','Journal du capitaine');
+    const cl=document.getElementById('captainsLogDrawer');
+    if(cl){
+      const sub=cl.querySelector('.captains-log-subtitle'); if(sub) sub.textContent='Vos notes, accessibles partout dans FishMetrics';
+      const close=cl.querySelector('#captainsLogClose'); if(close) close.setAttribute('aria-label','Fermer le Journal du capitaine');
+      const tabs=cl.querySelectorAll('.captains-log-tab');
+      const tabNames=['Général','Lieux','Planificateur','Batailles'];
+      tabs.forEach((b,i)=>{ if(tabNames[i]) b.textContent=tabNames[i]; });
+      const tablist=cl.querySelector('.captains-log-tabs'); if(tablist) tablist.setAttribute('aria-label','Sections du Journal du capitaine');
+      const ta=cl.querySelector('#captainsLogText'); if(ta) ta.placeholder='Écrivez ce que vous souhaitez retenir…';
+    }
+    const clToggle=document.getElementById('captainsLogToggle'); if(clToggle){ clToggle.setAttribute('aria-label','Journal du capitaine'); clToggle.setAttribute('data-tooltip','Journal du capitaine'); }
+
+    // Instructions — FishMetrics-authored guidance only. Canonical game names remain unchanged.
+    const iv=document.getElementById('instructionsView');
+    if(iv){
+      const title=iv.querySelector('.panel-title'); if(title) title.textContent='Mode d’emploi';
+      const blocks=iv.querySelectorAll('.ack-wrapper');
+      if(blocks[0]) blocks[0].querySelector('.instr-text').innerHTML='<b>FishMetrics</b> — un compagnon pour les joueurs qui aiment suivre, planifier et analyser leur parcours de pêche dans CotD. Ce n’est pas une évaluation scientifique du niveau de jeu, mais une façon structurée d’explorer vos statistiques et votre progression. Si vous aimez jouer avec les chiffres ou comparer vos statistiques avec vos amis et vos camarades de clan, vous êtes au bon endroit.';
+      if(blocks[1]) blocks[1].innerHTML='<strong>Comment utiliser FishMetrics</strong><br><span class="instr-text">1) Allez dans <span class="tab-ref">Journal</span> pour saisir le poids de vos poissons.<br>2) Le <span class="tab-ref">Tableau de bord</span> affiche votre progression générale et vos indicateurs clés.<br>3) Utilisez les curseurs du <span class="tab-ref">Tableau de bord</span> pour filtrer et explorer vos statistiques.<br>4) Analysez vos performances par lieu et par poisson avec <span class="tab-ref">Plages de scores</span> et <span class="tab-ref">Analyse des poissons</span>.<br>5) <span class="tab-ref">Objectifs de carrière</span> et <span class="tab-ref">Mode Focus</span> vous aident à déterminer quels poissons cibler pour améliorer vos statistiques.<br>6) Utilisez l’icône de partage (en haut à droite) pour télécharger et partager vos cartes de scores.</span>';
+      const strongs=iv.querySelectorAll('.ack-wrapper > strong');
+      strongs.forEach(el=>{ if(el.textContent.trim()==='Preferences') el.textContent='Préférences'; if(el.textContent.trim()==='Data & Backups') el.textContent='Données et sauvegardes'; if(el.textContent.trim()==='Season Archiving') el.textContent='Archivage des saisons'; });
+      const pref=iv.querySelector('.pref-note'); if(pref) pref.textContent='Choisissez comment FishMetrics gère les mises à jour de vos records personnels Toutes périodes lorsqu’une prise de Saison dépasse votre meilleur résultat.';
+      const opts=iv.querySelectorAll('.pref-option');
+      ['Demander à chaque fois','Toujours mettre à jour le record','Ne jamais mettre à jour le record'].forEach((t,i)=>{if(opts[i]){const input=opts[i].querySelector('input'); opts[i].textContent=' '+t; if(input) opts[i].prepend(input);}});
+      const review=iv.querySelector('#reviewSeasonPbUpdatesBtn'); if(review) review.textContent='Vérifier les mises à jour des records de Saison';
+      const actionNote=iv.querySelector('.pref-action-note'); if(actionNote) actionNote.textContent='Analysez les records de Saison pour repérer les prises susceptibles d’améliorer vos records Toutes périodes.';
+      const dataBlock=[...iv.querySelectorAll('.ack-wrapper')].find(x=>x.textContent.includes('Want to move FishMetrics')); if(dataBlock){const sp=dataBlock.querySelector('.instr-text'); if(sp) sp.textContent='Vous souhaitez utiliser FishMetrics sur un autre appareil (ou simplement conserver une copie de sécurité) ?';}
+      const exp=iv.querySelector('#backupExportBtn'); if(exp) exp.textContent='Exporter votre aquarium (JSON)';
+      const rl=iv.querySelector('.restore-label'); if(rl) rl.textContent='Restaurer votre aquarium';
+      const rd=iv.querySelector('#restoreDrop'); if(rd){rd.textContent='Déposez une sauvegarde FishMetrics ici, ou cliquez pour parcourir'; rd.setAttribute('aria-label','Déposez ici un fichier JSON de sauvegarde FishMetrics, ou cliquez pour parcourir');}
+      const seasonBlock=[...iv.querySelectorAll('.ack-wrapper')].find(x=>x.textContent.includes('Seasons archive automatically')); if(seasonBlock){const sp=seasonBlock.querySelector('.instr-text'); if(sp) sp.innerHTML='Les saisons sont archivées automatiquement au moment de la réinitialisation globale de CotD, et non à minuit heure locale.<br>Les informations de votre saison précédente sont conservées pour référence.';}
+      const ack=iv.querySelector('.ack-heading'); if(ack) ack.innerHTML='<strong>Remerciements</strong>';
+      const ackText=iv.querySelector('.ack-text'); if(ackText){ const link=ackText.querySelector('a'); const linkHTML=link?link.outerHTML:'<strong>Carp Diem</strong>'; ackText.innerHTML='Un immense merci à tout le monde — à mes formidables camarades de clan chez '+linkHTML+' qui ont inspiré ce projet et participé à de nombreuses heures de réflexion et de tests, aux amis de toute la communauté CotD pour leurs idées et leurs retours, et tout particulièrement à ces amis non-joueurs qui ne savaient absolument pas ce qu’était CotD mais n’ont jamais refusé un SOS de débogage — merci pour votre temps ! Ce projet ne serait pas possible sans vous 💜'; }
+      const foot=iv.querySelector('.fm-instructions-footer'); if(foot) foot.innerHTML='© 2026 FishMetrics — un projet personnel indépendant conçu pour aider les pêcheurs en jeu à suivre et améliorer leurs prises.<br>Tous les noms et toutes les données liés au jeu appartiennent à leurs propriétaires respectifs.<br>Sans affiliation avec une entreprise ou une organisation portant un nom similaire.';
+    }
+
+    // Share menu + restore confirmation shell.
+    const shareBtn=document.getElementById('menuBtn'); if(shareBtn){ shareBtn.setAttribute('aria-label','Partager'); shareBtn.setAttribute('title','Partager'); }
+    const share=document.getElementById('shareDropdown');
+    if(share){
+      share.setAttribute('aria-label','Partage');
+      const item=(mode,text)=>{ const el=share.querySelector('[data-share="'+mode+'"]'); if(el) el.textContent=text; };
+      item('overall','Carte de score générale');
+      item('all-time-poster','Affiche Toutes périodes');
+      item('current-season-poster','Affiche de la saison actuelle');
+      item('last-season-poster','Affiche de la saison précédente');
+      item('backup','Exporter votre aquarium (JSON)');
+      const section=share.querySelector('.menu-section'); if(section) section.textContent='Par lieu';
+    }
+    set('restoreConfirmTitle','Sauvegarde détectée');
+    set('restoreConfirmCancel','Annuler');
+    set('restoreConfirmOk','OK');
+
+    // Journal: static interface only. Generated fish rows/data remain untouched.
+    const rv=document.getElementById('recordsView');
+    if(rv){
+      const q=(sel,text)=>{const el=rv.querySelector(sel); if(el) el.textContent=text;};
+      q('.unit-toggle-label','Unité de poids');
+      const search=rv.querySelector('#fishSearchInput'); if(search) search.placeholder='Rechercher un poisson…';
+      const clear=rv.querySelector('#fishSearchClearBtn'); if(clear) clear.setAttribute('aria-label','Effacer la recherche');
+      const imp=rv.querySelector('#seasonImportBtn'); if(imp){ imp.textContent='Importer des captures de saison'; imp.setAttribute('aria-label','Importer des captures de saison'); }
+      q('.table-title','Journal des prises');
+      const loc=rv.querySelector('.location-select');
+      if(loc && loc.firstChild && loc.firstChild.nodeType===3) loc.firstChild.nodeValue='Lieu: ';
+      const totals=rv.querySelectorAll('.total-fish');
+      if(totals[0] && totals[0].firstChild) totals[0].firstChild.nodeValue='Total poissons: ';
+      if(totals[1] && totals[1].firstChild) totals[1].firstChild.nodeValue='Tous les lieux: ';
+      const th=rv.querySelectorAll('#recordsTable thead th');
+      const labels=['Rareté','Poisson',null,'Points','Étoiles'];
+      th.forEach((el,i)=>{ if(labels[i]) el.textContent=labels[i]; });
+      if(th[2]) th[2].innerHTML='Votre record (<span id="recordsUnitLabel">'+(document.getElementById('recordsUnitLabel')?.textContent||'lbs')+'</span>)';
+    }
+
+    // Fishing Guide welcome copy + controls. Dynamic opportunity rows are translated in app.js.
+    const welcome=document.querySelector('#companionWelcome .welcome-title'); if(welcome) welcome.textContent='Bienvenue pour une belle journée de pêche.';
+    const sub=document.querySelector('#companionWelcome .welcome-sub'); if(sub) sub.textContent='Enregistrez quelques prises pour débloquer :';
+    const lis=document.querySelectorAll('#companionWelcome .welcome-list li');
+    ['Meilleures opportunités de points','Améliorations proches d’un palier','Avantages saisonniers','Gains cachés'].forEach((t,i)=>{if(lis[i]) lis[i].textContent=t;});
+    const reset=document.getElementById('companionReset'); if(reset) reset.setAttribute('aria-label','Réinitialiser la position');
+    const dismiss=document.getElementById('companionDismiss'); if(dismiss) dismiss.setAttribute('aria-label','Fermer');
+  }
+  applySafeFrench();
+  document.addEventListener('DOMContentLoaded',()=>setTimeout(applySafeFrench,50),{once:true});
+  setTimeout(applySafeFrench,250);
+})();
+</script>
 
 <footer class="app-footer">
   <div class="footer-left">
@@ -775,7 +1023,7 @@ Not affiliated with any company or organization of a similar name.</div>
   <div class="footer-right">
     <button class="version-btn footer-meta-btn" onclick="openReleaseNotes()" aria-label="Version and release notes">
       <span class="footer-icon" aria-hidden="true">ⓘ</span>
-      <span class="footer-label">v1.8</span>
+      <span class="footer-label">v1.8.2</span>
     </button>
   </div>
 </footer>
@@ -795,7 +1043,7 @@ Not affiliated with any company or organization of a similar name.</div>
     <button onclick="clearFishMetricsData()">Clear All Local Data</button>
 
     <p class="privacy-footnote">
-      GDPR compliance: FishMetrics v1.8 – local-only data storage.
+      GDPR compliance: FishMetrics v1.8.2 – local-only data storage.
     </p>
 
     <button class="close-btn" onclick="closePrivacyNotice()">Close</button>
@@ -805,6 +1053,19 @@ Not affiliated with any company or organization of a similar name.</div>
 <div id="releaseNotesModal" class="privacy-modal">
   <div class="privacy-content release-notes-content">
     <button type="button" class="release-notes-x" onclick="closeReleaseNotes()" aria-label="Close release notes">×</button>
+
+<h3>FishMetrics v1.8.2</h3>
+
+<ul class="release-notes">
+  <li>Added Captain's Log for notes</li>
+</ul>
+
+<h3>FishMetrics v1.8.1</h3>
+
+<ul class="release-notes">
+  <li>Enhanced Lure Management</li>
+  <li>Updated Fish Spawn Timing</li>
+</ul>
 
 <h3>FishMetrics v1.8.0</h3>
 
@@ -983,6 +1244,111 @@ Not affiliated with any company or organization of a similar name.</div>
 <div id="companionRestore" style="display:none;" class="companion-restore-fixed" aria-live="polite">
   Fishing Guide <span id="restoreGuide" class="restore-link">↺ Restore</span>
 </div>
+
+
+<!-- Captain's Log: floating notebook -->
+<button type="button" id="captainsLogToggle" class="captains-log-toggle"
+        aria-label="Captain's Log" aria-controls="captainsLogDrawer"
+        aria-expanded="false" data-tooltip="Captain's Log">
+  <svg class="captains-log-book-icon" viewBox="0 0 64 64" aria-hidden="true">
+    <path class="captains-log-book-cover" d="M12 7h32a7 7 0 0 1 7 7v41H19a7 7 0 0 1-7-7V7Z"/>
+    <path class="captains-log-book-spine" d="M20 7v48"/>
+    <path class="captains-log-book-pages" d="M27 18h16M27 27h16M27 36h12"/>
+    <path class="captains-log-book-base" d="M12 47h39"/>
+    <path class="captains-log-bookmark" d="M34 53v9l4-3 4 3v-9"/>
+  </svg>
+  <span class="captains-log-shine" aria-hidden="true"></span>
+</button>
+
+<div id="captainsLogBackdrop" class="captains-log-backdrop" aria-hidden="true"></div>
+
+<aside id="captainsLogDrawer" class="captains-log-drawer"
+       aria-hidden="true" aria-labelledby="captainsLogTitle">
+  <div class="captains-log-header">
+    <div class="captains-log-heading">
+      <svg viewBox="0 0 64 64" aria-hidden="true">
+        <path d="M14 8h30a6 6 0 0 1 6 6v42H20a6 6 0 0 1-6-6V8Z"/>
+        <path d="M20 8v48"/>
+        <path d="M27 18h15M27 27h15M27 36h11"/>
+      </svg>
+      <div>
+        <div id="captainsLogTitle" class="captains-log-title">Captain's Log</div>
+        <div class="captains-log-subtitle">Your notes, available anywhere in FishMetrics</div>
+      </div>
+    </div>
+    <button type="button" id="captainsLogClose" class="captains-log-close" aria-label="Close Captain's Log">×</button>
+  </div>
+
+  <div class="captains-log-tabs" role="tablist" aria-label="Captain's Log sections">
+    <button type="button" class="captains-log-tab active" data-log-section="general" role="tab" aria-selected="true">General</button>
+    <button type="button" class="captains-log-tab" data-log-section="maps" role="tab" aria-selected="false">Maps</button>
+    <button type="button" class="captains-log-tab" data-log-section="planner" role="tab" aria-selected="false">Planner</button>
+    <button type="button" class="captains-log-tab" data-log-section="battles" role="tab" aria-selected="false">Battles</button>
+  </div>
+
+  <div class="captains-log-body">
+    <label class="captains-log-label" for="captainsLogText">
+      <span id="captainsLogSectionTitle">General Notes</span>
+      <span id="captainsLogSaved" class="captains-log-saved">Saved locally</span>
+    </label>
+    <textarea id="captainsLogText" class="captains-log-text"
+              placeholder="Write anything you want to remember..."></textarea>
+  </div>
+</aside>
+
+<script>
+(function(){
+  function forceCaptainLogClosed(){
+    var drawer=document.getElementById('captainsLogDrawer');
+    var backdrop=document.getElementById('captainsLogBackdrop');
+    var toggle=document.getElementById('captainsLogToggle');
+    if(drawer){
+      drawer.classList.remove('open');
+      drawer.setAttribute('aria-hidden','true');
+      drawer.style.transform='translate3d(105%,0,0)';
+      drawer.style.visibility='hidden';
+    }
+    if(backdrop){
+      backdrop.classList.remove('open');
+      backdrop.setAttribute('aria-hidden','true');
+      backdrop.style.opacity='0';
+      backdrop.style.visibility='hidden';
+    }
+    document.body.classList.remove('captains-log-open');
+    if(toggle) toggle.setAttribute('aria-expanded','false');
+  }
+
+  function closeCaptainLogFallback(event){
+    if(event){ event.preventDefault(); event.stopPropagation(); }
+    forceCaptainLogClosed();
+  }
+
+  forceCaptainLogClosed();
+  document.addEventListener('DOMContentLoaded', forceCaptainLogClosed, {once:true});
+  window.addEventListener('pageshow', function(e){ if(e.persisted) forceCaptainLogClosed(); });
+
+  var closeBtn=document.getElementById('captainsLogClose');
+  var backdrop=document.getElementById('captainsLogBackdrop');
+  if(closeBtn){
+    closeBtn.addEventListener('click', closeCaptainLogFallback, true);
+    closeBtn.addEventListener('touchend', closeCaptainLogFallback, {capture:true, passive:false});
+  }
+  if(backdrop){
+    backdrop.addEventListener('click', closeCaptainLogFallback, true);
+    backdrop.addEventListener('touchend', closeCaptainLogFallback, {capture:true, passive:false});
+  }
+
+  var toggle=document.getElementById('captainsLogToggle');
+  if(toggle){
+    toggle.addEventListener('click', function(){
+      var drawer=document.getElementById('captainsLogDrawer');
+      var backdrop=document.getElementById('captainsLogBackdrop');
+      if(drawer){ drawer.style.transform=''; drawer.style.visibility=''; }
+      if(backdrop){ backdrop.style.opacity=''; backdrop.style.visibility=''; }
+    }, true);
+  }
+})();
+</script>
 
 </body>
 </html>
