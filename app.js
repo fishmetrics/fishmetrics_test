@@ -11645,7 +11645,7 @@ function getFilteredPlannerRows(orderType = 'season'){
   function getSeasonMapOptions(){
     const pool = getSeasonPool();
     const allValue = plannerState.seasonScope === 'VIP' ? 'ALL_VIP' : 'ALL_MAIN';
-    return [{ value: allValue, label: plannerState.seasonScope === 'VIP' ? plannerTxt('All VIP Maps','Tous les lieux VIP') : plannerTxt('All Main Maps','Tous les lieux Main') }]
+    return [{ value: allValue, label: plannerState.seasonScope === 'VIP' ? plannerTxt('All VIP Maps','Tous les lieux VIP') : plannerTxt('All Main Maps','Tous les lieux') }]
       .concat(Object.keys(pool || {}).map((name) => ({ value: name, label: name })));
   }
 
@@ -11838,11 +11838,11 @@ function getFilteredPlannerRows(orderType = 'season'){
     }).join('');
 
     shell.body.innerHTML = `
-      ${plannerModuleNav(plannerTxt('Season Planning','Planification de saison'))}
+      ${plannerModuleNav(plannerTxt('Season Planning','Objectifs de saison'))}
       <section class="planner-lure-panel">
         <div class="planner-lure-head">
           <div class="planner-lure-title-wrap">
-            <div class="planner-lure-title">${plannerTxt('Season Planning','Planification de saison')}</div>
+            <div class="planner-lure-title">${plannerTxt('Season Planning','Objectifs de saison')}</div>
             <div class="planner-lure-copy">${plannerTxt('Forecast target points by month, map, and season status.','Prévoyez les points cibles par mois, lieu et statut saisonnier.')}</div>
           </div>
         </div>
@@ -11951,7 +11951,7 @@ function getFilteredPlannerRows(orderType = 'season'){
   function getOOSMapOptions(){
     const pool = plannerState.oosScope === 'VIP' ? (LOCATIONS_VIP || {}) : (LOCATIONS || {});
     const allValue = plannerState.oosScope === 'VIP' ? 'ALL_VIP' : 'ALL_MAIN';
-    return [{ value: allValue, label: plannerState.oosScope === 'VIP' ? plannerTxt('All VIP Maps','Toutes les cartes VIP') : plannerTxt('All Main Maps','Toutes les cartes Main') }]
+    return [{ value: allValue, label: plannerState.oosScope === 'VIP' ? plannerTxt('All VIP Maps','Toutes les cartes VIP') : plannerTxt('All Main Maps','Toutes les cartes') }]
       .concat(Object.keys(pool || {}).map((name) => ({ value: name, label: name })));
   }
 
@@ -12108,11 +12108,11 @@ function getFilteredPlannerRows(orderType = 'season'){
     }).join('');
 
     shell.body.innerHTML = `
-      ${plannerModuleNav(plannerTxt('OOS Planning','Planification OOS'))}
+      ${plannerModuleNav(plannerTxt('OOS Planning','Calendrier d’OOS'))}
       <section class="planner-lure-panel">
         <div class="planner-lure-head">
           <div class="planner-lure-title-wrap">
-            <div class="planner-lure-title">${plannerTxt('OOS Planning','Planification OOS')}</div>
+            <div class="planner-lure-title">${plannerTxt('OOS Planning','Calendrier d’OOS')}</div>
             <div class="planner-lure-copy">${plannerTxt('Guide view for what is at risk right now. Uses the current month automatically.','Vue guide de ce qui est à risque actuellement. Utilise automatiquement le mois en cours.')}</div>
           </div>
         </div>
@@ -12290,7 +12290,7 @@ function getFilteredPlannerRows(orderType = 'season'){
       <section class="planner-lure-panel">
         <div class="planner-lure-head">
           <div class="planner-lure-title-wrap">
-            <div class="planner-lure-title">${plannerTxt('Lure Planner','Planificateur de leurres')}</div>
+            <div class="planner-lure-title">${plannerTxt('Lure Planner','Planification des leurres')}</div>
             <div class="planner-lure-copy">${plannerTxt('Enter the current lure and fish in hand for each fish to see the highest lure level reachable now.','Saisissez le niveau actuel du leurre et le nombre de poissons en main pour chaque poisson afin de voir le niveau de leurre maximal accessible maintenant.')}</div>
           </div>
         </div>
@@ -12302,7 +12302,7 @@ function getFilteredPlannerRows(orderType = 'season'){
             </div>
             <label class="planner-map-control planner-map-control-inline">
               <span>${plannerTxt('Pick a map','Choisir un lieu')}</span>
-              <select id="plannerMapSelect" class="planner-select" ${isBattleSelection ? 'disabled aria-disabled="true" title="The selected battle list determines the map"' : ''}>${mapOptions.map((opt) => `<option value="${escapeAttr(opt)}" ${plannerState.map === opt ? 'selected' : ''}>${opt === 'ALL' ? (plannerState.scope === 'VIP' ? plannerTxt('All VIP Maps','Tous les lieux VIP') : plannerTxt('All Main Maps','Tous les lieux Main')) : escapeHtml(opt)}</option>`).join('')}</select>
+              <select id="plannerMapSelect" class="planner-select" ${isBattleSelection ? 'disabled aria-disabled="true" title="The selected battle list determines the map"' : ''}>${mapOptions.map((opt) => `<option value="${escapeAttr(opt)}" ${plannerState.map === opt ? 'selected' : ''}>${opt === 'ALL' ? (plannerState.scope === 'VIP' ? plannerTxt('All VIP Maps','Tous les lieux VIP') : plannerTxt('All Main Maps','Tous les lieux')) : escapeHtml(opt)}</option>`).join('')}</select>
             </label>
           </div>
           <div class="planner-control-row planner-control-row-rarity">
@@ -12468,7 +12468,7 @@ function getFilteredPlannerRows(orderType = 'season'){
                 <th>${plannerTxt('Location','Lieu')}</th>
                 <th>${plannerTxt('Fish','Poisson')}</th>
                 <th class="planner-sortable-head" data-lure-sort="currentLure">${plannerTxt('Current Lure','Leurre actuel')}${plannerSortArrow(plannerState.lureSortKey, plannerState.lureSortDir, 'currentLure')}</th>
-                <th class="planner-sortable-head" data-lure-sort="fishInHand">${plannerTxt('Fish in Hand','Poissons en main')}${plannerSortArrow(plannerState.lureSortKey, plannerState.lureSortDir, 'fishInHand')}</th>
+                <th class="planner-sortable-head" data-lure-sort="fishInHand">${plannerTxt('Fish in Hand','Poisson disponible')}${plannerSortArrow(plannerState.lureSortKey, plannerState.lureSortDir, 'fishInHand')}</th>
                 ${isCurrent
                   ? `<th>${plannerTxt('Reachable','Accessible')}</th>
                      <th class="planner-sortable-head" data-lure-sort="goldNeeded">${plannerTxt('Gold Needed','Or nécessaire')}${plannerSortArrow(plannerState.lureSortKey, plannerState.lureSortDir, 'goldNeeded')}</th>`
@@ -12502,7 +12502,7 @@ function getFilteredPlannerRows(orderType = 'season'){
         <div class="planner-lure-head">
           <div class="planner-lure-title-wrap">
             <div class="planner-lure-title">${plannerTxt('Lure Cost Calculator','Calculateur du coût des leurres')}</div>
-            <div class="planner-lure-copy">${plannerTxt('Calculate the fish and gold still needed to upgrade your lure from one level to another. Fish in Hand is applied step by step across the upgrade path.','Calculez les poissons et l’or encore nécessaires pour améliorer votre leurre d’un niveau à un autre. Les poissons en main sont appliqués étape par étape sur le parcours d’amélioration.')}</div>
+            <div class="planner-lure-copy">${plannerTxt('Calculate the fish and gold still needed to upgrade your lure from one level to another. Fish in Hand is applied step by step across the upgrade path.','Calculez les poissons et l’or encore nécessaires pour améliorer votre leurre d’un niveau à un autre. Le poisson disponible est appliqué étape par étape sur le parcours d’amélioration.')}</div>
           </div>
         </div>
 
@@ -12529,7 +12529,7 @@ function getFilteredPlannerRows(orderType = 'season'){
               <tr>
                 <th>${plannerTxt('From Lure','Leurre de départ')}</th>
                 <th>${plannerTxt('To Lure','Leurre cible')}</th>
-                <th>${plannerTxt('Fish in Hand','Poissons en main')}</th>
+                <th>${plannerTxt('Fish in Hand','Poisson disponible')}</th>
                 <th>${plannerTxt('Fish Needed','Poissons nécessaires')}</th>
                 <th>${plannerTxt('Gold Needed','Or nécessaire')}</th>
               </tr>
@@ -13167,7 +13167,7 @@ function getFilteredPlannerRows(orderType = 'season'){
             </div>
             <label class="planner-map-control planner-map-control-inline">
               <span>${plannerTxt('Pick a map','Choisir un lieu')}</span>
-              <select id="plannerMapSelect" class="planner-select">${mapOptions.map((opt) => `<option value="${escapeAttr(opt)}" ${plannerState.map === opt ? 'selected' : ''}>${opt === 'ALL' ? (plannerState.scope === 'VIP' ? plannerTxt('All VIP Maps','Tous les lieux VIP') : plannerTxt('All Main Maps','Tous les lieux Main')) : escapeHtml(opt)}</option>`).join('')}</select>
+              <select id="plannerMapSelect" class="planner-select">${mapOptions.map((opt) => `<option value="${escapeAttr(opt)}" ${plannerState.map === opt ? 'selected' : ''}>${opt === 'ALL' ? (plannerState.scope === 'VIP' ? plannerTxt('All VIP Maps','Tous les lieux VIP') : plannerTxt('All Main Maps','Tous les lieux')) : escapeHtml(opt)}</option>`).join('')}</select>
             </label>
           </div>
           <div class="planner-control-row planner-control-row-search">

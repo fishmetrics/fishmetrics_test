@@ -773,9 +773,9 @@ Not affiliated with any company or organization of a similar name.</div>
     const sub=pd.querySelector('.planner-sub'); if(sub) sub.textContent='Estimez le coût des leurres, planifiez les opportunités et prévoyez les points';
     const close=pd.querySelector('#plannerCloseBtn'); if(close){close.textContent='Statistiques'; close.setAttribute('aria-label','Statistiques');}
     const items=[
-      ['Planification de saison','Prévoyez les points cibles saisonniers par mois'],
-      ['Planification OOS','Ce qui est à risque en ce moment'],
-      ['Planification des leurres','Estimez les niveaux de leurre atteignables et leur coût'],
+      ['Objectifs de saison','Prévoyez les points cibles saisonniers par mois'],
+      ['Calendrier d’OOS','Ce qui est à risque en ce moment'],
+      ['Estimation des leurres','Estimez les niveaux de leurre atteignables et leur coût'],
       ['Calculateur du coût des leurres','Consultez le coût générique des améliorations de leurre'],
       ['Suivi XP','Suivez votre progression vers un objectif XP'],
       ['Suivi de la valeur des prises','Suivez le poids, les points et le prix de vente des poissons']
@@ -795,7 +795,7 @@ Not affiliated with any company or organization of a similar name.</div>
   }
   set('tabOverview','Tableau de bord');
   set('tabRecords','Journal');
-  set('tabMap','Plages de scores');
+  set('tabMap','Tableau de scores');
   set('tabFish','Analyse des poissons');
   set('tabCareerTargets','Objectifs de carrière');
   set('tabFocus','Mode Focus');
@@ -829,6 +829,11 @@ Not affiliated with any company or organization of a similar name.</div>
   set('typeRangeOos','(prises hors saison non incluses)');
   // Fish Insights — names/categories used by the game remain canonical.
   set('legendaryTitle','Les légendaires');
+  // Native-speaker polish: display the Legendary rarity as Légendaire in French.
+  const rarityLegend=document.querySelector('.legend-item .swatch.legendary');
+  if(rarityLegend && rarityLegend.parentElement){
+    Array.from(rarityLegend.parentElement.childNodes).forEach((n)=>{ if(n.nodeType===Node.TEXT_NODE && n.textContent.trim()==='Legendary') n.textContent='Légendaire'; });
+  }
   set('fearsomeTitle','Les Quatre Redoutables');
   set('eliteEpicsTitle','Épiques d’élite');
   set('shortLivedTitle','Les spéciales éphémères');
@@ -858,7 +863,16 @@ Not affiliated with any company or organization of a similar name.</div>
     const toggle=ct.querySelector('.ct-switch'); if(toggle) toggle.title='Changer le mode de tri';
   }
 
+  function applyNativeRarityFrench(root=document){
+    // Exact visible-text replacement only. Does not touch values, data attributes, IDs, or app state.
+    const walker=document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+    const nodes=[]; let n;
+    while((n=walker.nextNode())){ if(n.textContent.trim()==='Legendary') nodes.push(n); }
+    nodes.forEach((node)=>{ node.textContent=node.textContent.replace('Legendary','Légendaire'); });
+  }
+
   function applySafeFrench(){
+    applyNativeRarityFrench(document);
     // Re-apply Focus after its own initializer has populated/reset controls.
     set('focusTitle','Mode Focus');
     set('focusDesc','Le Mode Focus vous permet de choisir jusqu’à dix poissons et de voir à quel point chacun est proche de son prochain palier. Repérez les gains de points les plus importants et décidez quoi cibler ensuite.');
@@ -938,7 +952,7 @@ Not affiliated with any company or organization of a similar name.</div>
       const title=iv.querySelector('.panel-title'); if(title) title.textContent='Mode d’emploi';
       const blocks=iv.querySelectorAll('.ack-wrapper');
       if(blocks[0]) blocks[0].querySelector('.instr-text').innerHTML='<b>FishMetrics</b> — un compagnon pour les joueurs qui aiment suivre, planifier et analyser leur parcours de pêche dans CotD. Ce n’est pas une évaluation scientifique du niveau de jeu, mais une façon structurée d’explorer vos statistiques et votre progression. Si vous aimez jouer avec les chiffres ou comparer vos statistiques avec vos amis et vos camarades de clan, vous êtes au bon endroit.';
-      if(blocks[1]) blocks[1].innerHTML='<strong>Comment utiliser FishMetrics</strong><br><span class="instr-text">1) Allez dans <span class="tab-ref">Journal</span> pour saisir le poids de vos poissons.<br>2) Le <span class="tab-ref">Tableau de bord</span> affiche votre progression générale et vos indicateurs clés.<br>3) Utilisez les curseurs du <span class="tab-ref">Tableau de bord</span> pour filtrer et explorer vos statistiques.<br>4) Analysez vos performances par lieu et par poisson avec <span class="tab-ref">Plages de scores</span> et <span class="tab-ref">Analyse des poissons</span>.<br>5) <span class="tab-ref">Objectifs de carrière</span> et <span class="tab-ref">Mode Focus</span> vous aident à déterminer quels poissons cibler pour améliorer vos statistiques.<br>6) Utilisez l’icône de partage (en haut à droite) pour télécharger et partager vos cartes de scores.</span>';
+      if(blocks[1]) blocks[1].innerHTML='<strong>Comment utiliser FishMetrics</strong><br><span class="instr-text">1) Allez dans <span class="tab-ref">Journal</span> pour saisir le poids de vos poissons.<br>2) Le <span class="tab-ref">Tableau de bord</span> affiche votre progression générale et vos indicateurs clés.<br>3) Utilisez les curseurs du <span class="tab-ref">Tableau de bord</span> pour filtrer et explorer vos statistiques.<br>4) Analysez vos performances par lieu et par poisson avec <span class="tab-ref">Tableau de scores</span> et <span class="tab-ref">Analyse des poissons</span>.<br>5) <span class="tab-ref">Objectifs de carrière</span> et <span class="tab-ref">Mode Focus</span> vous aident à déterminer quels poissons cibler pour améliorer vos statistiques.<br>6) Utilisez l’icône de partage (en haut à droite) pour télécharger et partager vos cartes de scores.</span>';
       const strongs=iv.querySelectorAll('.ack-wrapper > strong');
       strongs.forEach(el=>{ if(el.textContent.trim()==='Preferences') el.textContent='Préférences'; if(el.textContent.trim()==='Data & Backups') el.textContent='Données et sauvegardes'; if(el.textContent.trim()==='Season Archiving') el.textContent='Archivage des saisons'; });
       const pref=iv.querySelector('.pref-note'); if(pref) pref.textContent='Choisissez comment FishMetrics gère les mises à jour de vos records personnels Toutes périodes lorsqu’une prise de Saison dépasse votre meilleur résultat.';
@@ -1347,6 +1361,15 @@ Not affiliated with any company or organization of a similar name.</div>
       if(backdrop){ backdrop.style.opacity=''; backdrop.style.visibility=''; }
     }, true);
   }
+
+  // Keep dynamically rendered rarity labels French without altering underlying category values.
+  const __fmFrRarityObserver=new MutationObserver((mutations)=>{
+    mutations.forEach((m)=>m.addedNodes.forEach((node)=>{
+      if(node.nodeType===Node.TEXT_NODE){ if(node.textContent.trim()==='Legendary') node.textContent=node.textContent.replace('Legendary','Légendaire'); }
+      else if(node.nodeType===Node.ELEMENT_NODE){ applyNativeRarityFrench(node); }
+    }));
+  });
+  __fmFrRarityObserver.observe(document.body,{childList:true,subtree:true});
 })();
 </script>
 
