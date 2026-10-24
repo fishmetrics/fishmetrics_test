@@ -9651,7 +9651,9 @@ try{
 /* Fishing Guide Opportunity Logic */
 (function(){
   const __guideFR = () => new URLSearchParams(location.search).get('lang') === 'fr';
-  const __guideTxt = (en, fr) => __guideFR() ? fr : en;
+  const __guideZH = () => new URLSearchParams(location.search).get('lang') === 'zh-CN';
+  const __guideZHText = {'High Value Target':'高价值目标','Cible à forte valeur':'高价值目标','Next upgrade':'下次升级','Closest Upgrade':'最接近升级','Nearest to next star (needs':'距离下一星级还需','Worth Catching This Season':'本赛季值得捕获','rare fish active':'种稀有鱼当前可捕获','Missing Fish':'未捕获鱼类','No fish uncaught. Bestiary 100%':'所有鱼类均已捕获，图鉴完成度 100%','Nearest to next star':'最接近下一星级','Quick Win':'快速提升','Not yet caught':'尚未捕获','Easy upgrade':'轻松升级','No easy catches right now':'目前没有容易提升的目标','Seasonal Targets':'赛季目标','Switch to Season view':'切换到赛季视图'};
+  const __guideTxt = (en, fr) => __guideZH() ? (__guideZHText[en] || en) : (__guideFR() ? fr : en);
   function norm(name){ return String(name||'').trim().toLowerCase().replace(/\s+/g,' '); }
   function normCat(cat){
     const c = String(cat||'').toLowerCase();
@@ -9828,7 +9830,7 @@ try{
   }
 
   function setNearTerm(name, dist){
-    setRow(1, __guideTxt('Closest Upgrade','Amélioration la plus proche'), `${toTitle(name)} → ${__guideTxt('Nearest to next star (needs','Plus proche de la prochaine étoile (besoin de')} ${dist} pts`);
+    setRow(1, __guideTxt('Closest Upgrade','Amélioration la plus proche'), `${toTitle(name)} → ${__guideTxt('Nearest to next star (needs','Plus proche de la prochaine étoile (besoin de')} ${dist} pts${__guideZH() ? '' : ''}`);
   }
 
   function setSeasonal(count){
