@@ -681,7 +681,7 @@ function setupHomeButton(){
   if(btn.dataset) btn.dataset.homeBound = '1';
   btn.addEventListener('click', () => {
     // Go back to landing page
-    window.location.href = (new URLSearchParams(window.location.search).get('lang') === 'fr') ? 'index.html?lang=fr' : 'index.html';
+    { const __lang=new URLSearchParams(window.location.search).get('lang'); window.location.href = __lang==='fr' ? 'index.html?lang=fr' : (__lang==='zh-CN' ? 'index.html?lang=zh-CN' : 'index.html'); }
   });
 }
 
@@ -1089,7 +1089,8 @@ function renderStarDistributionBar(totalCaught, star1, star2, star3, star4, star
 
   if(legend){
     const rangeLabel = season ? '1–5★' : '2–5★';
-    const basis = `Based on ${denom} fish (${rangeLabel})`;
+    const __lang = new URLSearchParams(location.search).get('lang');
+    const basis = __lang === 'fr' ? `Basé sur ${denom} poissons (${rangeLabel})` : (__lang === 'zh-CN' ? `基于 ${denom} 条鱼 (${rangeLabel})` : `Based on ${denom} fish (${rangeLabel})`);
     legend.textContent = `${basis} • ` + counts.map(c=>{
       const pct = (c.count / denom) * 100;
       return `${c.stars}★ ${pct.toFixed(1)}% (${c.count})`;
@@ -1106,7 +1107,7 @@ function renderHigh4Chip(count, denom){
   const d = Number(denom) || 0;
   const pct = d > 0 ? (100 * c / d) : 0;
   if(countEl) countEl.textContent = String(c);
-  if(pctEl) pctEl.textContent = `${pct.toFixed(1)}% • 85.5%+ max`;
+  if(pctEl) pctEl.textContent = `${pct.toFixed(1)}% • ${new URLSearchParams(location.search).get('lang')==='zh-CN' ? '最高分的 85.5%+' : '85.5%+ max'}`;
   chip.title = `High 4★: ${c}${d ? ` (${pct.toFixed(1)}%)` : ''}. Counts 4★ catches at 85.5%+ of max points, below 5★.`;
 }
 
@@ -1170,7 +1171,7 @@ function populateLocationOptions(){
   const allCount = Object.values(getLocationsData() || {}).reduce((sum,arr)=>sum + (Array.isArray(arr) ? arr.length : 0),0);
   const allOpt = document.createElement("option");
   allOpt.value = "__ALL__";
-  allOpt.textContent = (new URLSearchParams(location.search).get('lang')==='fr') ? `Tous les lieux (${allCount})` : `All Locations (${allCount})`;
+  { const __lang=new URLSearchParams(location.search).get('lang'); allOpt.textContent = (__lang==='fr') ? `Tous les lieux (${allCount})` : (__lang==='zh-CN' ? `所有地点 (${allCount})` : `All Locations (${allCount})`); }
   locationSelect.appendChild(allOpt);
 
   getLocationList().forEach(loc=>{
@@ -1197,7 +1198,7 @@ function buildLocationButtons(){
   allBtn.type = "button";
   allBtn.className = "loc-btn";
   allBtn.dataset.value = "__ALL__";
-  allBtn.textContent = (new URLSearchParams(location.search).get('lang')==='fr') ? "Tous les lieux" : "All Locations";
+  { const __lang=new URLSearchParams(location.search).get('lang'); allBtn.textContent = (__lang==='fr') ? "Tous les lieux" : (__lang==='zh-CN' ? "所有地点" : "All Locations"); }
   locationButtonsEl.appendChild(allBtn);
 
   getLocationList().forEach((loc, i)=>{
@@ -1394,7 +1395,7 @@ function renderPersonalBests(allFish){
     const panel = wrap.closest('.panel');
     const titleEl = panel ? panel.querySelector('.panel-title') : null;
     if(titleEl){
-      titleEl.textContent = seasonMode ? (new URLSearchParams(location.search).get('lang') === 'fr' ? '✨ Temps forts' : '✨ Highlights') : (new URLSearchParams(location.search).get('lang') === 'fr' ? '👑 Records personnels' : '👑 Personal Bests');
+      { const __l=new URLSearchParams(location.search).get('lang'); titleEl.textContent = seasonMode ? (__l==='fr' ? '✨ Temps forts' : (__l==='zh-CN' ? '✨ 亮点' : '✨ Highlights')) : (__l==='fr' ? '👑 Records personnels' : (__l==='zh-CN' ? '👑 个人最佳' : '👑 Personal Bests')); }
     }
   }catch(_){ }
 
@@ -1444,7 +1445,7 @@ function renderPersonalBests(allFish){
             <div class="best-rarity">${rarity} ${label}</div>
             <div class="best-points">—</div>
           </div>
-          <div class="best-fish">${new URLSearchParams(location.search).get('lang') === 'fr' ? 'Aucun record' : 'No record yet'}</div>
+          <div class="best-fish">${new URLSearchParams(location.search).get('lang') === 'fr' ? 'Aucun record' : (new URLSearchParams(location.search).get('lang') === 'zh-CN' ? '暂无记录' : 'No record yet')}</div>
           <div class="best-meta">
             <span class="pill">⭐ —</span>
             <span class="pill">📍 —</span>
@@ -1470,7 +1471,7 @@ function renderPersonalBests(allFish){
   let tiles = '';
   if(seasonMode){
     // Sequence: Common lowest, Common highest, Rare lowest, Rare highest, Epic lowest, Epic highest, Legendary lowest, Legendary highest
-    tiles = rarityOrder.map(r => tile(r, new URLSearchParams(location.search).get('lang') === 'fr' ? 'Plus bas' : 'Lowest', worstOf(r)) + tile(r, new URLSearchParams(location.search).get('lang') === 'fr' ? 'Plus haut' : 'Highest', bestOf(r))).join('');
+    tiles = rarityOrder.map(r => tile(r, new URLSearchParams(location.search).get('lang') === 'fr' ? 'Plus bas' : (new URLSearchParams(location.search).get('lang') === 'zh-CN' ? '最低' : 'Lowest'), worstOf(r)) + tile(r, new URLSearchParams(location.search).get('lang') === 'fr' ? 'Plus haut' : (new URLSearchParams(location.search).get('lang') === 'zh-CN' ? '最高' : 'Highest'), bestOf(r))).join('');
   } else {
     // Career mode: original behavior (highest only)
     tiles = rarityOrder.map(rarity => {
@@ -1482,7 +1483,7 @@ function renderPersonalBests(allFish){
               <div class="best-rarity">${rarity}</div>
               <div class="best-points">—</div>
             </div>
-            <div class="best-fish">${new URLSearchParams(location.search).get('lang') === 'fr' ? 'Aucun record' : 'No record yet'}</div>
+            <div class="best-fish">${new URLSearchParams(location.search).get('lang') === 'fr' ? 'Aucun record' : (new URLSearchParams(location.search).get('lang') === 'zh-CN' ? '暂无记录' : 'No record yet')}</div>
             <div class="best-meta">
               <span class="pill">⭐ —</span>
               <span class="pill">📍 —</span>
@@ -2126,13 +2127,15 @@ function setDonutProgress(pct){
 function setTableHeaders(isAll){
   if(!theadRow) return;
   const seasonMode = document.body.classList.contains('season-active');
-  const __fr = new URLSearchParams(location.search).get('lang')==='fr';
-  const weightHdr = seasonMode ? ((__fr ? 'Poids (auto)' : 'Weight (auto)') + ` (<span id="recordsUnitLabel">${weightUnit}</span>)`) : ((__fr ? 'Votre record' : 'Your Record') + ` (<span id="recordsUnitLabel">${weightUnit}</span>)`);
-  const pointsHdr = seasonMode ? (__fr ? 'Points de saison' : 'Season Points') : 'Points';
-  const locationHdr = __fr ? 'Lieu' : 'Location';
-  const categoryHdr = __fr ? 'Catégorie' : 'Category';
-  const fishHdr = __fr ? 'Poisson' : 'Fish';
-  const starsHdr = __fr ? 'Étoiles' : 'Stars';
+  const __lang = new URLSearchParams(location.search).get('lang');
+  const __fr = __lang === 'fr';
+  const __zh = __lang === 'zh-CN';
+  const weightHdr = seasonMode ? (((__fr ? 'Poids (auto)' : (__zh ? '重量（自动）' : 'Weight (auto)'))) + ` (<span id="recordsUnitLabel">${weightUnit}</span>)`) : (((__fr ? 'Votre record' : (__zh ? '个人记录' : 'Your Record'))) + ` (<span id="recordsUnitLabel">${weightUnit}</span>)`);
+  const pointsHdr = seasonMode ? (__fr ? 'Points de saison' : (__zh ? '赛季分数' : 'Season Points')) : (__zh ? '分数' : 'Points');
+  const locationHdr = __fr ? 'Lieu' : (__zh ? '地点' : 'Location');
+  const categoryHdr = __fr ? 'Catégorie' : (__zh ? '类别' : 'Category');
+  const fishHdr = __fr ? 'Poisson' : (__zh ? '鱼' : 'Fish');
+  const starsHdr = __fr ? 'Étoiles' : (__zh ? '星级' : 'Stars');
 
   // Always show a Location column (in single-location view, it will be locked to the selected location).
   theadRow.innerHTML = `
@@ -3527,8 +3530,8 @@ brokenXAxisBreak);
       labels: [],
       datasets: [
         { label: "Range", type: "line", data: [], pointRadius: 0, borderWidth: 3, parsing:false, spanGaps:false },
-        { label: "Lowest", type: "scatter", data: [], pointRadius: 5, pointHitRadius: 12, pointBackgroundColor:"#e53935", pointBorderColor:"#e53935", pointHoverBackgroundColor:"#e53935", pointHoverBorderColor:"#e53935", backgroundColor:"#e53935", borderColor:"#e53935"},
-        { label: "Highest", type: "scatter", data: [], pointRadius: 5, pointHitRadius: 12, pointBackgroundColor:"#00e676", pointBorderColor:"#00e676", pointHoverBackgroundColor:"#00e676", pointHoverBorderColor:"#00e676", backgroundColor:"#00e676", borderColor:"#00e676"},
+        { label: (new URLSearchParams(location.search).get('lang')==='zh-CN' ? '最低' : 'Lowest'), type: "scatter", data: [], pointRadius: 5, pointHitRadius: 12, pointBackgroundColor:"#e53935", pointBorderColor:"#e53935", pointHoverBackgroundColor:"#e53935", pointHoverBorderColor:"#e53935", backgroundColor:"#e53935", borderColor:"#e53935"},
+        { label: (new URLSearchParams(location.search).get('lang')==='zh-CN' ? '最高' : 'Highest'), type: "scatter", data: [], pointRadius: 5, pointHitRadius: 12, pointBackgroundColor:"#00e676", pointBorderColor:"#00e676", pointHoverBackgroundColor:"#00e676", pointHoverBorderColor:"#00e676", backgroundColor:"#00e676", borderColor:"#00e676"},
       ]
     },
     options: {
@@ -3561,8 +3564,8 @@ brokenXAxisBreak);
       labels: [],
       datasets: [
         { label: "Range", type: "line", data: [], pointRadius: 0, borderWidth: 3, parsing:false, spanGaps:false },
-        { label: "Lowest", type: "scatter", data: [], pointRadius: 5, pointHitRadius: 12, pointBackgroundColor:"#e53935", pointBorderColor:"#e53935", pointHoverBackgroundColor:"#e53935", pointHoverBorderColor:"#e53935", backgroundColor:"#e53935", borderColor:"#e53935"},
-        { label: "Highest", type: "scatter", data: [], pointRadius: 5, pointHitRadius: 12, pointBackgroundColor:"#00e676", pointBorderColor:"#00e676", pointHoverBackgroundColor:"#00e676", pointHoverBorderColor:"#00e676", backgroundColor:"#00e676", borderColor:"#00e676"},
+        { label: (new URLSearchParams(location.search).get('lang')==='zh-CN' ? '最低' : 'Lowest'), type: "scatter", data: [], pointRadius: 5, pointHitRadius: 12, pointBackgroundColor:"#e53935", pointBorderColor:"#e53935", pointHoverBackgroundColor:"#e53935", pointHoverBorderColor:"#e53935", backgroundColor:"#e53935", borderColor:"#e53935"},
+        { label: (new URLSearchParams(location.search).get('lang')==='zh-CN' ? '最高' : 'Highest'), type: "scatter", data: [], pointRadius: 5, pointHitRadius: 12, pointBackgroundColor:"#00e676", pointBorderColor:"#00e676", pointHoverBackgroundColor:"#00e676", pointHoverBorderColor:"#00e676", backgroundColor:"#00e676", borderColor:"#00e676"},
       ]
     },
     options: {
@@ -3595,8 +3598,8 @@ brokenXAxisBreak);
       labels: [],
       datasets: [
         { label: "Range", type: "line", data: [], pointRadius: 0, borderWidth: 3, parsing:false, spanGaps:false },
-        { label: "Lowest", type: "scatter", data: [], pointRadius: 5, pointHitRadius: 12, pointBackgroundColor:"#e53935", pointBorderColor:"#e53935", pointHoverBackgroundColor:"#e53935", pointHoverBorderColor:"#e53935", backgroundColor:"#e53935", borderColor:"#e53935"},
-        { label: "Highest", type: "scatter", data: [], pointRadius: 5, pointHitRadius: 12, pointBackgroundColor:"#00e676", pointBorderColor:"#00e676", pointHoverBackgroundColor:"#00e676", pointHoverBorderColor:"#00e676", backgroundColor:"#00e676", borderColor:"#00e676"},
+        { label: (new URLSearchParams(location.search).get('lang')==='zh-CN' ? '最低' : 'Lowest'), type: "scatter", data: [], pointRadius: 5, pointHitRadius: 12, pointBackgroundColor:"#e53935", pointBorderColor:"#e53935", pointHoverBackgroundColor:"#e53935", pointHoverBorderColor:"#e53935", backgroundColor:"#e53935", borderColor:"#e53935"},
+        { label: (new URLSearchParams(location.search).get('lang')==='zh-CN' ? '最高' : 'Highest'), type: "scatter", data: [], pointRadius: 5, pointHitRadius: 12, pointBackgroundColor:"#00e676", pointBorderColor:"#00e676", pointHoverBackgroundColor:"#00e676", pointHoverBorderColor:"#00e676", backgroundColor:"#00e676", borderColor:"#00e676"},
       ]
     },
     options: {
@@ -4046,17 +4049,15 @@ function updateSeasonBannerHeader(){
     // Title: "Season Active — Month YYYY" (always)
     let monthLabel = "";
     try{
-      monthLabel = new Intl.DateTimeFormat('en-US', { month: 'long', year: 'numeric' }).format(new Date());
+      monthLabel = new Intl.DateTimeFormat(new URLSearchParams(location.search).get('lang')==='fr'?'fr-FR':(new URLSearchParams(location.search).get('lang')==='zh-CN'?'zh-CN':'en-US'), { month: 'long', year: 'numeric' }).format(new Date());
     }catch(_){ monthLabel = ""; }
-    titleEl.textContent = monthLabel ? `Season Active — ${monthLabel}` : "Season Active";
+    { const L=new URLSearchParams(location.search).get('lang'); const prefix=L==='fr'?'Saison en cours':(L==='zh-CN'?'当前赛季':'Season Active'); titleEl.textContent=monthLabel?`${prefix} — ${monthLabel}`:prefix; }
 
     // Subtitle: distinguish VIP vs Main (only)
     const subEl = banner.querySelector('.season-banner-sub');
     if(subEl){
       const usingVipDataset = (typeof getLocationsData === 'function') && (getLocationsData() === LOCATIONS_VIP);
-      subEl.textContent = usingVipDataset
-        ? "Monthly CotD VIP Season • All-time stats unaffected"
-        : "Monthly CotD Season • All-time stats unaffected";
+      { const L=new URLSearchParams(location.search).get('lang'); subEl.textContent=L==='fr'?(usingVipDataset?'Saison mensuelle VIP CotD · Les statistiques de carrière ne sont pas affectées':'Saison mensuelle CotD · Les statistiques de carrière ne sont pas affectées'):(L==='zh-CN'?(usingVipDataset?'CotD VIP 月度赛季 · 不影响历史总成绩':'CotD 月度赛季 · 不影响历史总成绩'):(usingVipDataset?'Monthly CotD VIP Season • All-time stats unaffected':'Monthly CotD Season • All-time stats unaffected')); }
     }
   }catch(_){}
 }
@@ -4373,8 +4374,8 @@ try{
       // Build datasets without null separators (more stable across browsers).
       typeDumbbellChart.data.datasets = [
         ...rangeSets,
-        { label: 'Lowest', type: 'scatter', data: lows, pointRadius: 5, pointHitRadius: 12, parsing: false, pointBackgroundColor: '#e53935', pointBorderColor: '#e53935', backgroundColor: '#e53935', borderColor: '#e53935', pointHoverBackgroundColor: '#e53935', pointHoverBorderColor: '#e53935' },
-        { label: 'Highest', type: 'scatter', data: highs, pointRadius: 5, pointHitRadius: 12, parsing: false, pointBackgroundColor: '#00e676', pointBorderColor: '#00e676', backgroundColor: '#00e676', borderColor: '#00e676', pointHoverBackgroundColor: '#00e676', pointHoverBorderColor: '#00e676' },
+        { label: (new URLSearchParams(location.search).get('lang')==='zh-CN' ? '最低' : 'Lowest'), type: 'scatter', data: lows, pointRadius: 5, pointHitRadius: 12, parsing: false, pointBackgroundColor: '#e53935', pointBorderColor: '#e53935', backgroundColor: '#e53935', borderColor: '#e53935', pointHoverBackgroundColor: '#e53935', pointHoverBorderColor: '#e53935' },
+        { label: (new URLSearchParams(location.search).get('lang')==='zh-CN' ? '最高' : 'Highest'), type: 'scatter', data: highs, pointRadius: 5, pointHitRadius: 12, parsing: false, pointBackgroundColor: '#00e676', pointBorderColor: '#00e676', backgroundColor: '#00e676', borderColor: '#00e676', pointHoverBackgroundColor: '#00e676', pointHoverBorderColor: '#00e676' },
       ];
 
       // Ensure broken-scale tick labels always reflect raw point values (not mapped units)
@@ -4461,8 +4462,8 @@ try{
       // Datasets without null separators (prevents occasional full-blank renders).
       chart.data.datasets = [
         ...rangeSets,
-        { label: 'Lowest', type: 'scatter', data: minPts, pointRadius: 5, pointHitRadius: 12, parsing: false, pointBackgroundColor: '#e53935', pointBorderColor: '#e53935', backgroundColor: '#e53935', borderColor: '#e53935', pointHoverBackgroundColor: '#e53935', pointHoverBorderColor: '#e53935' },
-        { label: 'Highest', type: 'scatter', data: maxPts, pointRadius: 5, pointHitRadius: 12, parsing: false, pointBackgroundColor: '#00e676', pointBorderColor: '#00e676', backgroundColor: '#00e676', borderColor: '#00e676', pointHoverBackgroundColor: '#00e676', pointHoverBorderColor: '#00e676' },
+        { label: (new URLSearchParams(location.search).get('lang')==='zh-CN' ? '最低' : 'Lowest'), type: 'scatter', data: minPts, pointRadius: 5, pointHitRadius: 12, parsing: false, pointBackgroundColor: '#e53935', pointBorderColor: '#e53935', backgroundColor: '#e53935', borderColor: '#e53935', pointHoverBackgroundColor: '#e53935', pointHoverBorderColor: '#e53935' },
+        { label: (new URLSearchParams(location.search).get('lang')==='zh-CN' ? '最高' : 'Highest'), type: 'scatter', data: maxPts, pointRadius: 5, pointHitRadius: 12, parsing: false, pointBackgroundColor: '#00e676', pointBorderColor: '#00e676', backgroundColor: '#00e676', borderColor: '#00e676', pointHoverBackgroundColor: '#00e676', pointHoverBorderColor: '#00e676' },
       ];
       safeUpdate(chart, { requireVisible: true });
     }
@@ -4514,7 +4515,7 @@ try{
     if(fearsomeChart){
       try{
         const __t = document.getElementById('fearsomeChart')?.closest('.panel')?.querySelector('.panel-title');
-        if(__t) __t.textContent = (__isVipAlltimeFI ? (new URLSearchParams(location.search).get('lang') === 'fr' ? 'Les Epic' : 'The Epics') : (new URLSearchParams(location.search).get('lang') === 'fr' ? 'Les Quatre Redoutables' : 'The Fearsome Four'));
+        if(__t){ const __l=new URLSearchParams(location.search).get('lang'); __t.textContent = __isVipAlltimeFI ? (__l==='fr'?'Les Epic':(__l==='zh-CN'?'Epic 鱼类':'The Epics')) : (__l==='fr'?'Les Quatre Redoutables':(__l==='zh-CN'?'四大强敌':'The Fearsome Four')); }
       }catch(_){ }
 
       fearsomeChart.data.labels = fearList.map(f => __wrapWordsFearsome(toTitleCase(f.name), 10));
@@ -4554,12 +4555,11 @@ function getSeasonImprovementTargets(allFish, category, limit=10){
         try{
           const __t = document.getElementById('eliteEpicsChart')?.closest('.panel')?.querySelector('.panel-title');
           if(__t){
-            const __fr = new URLSearchParams(location.search).get('lang') === 'fr';
+            const __l = new URLSearchParams(location.search).get('lang');
+            const __fr = __l === 'fr', __zh = __l === 'zh-CN';
             __t.innerHTML = __isVipAlltimeFI
-              ? (__fr ? 'Les meilleurs poissons Rare' : 'The Top Rares')
-              : (__fr
-                  ? 'Common – Cibles prioritaires<span class="panel-subtitle">Common aux scores les plus bas</span>'
-                  : 'Commons – Key Targets<span class="panel-subtitle">Lowest-scoring commons</span>');
+              ? (__fr ? 'Les meilleurs poissons Rare' : (__zh ? '顶级 Rare 鱼类' : 'The Top Rares'))
+              : (__fr ? 'Common – Cibles prioritaires<span class="panel-subtitle">Common aux scores les plus bas</span>' : (__zh ? 'Common — 重点目标<span class="panel-subtitle">分数最低的 Common</span>' : 'Commons – Key Targets<span class="panel-subtitle">Lowest-scoring commons</span>'));
           }
         }catch(_){ }
         // Season mode: ensure Chart.js does not auto-skip category labels.
@@ -4589,7 +4589,7 @@ function getSeasonImprovementTargets(allFish, category, limit=10){
       if(eliteEpicsChart){
         try{
           const __t = document.getElementById('eliteEpicsChart')?.closest('.panel')?.querySelector('.panel-title');
-          if(__t) __t.textContent = (__isVipAlltimeFI ? (new URLSearchParams(location.search).get('lang') === 'fr' ? 'Les meilleurs poissons Rare' : 'The Top Rares') : (new URLSearchParams(location.search).get('lang') === 'fr' ? 'Épiques d’élite' : 'The Elite Epics'));
+          if(__t){ const __l=new URLSearchParams(location.search).get('lang'); __t.textContent = __isVipAlltimeFI ? (__l==='fr'?'Les meilleurs poissons Rare':(__l==='zh-CN'?'顶级 Rare 鱼类':'The Top Rares')) : (__l==='fr'?'Épiques d’élite':(__l==='zh-CN'?'精英 Epic':'The Elite Epics')); }
         }catch(_){ }
         // Career mode: restore default auto-skip behavior.
         try{
@@ -4758,20 +4758,16 @@ function setupSeasonMode(){
       const shortT = document.getElementById('shortLivedTitle');
       const invT = document.getElementById('invisiblesTitle');
       if(m === "season"){
-        const __fr = new URLSearchParams(location.search).get('lang') === 'fr';
-        if(eliteT) eliteT.innerHTML = __fr
-          ? 'Common – Cibles prioritaires<span class="panel-subtitle">Common aux scores les plus bas</span>'
-          : 'Commons – Key Targets<span class="panel-subtitle">Lowest-scoring commons</span>';
-        if(shortT) shortT.innerHTML = __fr
-          ? 'Rare – Cibles prioritaires<span class="panel-subtitle">Rare aux scores les plus bas</span>'
-          : 'Rares – Key Targets<span class="panel-subtitle">Lowest-scoring rares</span>';
-        if(invT) invT.innerHTML = __fr
-          ? 'Epic – Cibles prioritaires<span class="panel-subtitle">Epic aux scores les plus bas</span>'
-          : 'Epics – Key Targets<span class="panel-subtitle">Lowest-scoring epics</span>';
+        const __l = new URLSearchParams(location.search).get('lang');
+        const __fr = __l === 'fr', __zh = __l === 'zh-CN';
+        if(eliteT) eliteT.innerHTML = __fr ? 'Common – Cibles prioritaires<span class="panel-subtitle">Common aux scores les plus bas</span>' : (__zh ? 'Common — 重点目标<span class="panel-subtitle">分数最低的 Common</span>' : 'Commons – Key Targets<span class="panel-subtitle">Lowest-scoring commons</span>');
+        if(shortT) shortT.innerHTML = __fr ? 'Rare – Cibles prioritaires<span class="panel-subtitle">Rare aux scores les plus bas</span>' : (__zh ? 'Rare — 重点目标<span class="panel-subtitle">分数最低的 Rare</span>' : 'Rares – Key Targets<span class="panel-subtitle">Lowest-scoring rares</span>');
+        if(invT) invT.innerHTML = __fr ? 'Epic – Cibles prioritaires<span class="panel-subtitle">Epic aux scores les plus bas</span>' : (__zh ? 'Epic — 重点目标<span class="panel-subtitle">分数最低的 Epic</span>' : 'Epics – Key Targets<span class="panel-subtitle">Lowest-scoring epics</span>');
       }else{
-        if(eliteT) eliteT.textContent = new URLSearchParams(location.search).get('lang') === 'fr' ? "Épiques d’élite" : "The Elite Epics";
-        if(shortT) shortT.textContent = new URLSearchParams(location.search).get('lang') === 'fr' ? "Les spéciales éphémères" : "The Short-Lived Specials";
-        if(invT) invT.textContent = new URLSearchParams(location.search).get('lang') === 'fr' ? "Les invisibles" : "The Invisibles";
+        { const __l=new URLSearchParams(location.search).get('lang');
+        if(eliteT) eliteT.textContent = __l==='fr' ? "Épiques d’élite" : (__l==='zh-CN' ? '精英 Epic' : "The Elite Epics");
+        if(shortT) shortT.textContent = __l==='fr' ? "Les spéciales éphémères" : (__l==='zh-CN' ? '限时特殊鱼' : "The Short-Lived Specials");
+        if(invT) invT.textContent = __l==='fr' ? "Les invisibles" : (__l==='zh-CN' ? '隐形鱼' : "The Invisibles"); }
       }
     }catch(_){}
 
@@ -4791,19 +4787,17 @@ function setupSeasonMode(){
             const mm = Number(parts[1]);
             if(Number.isFinite(yy) && Number.isFinite(mm)){
               const dt = new Date(yy, Math.max(0, mm-1), 1);
-              monthLabel = dt.toLocaleString(undefined, { month: 'long', year: 'numeric' });
+              monthLabel = dt.toLocaleString(new URLSearchParams(location.search).get('lang')==='fr'?'fr-FR':(new URLSearchParams(location.search).get('lang')==='zh-CN'?'zh-CN':undefined), { month: 'long', year: 'numeric' });
             }
           }
         }catch(_){ monthLabel = ""; }
 
-        titleEl.textContent = monthLabel ? `Season Active — ${monthLabel}` : "Season Active";
+        { const L=new URLSearchParams(location.search).get('lang'); const prefix=L==='fr'?'Saison en cours':(L==='zh-CN'?'当前赛季':'Season Active'); titleEl.textContent=monthLabel?`${prefix} — ${monthLabel}`:prefix; }
         try{
           const subEl = banner.querySelector(".season-banner-sub");
           if(subEl){
             const usingVipDataset = getLocationsData() === LOCATIONS_VIP;
-            subEl.textContent = usingVipDataset
-              ? "Monthly CotD VIP Season • All-time stats unaffected"
-              : "Monthly CotD Season • All-time stats unaffected";
+            { const L=new URLSearchParams(location.search).get('lang'); subEl.textContent=L==='fr'?(usingVipDataset?'Saison mensuelle VIP CotD · Les statistiques de carrière ne sont pas affectées':'Saison mensuelle CotD · Les statistiques de carrière ne sont pas affectées'):(L==='zh-CN'?(usingVipDataset?'CotD VIP 月度赛季 · 不影响历史总成绩':'CotD 月度赛季 · 不影响历史总成绩'):(usingVipDataset?'Monthly CotD VIP Season • All-time stats unaffected':'Monthly CotD Season • All-time stats unaffected')); }
           }
         }catch(_){ }
       }
@@ -7789,18 +7783,20 @@ async function restoreFromFile(file){
 
       const unit = (norm.weightUnit === 'kgs') ? 'kgs' : 'lbs';
       const __restoreFR = new URLSearchParams(window.location.search).get('lang') === 'fr';
-      const when = norm.exportedAt ? new Date(norm.exportedAt).toLocaleString() : (__restoreFR ? 'Date inconnue' : 'Unknown date');
+      const __restoreZH = new URLSearchParams(window.location.search).get('lang') === 'zh-CN';
+      const restoreText = (en,fr,zh) => __restoreZH ? zh : (__restoreFR ? fr : en);
+      const when = norm.exportedAt ? new Date(norm.exportedAt).toLocaleString(__restoreZH ? 'zh-CN' : (__restoreFR ? 'fr-FR' : undefined)) : restoreText('Unknown date','Date inconnue','日期未知');
       // Sections detected (from the backup file)
       const detectedLines = [];
-      if(hasDetected.mainAllTime) detectedLines.push(__restoreFR ? `• Main toutes périodes : ${detected.mainAllTime.fish} poissons / ${detected.mainAllTime.locs} lieux<br>` : `• Main all-time: ${detected.mainAllTime.fish} fish / ${detected.mainAllTime.locs} locations<br>`);
+      if(hasDetected.mainAllTime) detectedLines.push(restoreText(`• Main all-time: ${detected.mainAllTime.fish} fish / ${detected.mainAllTime.locs} locations<br>`,`• Main toutes périodes : ${detected.mainAllTime.fish} poissons / ${detected.mainAllTime.locs} lieux<br>`,`• Main 历史记录：${detected.mainAllTime.fish} 条鱼 / ${detected.mainAllTime.locs} 个地点<br>`));
       if(hasDetected.mainSeason){
-        const note = seasonApplied ? '' : (__restoreFR ? ' (non appliqué)' : ' (not applied)');
-        detectedLines.push(__restoreFR ? `• Saison Main : ${detected.mainSeason.fish} poissons / ${detected.mainSeason.locs} lieux${note}<br>` : `• Main season: ${detected.mainSeason.fish} fish / ${detected.mainSeason.locs} locations${note}<br>`);
+        const note = seasonApplied ? '' : (restoreText(' (not applied)',' (non appliqué)','（未应用）'));
+        detectedLines.push(__restoreFR ? `• Saison Main : ${detected.mainSeason.fish} poissons / ${detected.mainSeason.locs} lieux${note}<br>` : (__restoreZH ? `• Main 赛季：${detected.mainSeason.fish} 条鱼 / ${detected.mainSeason.locs} 个地点${note}<br>` : `• Main season: ${detected.mainSeason.fish} fish / ${detected.mainSeason.locs} locations${note}<br>`));
       }
-      if(hasDetected.vipAllTime)  detectedLines.push(__restoreFR ? `• VIP toutes périodes : ${detected.vipAllTime.fish} poissons / ${detected.vipAllTime.locs} lieux<br>` : `• VIP all-time: ${detected.vipAllTime.fish} fish / ${detected.vipAllTime.locs} locations<br>`);
+      if(hasDetected.vipAllTime)  detectedLines.push(restoreText(`• VIP all-time: ${detected.vipAllTime.fish} fish / ${detected.vipAllTime.locs} locations<br>`,`• VIP toutes périodes : ${detected.vipAllTime.fish} poissons / ${detected.vipAllTime.locs} lieux<br>`,`• VIP 历史记录：${detected.vipAllTime.fish} 条鱼 / ${detected.vipAllTime.locs} 个地点<br>`));
       if(hasDetected.vipSeason){
-        const note = seasonApplied ? '' : (__restoreFR ? ' (non appliqué)' : ' (not applied)');
-        detectedLines.push(__restoreFR ? `• Saison VIP : ${detected.vipSeason.fish} poissons / ${detected.vipSeason.locs} lieux${note}<br>` : `• VIP season: ${detected.vipSeason.fish} fish / ${detected.vipSeason.locs} locations${note}<br>`);
+        const note = seasonApplied ? '' : (restoreText(' (not applied)',' (non appliqué)','（未应用）'));
+        detectedLines.push(__restoreFR ? `• Saison VIP : ${detected.vipSeason.fish} poissons / ${detected.vipSeason.locs} lieux${note}<br>` : (__restoreZH ? `• VIP 赛季：${detected.vipSeason.fish} 条鱼 / ${detected.vipSeason.locs} 个地点${note}<br>` : `• VIP season: ${detected.vipSeason.fish} fish / ${detected.vipSeason.locs} locations${note}<br>`));
       }
       let clanApplied = false;
       let clanNotAppliedReason = '';
@@ -7815,13 +7811,13 @@ async function restoreFromFile(file){
         }
       }catch(_){ clanApplied = false; }
       if(hasDetected.planner){
-        detectedLines.push(__restoreFR ? '• État du Planificateur : inclus<br>' : '• Planner state: included<br>');
+        detectedLines.push(restoreText('• Planner state: included<br>','• État du Planificateur : inclus<br>','• 规划工具数据：已包含<br>'));
       }
       if(hasDetected.clan){
-        detectedLines.push(__restoreFR ? `• Batailles de clan : ${detected.clan}${clanApplied ? '' : ' (non appliqué)'}<br>` : `• Clan battles: ${detected.clan} battle${detected.clan === 1 ? '' : 's'}${clanApplied ? '' : ' (not applied)'}<br>`);
+        detectedLines.push(__restoreFR ? `• Batailles de clan : ${detected.clan}${clanApplied ? '' : ' (non appliqué)'}<br>` : (__restoreZH ? `• 战队对战：${detected.clan} 场${clanApplied ? '' : '（未应用）'}<br>` : `• Clan battles: ${detected.clan} battle${detected.clan === 1 ? '' : 's'}${clanApplied ? '' : ' (not applied)'}<br>`));
       }
       if(!detectedLines.length){
-        detectedLines.push(__restoreFR ? '• Aucune section reconnue<br>' : '• No recognizable sections found<br>');
+        detectedLines.push(restoreText('• No recognizable sections found<br>','• Aucune section reconnue<br>','• 未找到可识别的数据部分<br>'));
       }
 
       // Totals (all-time only)
@@ -7829,21 +7825,21 @@ async function restoreFromFile(file){
       const totalAllTimeLocs = detected.mainAllTime.locs + detected.vipAllTime.locs;
 
       const confirmHtml =
-        (__restoreFR ? `<b>Détecté dans la sauvegarde :</b><br>` : `<b>Detected in backup:</b><br>`) +
+        (restoreText(`<b>Detected in backup:</b><br>`,`<b>Détecté dans la sauvegarde :</b><br>`,`<b>备份中检测到：</b><br>`)) +
         detectedLines.join('') +
         `<br>` +
-        (__restoreFR ? `<b>Résumé :</b><br>` : `<b>Summary:</b><br>`) +
-        (__restoreFR ? `• Total toutes périodes : ${totalAllTimeFish} poissons / ${totalAllTimeLocs} lieux<br>` : `• Total all-time: ${totalAllTimeFish} fish / ${totalAllTimeLocs} locations<br>`) +
-        (__restoreFR ? `• Unités : ${unit}<br>` : `• Units: ${unit}<br>`) +
-        (__restoreFR ? `• Exportée : ${when}<br>` : `• Exported: ${when}<br>`) +
-        `${seasonMsg}` +
+        (restoreText(`<b>Summary:</b><br>`,`<b>Résumé :</b><br>`,`<b>汇总：</b><br>`)) +
+        (restoreText(`• Total all-time: ${totalAllTimeFish} fish / ${totalAllTimeLocs} locations<br>`,`• Total toutes périodes : ${totalAllTimeFish} poissons / ${totalAllTimeLocs} lieux<br>`,`• 历史记录合计：${totalAllTimeFish} 条鱼 / ${totalAllTimeLocs} 个地点<br>`)) +
+        (restoreText(`• Units: ${unit}<br>`,`• Unités : ${unit}<br>`,`• 单位：${unit}<br>`)) +
+        (restoreText(`• Exported: ${when}<br>`,`• Exportée : ${when}<br>`,`• 导出时间：${when}<br>`)) +
+        `${__restoreZH ? seasonMsg.replace(/Season data:/g,"赛季数据：").replace(/not applied to current/g,"未应用于当前赛季").replace(/not applied/g,"未应用").replace(/current/g,"当前") : seasonMsg}` +
         `<br>` +
-        (__restoreFR ? `La restauration remplacera uniquement les sections présentes dans la sauvegarde. Les autres sections seront conservées. Continuer ?` : `Restoring will replace only the sections present in the backup. Other sections will be preserved. Continue?`);
+        (restoreText(`Restoring will replace only the sections present in the backup. Other sections will be preserved. Continue?`,`La restauration remplacera uniquement les sections présentes dans la sauvegarde. Les autres sections seront conservées. Continuer ?`,`恢复操作只会替换备份中包含的数据部分，其他数据将保留。是否继续？`));
 
 
       const ok = await showRestoreConfirmModal(confirmHtml);
       if(!ok){
-        setBackupMsg(__restoreFR ? 'Restauration annulée.' : 'Restore cancelled.');
+        setBackupMsg(restoreText('Restore cancelled.','Restauration annulée.','已取消恢复。'));
         return;
       }
 
@@ -8215,9 +8211,10 @@ function renderCareerTargets(){
     try{ _setCareerSecondarySortUI(targetMode); }catch(_){ }
       const __isVip = (typeof isVipModeActive==='function') ? isVipModeActive() : false;
       const __fr = new URLSearchParams(location.search).get('lang')==='fr';
-      subLabelEl.textContent = (targetMode==='oos1') ? (__fr ? 'En saison maintenant • Hors saison le mois prochain' : 'In season now • OOS next month') :
-        (targetMode==='oos3') ? (__fr ? 'En saison maintenant • Hors saison dans les 3 prochains mois' : 'In season now • OOS within 3 months') :
-        (__isVip ? (__fr ? 'Meilleures étoiles de tous les temps' : 'All-time best stars') : (__fr ? 'Meilleures étoiles de tous les temps • En saison ce mois-ci' : 'All-time best stars • In-season this month'));    }
+      const __zh = new URLSearchParams(location.search).get('lang')==='zh-CN';
+      subLabelEl.textContent = (targetMode==='oos1') ? (__zh ? '目前当季 · 下月非当季' : (__fr ? 'En saison maintenant • Hors saison le mois prochain' : 'In season now • OOS next month')) :
+        (targetMode==='oos3') ? (__zh ? '目前当季 · 未来三个月内非当季' : (__fr ? 'En saison maintenant • Hors saison dans les 3 prochains mois' : 'In season now • OOS within 3 months')) :
+        (__isVip ? (__zh ? '历史最佳星级' : (__fr ? 'Meilleures étoiles de tous les temps' : 'All-time best stars')) : (__zh ? '历史最佳星级 · 本月当季鱼类' : (__fr ? 'Meilleures étoiles de tous les temps • En saison ce mois-ci' : 'All-time best stars • In-season this month')));    }
     if(sortLabelEl) { const __fr = new URLSearchParams(location.search).get('lang')==='fr'; sortLabelEl.textContent = (careerTargetSortMode === "climb") ? (__fr ? "plus grande progression" : "biggest climb") : (__fr ? "plus proche de l’objectif" : "closest to target"); }
     _setCareerTargetButtonsActive();
         _setCareerSortButtonsActive();
@@ -8499,6 +8496,11 @@ function showRestoreConfirmModal(linesText){
     }
 
     // render as bullet-like lines
+    const restoreLang = new URLSearchParams(location.search).get('lang');
+    const restoreTitle = document.getElementById('restoreConfirmTitle');
+    if(restoreTitle) restoreTitle.textContent = restoreLang === 'zh-CN' ? '检测到备份' : (restoreLang === 'fr' ? 'Sauvegarde détectée' : 'Backup detected');
+    cancel.textContent = restoreLang === 'zh-CN' ? '取消' : (restoreLang === 'fr' ? 'Annuler' : 'Cancel');
+    ok.textContent = restoreLang === 'zh-CN' ? '确定' : 'OK';
     body.innerHTML = linesText;
 
     backdrop.classList.add('show');
@@ -8545,7 +8547,7 @@ function _addMonths(date, months){
   const listEl = document.getElementById('focusList');
   const emptyEl = document.getElementById('focusListEmpty');
   const __focusIsFR = () => new URLSearchParams(location.search).get('lang') === 'fr';
-  const __focusTxt = (en, fr) => __focusIsFR() ? fr : en;
+  const __focusTxt = (en, fr) => new URLSearchParams(location.search).get('lang') === 'zh-CN' ? '选择…' : (__focusIsFR() ? fr : en);
 
 
   let gapPanel = document.getElementById('focusGapPanel');
@@ -8833,7 +8835,7 @@ function _addMonths(date, months){
         // if we were previously at limit, refresh the hint based on current selection state
         if(locSel.value && catSel.value){
           const count = Math.max(0, (fishSel.options ? fishSel.options.length - 1 : 0));
-          setHint(__focusIsFR() ? `${count} poisson(s) correspondant(s) ${((typeof isVipModeActive==='function' && isVipModeActive()) ? '' : 'en saison ')}à ${locSel.value}. Choisissez-en un.` : `${count} matching ${((typeof isVipModeActive==='function' && isVipModeActive()) ? '' : 'In Season ')}fish in ${locSel.value}. Now pick one.`);
+          setHint((new URLSearchParams(location.search).get('lang') === 'zh-CN') ? `${count} 条符合条件的${((typeof isVipModeActive==='function' && isVipModeActive()) ? '' : '当季')}鱼类，地点：${locSel.value}。请选择一条。` : (__focusIsFR() ? `${count} poisson(s) correspondant(s) ${((typeof isVipModeActive==='function' && isVipModeActive()) ? '' : 'en saison ')}à ${locSel.value}. Choisissez-en un.` : `${count} matching ${((typeof isVipModeActive==='function' && isVipModeActive()) ? '' : 'In Season ')}fish in ${locSel.value}. Now pick one.`));
         }
       }
     }
@@ -8993,7 +8995,7 @@ function _addMonths(date, months){
       fishSel.appendChild(opt(String(f.name), label));
     });
     fishSel.disabled = false;
-    setHint(__focusIsFR() ? `${fish.length} poisson(s) correspondant(s) ${((typeof isVipModeActive==='function' && isVipModeActive()) ? '' : 'en saison ')}à ${loc}. Choisissez-en un.` : `${fish.length} matching ${((typeof isVipModeActive==='function' && isVipModeActive()) ? '' : 'In Season ')}fish in ${loc}. Now pick one.`);
+    setHint((new URLSearchParams(location.search).get('lang') === 'zh-CN') ? `${fish.length} 条符合条件的${((typeof isVipModeActive==='function' && isVipModeActive()) ? '' : '当季')}鱼类，地点：${loc}。请选择一条。` : (__focusIsFR() ? `${fish.length} poisson(s) correspondant(s) ${((typeof isVipModeActive==='function' && isVipModeActive()) ? '' : 'en saison ')}à ${loc}. Choisissez-en un.` : `${fish.length} matching ${((typeof isVipModeActive==='function' && isVipModeActive()) ? '' : 'In Season ')}fish in ${loc}. Now pick one.`));
     updateAddState();
   });
 
@@ -10460,7 +10462,36 @@ Requirement: ${currPct}% ${metricLabel}.`;
 /* Planner tag + drawer */
 (function(){
   const plannerIsFR = () => new URLSearchParams(location.search).get('lang') === 'fr';
-  const plannerTxt = (en, fr) => plannerIsFR() ? fr : en;
+  const plannerIsZH = () => new URLSearchParams(location.search).get('lang') === 'zh-CN';
+  const plannerZH = {"Planner Home": "规划工具首页", "Season Planning": "赛季目标", "Forecast target points by month, map, and season status.": "按月份、地图和赛季状态规划目标分数。", "Pick a month": "选择月份", "Pick a map": "选择地图", "Pick a target": "选择目标", "Medium": "中等", "High": "较高", "Custom": "自定义", "edit any fish target directly in the table": "可直接在表格中修改每条鱼的目标", "Total Target Points": "目标总分", "IS Fish": "当季鱼类", "OOS Fish": "非当季鱼类", "Targets Hit": "已达成目标", "Points Scored / Target Points": "已获分数 / 目标分数", "Missing Fish": "未捕获鱼类", "Season Table": "赛季表格", "of": "/", "fish shown": "条鱼", "Location": "地点", "Fish": "鱼类", "Time": "时间", "Category": "类别", "Season Status": "赛季状态", "Target Points": "目标分数", "All Maps": "所有地图", "All Locations": "所有地点", "Reset": "重置", "Base Target": "基础目标", "Common": "普通", "Rare": "稀有", "Epic": "史诗", "Legendary": "传说"};
+  Object.assign(plannerZH, {
+    'All Main Maps':'所有地图','All VIP Maps':'所有 VIP 地图',
+    'OOS Planning':'非当季规划','OOS Table':'非当季鱼类表',
+    'Guide view for what is at risk right now. Uses the current month automatically.':'查看当前面临非当季风险的鱼类，自动使用当前月份。',
+    'OOS planner scope':'非当季规划范围',
+    'Uses the current month. 🔥 leaves within 3 months • ⚠️ longer than 6 months OOS window':'使用当前月份。🔥 三个月内转为非当季 • ⚠️ 非当季持续超过六个月',
+    'Leaves In':'距离离季','OOS Length':'离季时长',
+    'In progress':'进行中','Not started':'尚未开始','Target points for':'目标分数：',
+    'Base target':'基础目标','base':'基础','Reset this fish to the':'将此鱼重置为','target':'目标',
+    'Forecast target points by month, map, and season status.':'按月份、地图及当季状态规划目标分数。',
+    'Season planner scope':'赛季规划范围',
+    'Planner breadcrumb':'规划工具导航',
+    'Season Planning':'赛季目标',
+    'All Maps':'所有地图',
+    'Season Table':'赛季目标表',
+    'Targets Hit':'已达标鱼类',
+    'fish shown':'条鱼',
+    'Reset':'重置',
+    'Custom':'自定义',
+    'IS Fish':'当季鱼类',
+    'OOS Fish':'非当季鱼类',
+    'Total Target Points':'目标总分',
+    'Season Status':'当季状态',
+    'edit any fish target directly in the table':'可在表格中直接修改每条鱼的目标分数'
+  });
+  Object.assign(plannerZH, {"Across shown fish": "当前显示的鱼类", "All": "全部", "All Battle Fish": "所有战斗鱼类", "All Fish": "所有鱼类", "Calculate the fish and gold still needed to upgrade your lure from one level to another. Fish in Hand is applied step by step across the upgrade path.": "计算鱼饵从当前等级升级到目标等级还需要多少鱼和金币。现有鱼类会按升级步骤逐级抵扣。", "Cancel Custom Set": "取消自定义组合", "Cheapest to Upgrade": "升级成本最低", "Clear fish search": "清除鱼类搜索", "Click + or ✓ in the table to add or remove fish from this set.": "点击表格中的 + 或 ✓，添加或移除组合中的鱼类。", "Click + or ✓ in the table to add or remove fish, then save the set. Use Cancel Custom Set to exit without saving.": "点击表格中的 + 或 ✓ 添加或移除鱼类，然后保存组合。点击取消可不保存退出。", "Closest to Upgrade": "最接近升级", "Current": "当前", "Current Lure": "当前鱼饵等级", "Delete Set": "删除组合", "Deselect fish": "取消选择鱼类", "Editing Set": "正在编辑组合", "Enter custom set mode, then click + in the table to build a set.": "进入自定义组合模式，然后点击表格中的 + 添加鱼类。", "Enter the current lure and fish in hand for each fish to see the highest lure level reachable now.": "输入每种鱼的当前鱼饵等级和现有数量，查看目前可达到的最高鱼饵等级。", "Find a fish": "查找鱼类", "Fish": "鱼类", "Fish Needed": "还需鱼类数量", "Fish in Hand": "现有鱼类数量", "From Lure": "起始鱼饵等级", "Goal": "目标", "Goal Complete": "目标已达成", "Goal Progress": "目标进度", "Goal: 35": "目标：35", "Goals": "目标", "Gold Needed": "所需金币", "Location": "地点", "Lure Cost Calculator": "鱼饵成本计算器", "Lure Goals": "鱼饵目标", "Lure Planner": "鱼饵规划", "Lure Planning": "鱼饵规划", "Lure Progress": "鱼饵进度", "Lure Table": "鱼饵表格", "Make Custom Set": "创建自定义组合", "Map": "地图", "Maximum Progress": "最高进度", "My Custom Sets": "我的自定义组合", "Overview": "概览", "Pick a map": "选择地图", "Pick a rarity": "选择稀有度", "Pick a set": "选择组合", "Progress for the selected battle fish using current lure levels.": "根据当前鱼饵等级显示所选战斗鱼类的进度。", "Reachable": "可达到等级", "Reachable Progress": "可达到的进度", "Reset Defaults": "恢复默认值", "Save Custom Set": "保存自定义组合", "Search fish...": "搜索鱼类…", "Select": "选择", "Select fish": "选择鱼类", "Set a target lure level using your Current mode data": "根据“当前”模式的数据设置目标鱼饵等级", "Shows your current upgrade position and next steps": "显示当前升级进度和下一步需求", "Target": "目标", "Target Lure": "目标鱼饵等级", "To Lure": "目标鱼饵等级", "Total Fish Needed": "所需鱼类总数", "Total Gold Needed": "所需金币总数", "Upgrade Plan": "升级计划", "fish": "条鱼", "fish across": "条鱼，分布于", "fish shown": "条鱼", "fish to Lv.": "条鱼可升至等级", " gold to Lv.": "金币可升至等级", "in set": "在组合中", "maps": "张地图", "of": "/", "selected": "已选择", "unique fish": "种不同鱼类", "upgrade ready": "可升级", "upgrades ready": "可升级", "gold to Lv.": "金币可升至等级"});
+  Object.assign(plannerZH, {"Delete": "删除", "XP Tracker": "经验值追踪", "Track your XP progress over time and estimate when you will reach your target.": "记录经验值进度，并估算达到目标的时间。", "Start XP": "起始经验值", "Enter start XP": "输入起始经验值", "Target XP": "目标经验值", "Enter target XP": "输入目标经验值", "Update date": "更新日期", "Total XP": "总经验值", "Enter today's total XP": "输入今日总经验值", "Progress": "进度", "XP Remaining": "剩余经验值", "Avg XP / Day": "日均经验值", "Projected Finish": "预计完成日期", "XP Tracker Chart": "经验值趋势图", "XP Pace": "经验值增长速度", "All": "全部", "No updates yet": "暂无记录", "Current XP": "当前经验值", "XP / Day": "每日经验值", "Raw Gain": "实际增长", "Daily Updates": "每日记录", "entries": "条记录", "Date": "日期", "Daily Gain": "每日增长", "Action": "操作", "No XP updates yet.": "暂无经验值更新记录。", "Start": "开始", "Entry": "记录", "day": "天", "days": "天", "Could not find that fish row.": "找不到对应的鱼类记录。", "No saved entries for this fish yet.": "该鱼类暂无保存的记录。", "Catch Value Tracker": "渔获价值追踪", "Entries": "记录数", "Delete incorrect sale entries for this fish.": "删除该鱼类错误的出售记录。", "gold": "金币", "Close": "关闭", "Add": "添加", "Manage": "管理", "Track fish weight and sell price by map to spot your most valuable catches over time.": "按地图记录鱼类重量和售价，找出最有价值的渔获。", "Pick a map": "选择地图", "All VIP Maps": "所有 VIP 地图", "All Main Maps": "所有地图", "Find a fish": "查找鱼类", "Search fish...": "搜索鱼类…", "Clear fish search": "清除搜索", "Total Gold Tracked": "累计金币", "Average Sale": "平均售价", "Across all tracked catches": "所有已记录的渔获", "Highest Sale": "最高售价", "Best Average Fish": "平均售价最高的鱼", "avg": "平均", "Fish Value Summary": "鱼类价值汇总", "fish": "条鱼", "Location": "地点", "Fish": "鱼类", "Avg Points": "平均分数", "Avg Sale": "平均售价", "Best Sale": "最高售价", "Avg Weight": "平均重量", "Weight": "重量", "Points": "分数", "Sell Price": "出售价格", "No fish match the selected filters.": "没有符合筛选条件的鱼类。"});
+  const plannerTxt = (en, fr) => plannerIsZH() ? (plannerZH[en] || en) : (plannerIsFR() ? fr : en);
   const LURE_MAX = 35;
   const GOLD_FROM_ONE = [0,0,1000,3000,6000,10000,15000,21000,28000,36000,45000,55000,66000,78000,91000,105000,120000,136000,153000,171000,190000,210000,231000,253000,276000,300000,325000,351000,378000,406000,435000,465000,496000,528000,561000,595000];
   const FISH_FROM_ONE = [0,0,20,50,90,140,200,270,350,440,540,650,770,900,1040,1190,1350,1520,1700,1890,2090,2300,2520,2750,2990,3240,3500,3770,4050,4340,4640,4950,5270,5600,5940,6290];
@@ -11824,14 +11855,14 @@ function getFilteredPlannerRows(orderType = 'season'){
       const targetInputId = `seasonTarget_${String(row.targetOverrideKey || '').replace(/[^a-zA-Z0-9_-]/g, '_')}`;
       const targetMarkup = `<div class="planner-season-target-cell ${row.targetOverridden ? 'is-overridden' : ''}">
         <input id="${escapeAttr(targetInputId)}" class="planner-input planner-season-fish-target-input" type="number" min="${targetRange.min}" max="${targetRange.max}" step="1" value="${fmtInt(row.targetPoints).replace(/,/g,'')}" data-season-fish-target="${escapeAttr(row.targetOverrideKey)}" aria-label="${plannerTxt('Target points for','Points cibles pour')} ${escapeAttr(toTitleCase(row.name))}">
-        ${row.targetOverridden ? `<button type="button" class="planner-mini-btn planner-season-target-reset" data-season-fish-target-clear="${escapeAttr(row.targetOverrideKey)}" title="Reset this fish to the ${escapeAttr(getSeasonTargetLabel())} target">${plannerTxt('Reset','Réinitialiser')}</button>` : `<span class="planner-season-target-base" title="${plannerTxt('Base target','Cible de base')}">${plannerTxt('base','base')}</span>`}
+        ${row.targetOverridden ? `<button type="button" class="planner-mini-btn planner-season-target-reset" data-season-fish-target-clear="${escapeAttr(row.targetOverrideKey)}" title="${plannerTxt('Reset this fish to the','Réinitialiser ce poisson à la cible')} ${escapeAttr(getSeasonTargetLabel())} ${plannerTxt('target','cible')}">${plannerTxt('Reset','Réinitialiser')}</button>` : `<span class="planner-season-target-base" title="${plannerTxt('Base target','Cible de base')}">${plannerTxt('base','base')}</span>`}
       </div>`;
       return `
         <tr>
           <td class="planner-lure-location-cell"><div class="planner-lure-primary">${escapeHtml(row.location)}</div><div class="planner-lure-meta">${escapeHtml(row.scope)}</div></td>
           <td>${fishMarkup}</td>
           <td class="planner-time-cell" aria-label="${escapeAttr(timeInfo.label)}" title="${escapeAttr(timeInfo.label)}">${timeInfo.icon}</td>
-          <td><div class="planner-season-category">${escapeHtml(row.category)}</div></td>
+          <td><div class="planner-season-category">${plannerIsZH() ? escapeHtml(plannerZH[row.category] || row.category) : escapeHtml(row.category)}</div></td>
           <td class="planner-lure-num planner-season-status ${row.status === 'IS' ? 'is' : 'oos'}">${row.status}</td>
           <td class="planner-lure-num planner-lure-gold planner-season-target-td">${targetMarkup}</td>
         </tr>`;
@@ -11854,7 +11885,7 @@ function getFilteredPlannerRows(orderType = 'season'){
           <label class="planner-map-control">
             <span>${plannerTxt('Pick a month','Choisir un mois')}</span>
             <select id="plannerSeasonMonthSelect" class="planner-select">
-              ${monthOptions.map((opt) => { const frMonths=['','Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre']; return `<option value="${opt.value}" ${Number(plannerState.seasonMonth) === Number(opt.value) ? 'selected' : ''}>${plannerIsFR() ? frMonths[Number(opt.value)] : opt.label}</option>`; }).join('')}
+              ${monthOptions.map((opt) => { const frMonths=['','Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre']; return `<option value="${opt.value}" ${Number(plannerState.seasonMonth) === Number(opt.value) ? 'selected' : ''}>${plannerIsZH() ? ['','一月','二月','三月','四月','五月','六月','七月','八月','九月','十月','十一月','十二月'][Number(opt.value)] : (plannerIsFR() ? frMonths[Number(opt.value)] : opt.label)}</option>`; }).join('')}
             </select>
           </label>
           <label class="planner-map-control">
@@ -11876,15 +11907,15 @@ function getFilteredPlannerRows(orderType = 'season'){
           ${['Common','Rare','Epic','Legendary'].map((rarity) => {
             const range = SEASON_CUSTOM_RANGES[rarity];
             return `<label class="planner-map-control planner-season-custom-control">
-              <span>${rarity}</span>
+              <span>${plannerIsZH() ? (plannerZH[rarity] || rarity) : rarity}</span>
               <input class="planner-input planner-season-custom-input" type="number" min="${range.min}" max="${range.max}" step="1" value="${customTargets[rarity]}" data-season-custom-rarity="${rarity}">
             </label>`;
           }).join('')}
         </div>` : ''}
 
         <div class="planner-season-copy">
-          <div>OOS: Common ${fmtInt(SEASON_OOS_TARGETS.Common)} • Rare ${fmtInt(SEASON_OOS_TARGETS.Rare)} • Epic ${fmtInt(SEASON_OOS_TARGETS.Epic)}</div>
-          <div>${getSeasonTargetLabel()}: Common ${fmtInt(preset.Common)} • Rare ${fmtInt(preset.Rare)} • Epic ${fmtInt(preset.Epic)} • Legendary ${fmtInt(preset.Legendary)} <span class="planner-season-override-note">• ${plannerTxt('edit any fish target directly in the table','modifiez directement la cible de n’importe quel poisson dans le tableau')}</span></div>
+          <div>OOS: ${plannerTxt('Common','Common')} ${fmtInt(SEASON_OOS_TARGETS.Common)} • ${plannerTxt('Rare','Rare')} ${fmtInt(SEASON_OOS_TARGETS.Rare)} • ${plannerTxt('Epic','Epic')} ${fmtInt(SEASON_OOS_TARGETS.Epic)}</div>
+          <div>${getSeasonTargetLabel()}: ${plannerTxt('Common','Common')} ${fmtInt(preset.Common)} • ${plannerTxt('Rare','Rare')} ${fmtInt(preset.Rare)} • ${plannerTxt('Epic','Epic')} ${fmtInt(preset.Epic)} • ${plannerTxt('Legendary','Légendaire')} ${fmtInt(preset.Legendary)} <span class="planner-season-override-note">• ${plannerTxt('edit any fish target directly in the table','modifiez directement la cible de n’importe quel poisson dans le tableau')}</span></div>
         </div>
       </section>
 
@@ -12100,7 +12131,7 @@ function getFilteredPlannerRows(orderType = 'season'){
           <td class="planner-lure-location-cell"><div class="planner-lure-primary">${escapeHtml(row.location)}</div><div class="planner-lure-meta">${escapeHtml(row.scope)}</div></td>
           <td><div class="planner-lure-fish">${escapeHtml(toTitleCase(row.name))}</div></td>
           <td class="planner-time-cell" aria-label="${escapeAttr(row.timeLabel)}" title="${escapeAttr(row.timeLabel)}">${row.timeIcon}</td>
-          <td><div class="planner-season-category">${escapeHtml(row.category)}</div></td>
+          <td><div class="planner-season-category">${plannerIsZH() ? escapeHtml(plannerZH[row.category] || row.category) : escapeHtml(row.category)}</div></td>
           <td class="planner-lure-num">${row.leavesIn}${fire}</td>
           <td class="planner-lure-num">${row.oosLength}${warn}</td>
           <td class="planner-lure-num planner-season-status ${row.status === 'IS' ? 'is' : 'oos'}">${row.status}</td>
@@ -12396,10 +12427,10 @@ function getFilteredPlannerRows(orderType = 'season'){
         </details>
         ${activeAllBattleFish ? `
         <details class="planner-battle-focus">
-          <summary>Focus Fish</summary>
+          <summary>${plannerIsZH() ? "重点鱼类" : "Focus Fish"}</summary>
           <div class="planner-battle-focus-body">
             <section class="planner-battle-focus-section">
-              <div class="planner-battle-focus-section-title">Closest to Goal</div>
+              <div class="planner-battle-focus-section-title">${plannerIsZH() ? "最接近目标" : "Closest to Goal"}</div>
               ${closestBattleFocus.length ? `
                 <div class="planner-battle-focus-closest-grid">
                   ${closestBattleFocus.map((focus) => `
@@ -12409,11 +12440,11 @@ function getFilteredPlannerRows(orderType = 'season'){
                       <div class="planner-battle-focus-levels">${plannerTxt('Current','Actuel')} ${fmtInt(focus.current)} <span aria-hidden="true">→</span> ${plannerTxt('Goal','Objectif')} ${fmtInt(focus.goal)}</div>
                     </article>`).join('')}
                 </div>`
-                : `<div class="planner-battle-focus-complete">✓ All battle fish have reached their goals</div>`}
+                : `<div class="planner-battle-focus-complete">${plannerIsZH() ? "✓ 所有战斗鱼类均已达到目标" : "\u2713 All battle fish have reached their goals"}</div>`}
             </section>
 
             <section class="planner-battle-focus-section planner-battle-focus-section--farthest">
-              <div class="planner-battle-focus-section-title">Farthest from Goal</div>
+              <div class="planner-battle-focus-section-title">${plannerIsZH() ? "距离目标最远" : "Farthest from Goal"}</div>
               <div class="planner-battle-focus-grid">
                 ${allBattleFocus.map((item) => `
                   <article class="planner-battle-focus-map">
@@ -12433,7 +12464,7 @@ function getFilteredPlannerRows(orderType = 'season'){
           <div class="planner-lure-goals-body">
             ${['Common','Rare','Epic'].map((rarity) => `
               <label class="planner-lure-goal-field">
-                <span>${rarity}</span>
+                <span>${plannerIsZH() ? (plannerZH[rarity] || rarity) : rarity}</span>
                 <input type="number" min="1" max="35" step="1" value="${lureGoals[rarity]}" data-lure-goal="${rarity}">
               </label>`).join('')}
             <button type="button" class="planner-pill planner-lure-goals-reset" data-lure-goals-reset="1">${plannerTxt('Reset Defaults','Réinitialiser les valeurs par défaut')}</button>
@@ -14009,7 +14040,29 @@ if(rowSelectBtn){
     const { btn, drawer, closeBtn, body, titleBtn } = plannerShell();
     if(!btn || !drawer || btn.__plannerBound) return;
     btn.__plannerBound = true;
-    if(body && !plannerState.homeMarkup) plannerState.homeMarkup = body.innerHTML;
+    if(body && !plannerState.homeMarkup){
+      plannerState.homeMarkup = body.innerHTML;
+      if(plannerIsZH()){
+        const homeLabels = [
+          ['Season Planning','赛季目标'],['Forecast seasonal target points by month','按月份规划赛季目标分数'],
+          ['OOS Planning','非当季规划'],['What is at risk right now','查看当前即将离季的鱼类'],
+          ['Lure Planning','鱼饵规划'],['Estimate reachable lure levels and costs','估算可达到的鱼饵等级及成本'],
+          ['Lure Cost Calculator','鱼饵成本计算器'],['Generic lure upgrade cost lookup','查询鱼饵升级所需成本'],
+          ['XP Tracker','经验值追踪'],['Track progress toward an XP goal','追踪经验值目标进度'],
+          ['Catch Value Tracker','渔获价值追踪'],['Track fish weight, points, and sell price','记录鱼的重量、分数及售价']
+        ];
+        for(const [en,zh] of homeLabels){
+          plannerState.homeMarkup=plannerState.homeMarkup.replaceAll('>'+en+'<','>'+zh+'<');
+        }
+      }
+    }
+    if(plannerIsZH()){
+      const drawer = document.getElementById('plannerDrawer');
+      if(drawer){
+        const headerLabels=[['.planner-eyebrow','策略工具'],['#plannerTitleHomeBtn','规划工具首页'],['.planner-sub','规划赛季目标、鱼饵成本与经验值进度'],['#plannerCloseBtn','数据统计']];
+        for(const [sel,label] of headerLabels){const el=drawer.querySelector(sel);if(el)el.textContent=label;}
+      }
+    }
 
     btn.addEventListener('click', ()=> setOpen(true));
     try{
@@ -16791,8 +16844,10 @@ if(rowSelectBtn){
 /* Captain's Log */
 (function(){
   const STORAGE_KEY = 'fm_captains_log_v1';
-  const IS_FR = new URLSearchParams(location.search).get('lang') === 'fr';
-  const TITLES = IS_FR ? {
+  const LOG_LANG = new URLSearchParams(location.search).get('lang');
+  const IS_FR = LOG_LANG === 'fr';
+  const IS_ZH = LOG_LANG === 'zh-CN';
+  const TITLES = IS_ZH ? {general:'常规笔记', maps:'地点笔记', planner:'规划笔记', battles:'战斗笔记'} : IS_FR ? {
     general: 'Notes générales',
     maps: 'Notes sur les lieux',
     planner: 'Notes du planificateur',
@@ -16824,7 +16879,7 @@ if(rowSelectBtn){
     try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }catch(_){}
     const saved = document.getElementById('captainsLogSaved');
     if(saved){
-      saved.textContent = IS_FR ? 'Enregistré localement' : 'Saved locally';
+      saved.textContent = IS_ZH ? '已保存到本地' : (IS_FR ? 'Enregistré localement' : 'Saved locally');
       saved.classList.remove('saving');
     }
   }
@@ -16832,7 +16887,7 @@ if(rowSelectBtn){
   function scheduleSave(){
     const saved = document.getElementById('captainsLogSaved');
     if(saved){
-      saved.textContent = IS_FR ? 'Enregistrement…' : 'Saving…';
+      saved.textContent = IS_ZH ? '正在保存…' : (IS_FR ? 'Enregistrement…' : 'Saving…');
       saved.classList.add('saving');
     }
     clearTimeout(saveTimer);

@@ -1021,6 +1021,134 @@ Not affiliated with any company or organization of a similar name.</div>
 })();
 </script>
 
+<script>
+(function(){
+  const isZH=new URLSearchParams(location.search).get('lang')==='zh-CN';
+  if(!isZH) return;
+  document.documentElement.lang='zh-CN';
+  const set=(id,text)=>{const el=document.getElementById(id); if(el) el.textContent=text;};
+  const pairs={
+    tabOverview:'仪表板', tabRecords:'记录', tabMap:'分数表', tabFish:'鱼类分析', tabCareerTargets:'生涯目标', tabFocus:'专注模式', tabInstructions:'使用说明',
+    modeCareerBtn:'全部', modeSeasonBtn:'赛季', plannerToggleBtn:'规划工具', locationsTitle:'地点', rarityTitle:'稀有度', bestiaryTitle:'图鉴进度', fishingGuideTitle:'钓鱼指南',
+    includeOOSLabel:'包含非当季', includeLegendaryLabel:'包含传奇', avgStarRatingLabel:'平均星级', totalPointsLabel:'总分', fourStarCatchesLabel:'4★ 渔获', fiveStarCatchesLabel:'5★ 渔获', bestMapLabel:'最佳地点', bestMapSubLabel:'综合各稀有度', starDistributionTitle:'星级分布', high4Label:'高分 4★', pointsRarityTitle:'总分 / 稀有度', starsRarityTitle:'总星数 / 稀有度', pointsMapTitle:'分数 / 地点', starCatchesTitle:'各星级渔获',
+    commonRangeTitle:'分数表 — Common', rareRangeTitle:'分数表 — Rare', epicRangeTitle:'分数表 — Epic', typeRangeTitle:'按类型查看分数', commonRangeOos:'（不含非当季渔获）', rareRangeOos:'（不含非当季渔获）', epicRangeOos:'（不含非当季渔获）', typeRangeOos:'（不含非当季渔获）',
+    legendaryTitle:'传奇鱼类', fearsomeTitle:'四大强敌', eliteEpicsTitle:'精英 Epic', shortLivedTitle:'限时特殊鱼', invisiblesTitle:'隐形鱼', personalBestsTitle:'👑 个人最佳',
+    focusTitle:'专注模式', focusDesc:'专注模式可让你选择最多十条鱼，并查看每条鱼距离下一个里程碑还有多远。找出分数提升空间最大的目标，决定下一步该钓什么。', focusLocationLabel:'地点', focusCategoryLabel:'类别', focusFishLabel:'鱼', focusHint:'先选择一个地点。', focusAddBtn:'添加', focusListEmpty:'目前没有专注目标。请在上方添加鱼。',
+    avgStarsSeasonNote:'仅统计当季鱼类', careerTargetsSubLabel:'历史最佳星级 · 本月当季鱼类', careerTargetsSortLabel:'最接近目标',
+    careerTargetsSortedBy:'排序方式：'
+  };
+  Object.entries(pairs).forEach(([id,t])=>set(id,t));
+  const clanBtn=document.getElementById('clanToggleBtn'); if(clanBtn){const soon=clanBtn.querySelector('.coming-soon-mini'); if(soon) soon.textContent='即将推出'; clanBtn.setAttribute('aria-label','Clans — 即将推出');}
+  const ct=document.getElementById('careerTargetsView'); if(ct){
+    const title=ct.querySelector('.career-targets-title > span'); if(title) title.textContent='生涯目标';
+    const o1=ct.querySelector('[data-ct-target="oos1"]'); if(o1)o1.textContent='下月非当季';
+    const o3=ct.querySelector('[data-ct-target="oos3"]'); if(o3)o3.textContent='3个月内非当季';
+    const c=ct.querySelector('.ct-sort-label[data-mode="closest"]'); if(c)c.textContent='最接近目标';
+    const b=ct.querySelector('.ct-sort-label[data-mode="climb"]'); if(b)b.textContent='提升空间最大';
+    const sort=ct.querySelector('.ct-secondary-sort-label'); if(sort)sort.textContent='排序：';
+    const sel=ct.querySelector('#ctSecondarySortSelect'); if(sel){if(sel.options[0])sel.options[0].textContent='星级'; if(sel.options[1])sel.options[1].textContent='非当季优先';}
+  }
+  const exact=new Map(Object.entries({
+    'Dashboard':'仪表板','Log Records':'记录','Score Ranges':'分数表','Fish Insights':'鱼类分析','Career Targets':'生涯目标','Focus Mode':'专注模式','Instructions':'使用说明',
+    'All Locations':'所有地点','Location':'地点','Category':'类别','Fish':'鱼','Your Record':'个人记录','Your Record (lbs)':'个人记录 (lbs)','Your Record (kgs)':'个人记录 (kgs)','Weight (auto)':'重量（自动）','Season Points':'赛季分数','Points':'分数','Stars':'星级',
+    'Common':'常见','Rare':'稀有','Epic':'史诗','Legendary':'传奇','Lowest':'最低','Highest':'最高','No record yet':'暂无记录','Highlights':'亮点','Personal Bests':'个人最佳',
+    'Closest to target':'最接近目标','Biggest climb':'提升空间最大','Sorted by':'排序方式','Select':'选择','Add':'添加','Remove':'移除','remaining':'剩余',
+    'Fishing Guide':'钓鱼指南','Quick Win':'快速提升','Restore':'恢复','Welcome!':'欢迎！','Close':'关闭','Home':'首页','Share':'分享',
+    'Privacy Notice':'隐私说明','Contact':'联系我们','Release Notes':'版本说明','Captain\'s Log':'船长日志'
+  }));
+  function translateNode(node){
+    if(node.nodeType!==Node.TEXT_NODE) return;
+    if(node.parentElement && node.parentElement.closest('#recordsView')) return;
+    const raw=node.textContent, t=raw.trim(); if(!t) return;
+    if(exact.has(t)){node.textContent=raw.replace(t,exact.get(t)); return;}
+    let m=t.match(/^All Locations \((\d+)\)$/); if(m){node.textContent=raw.replace(t,`所有地点 (${m[1]})`); return;}
+    m=t.match(/^(\d+) \/ (\d+) remaining$/); if(m){node.textContent=raw.replace(t,`剩余 ${m[1]} / ${m[2]}`); return;}
+    if(t==='All set for this category.') node.textContent=raw.replace(t,'此类别已全部达标。');
+  }
+  function translateTree(root=document){
+    if(root && root.nodeType===Node.ELEMENT_NODE && (root.id==='recordsView' || root.closest?.('#recordsView'))) return;
+    const w=document.createTreeWalker(root,NodeFilter.SHOW_TEXT); const nodes=[]; let n; while((n=w.nextNode())) nodes.push(n); nodes.forEach(translateNode);
+  }
+  // Instructions: authored UI prose only; fish/map names and app data are untouched.
+  const iv=document.getElementById('instructionsView'); if(iv){
+    const title=iv.querySelector('.panel-title'); if(title)title.textContent='使用说明';
+    const blocks=iv.querySelectorAll('.ack-wrapper');
+    if(blocks[0]) blocks[0].querySelector('.instr-text').innerHTML='<b>FishMetrics</b> — 为喜欢记录、规划和分析 CotD 钓鱼历程的玩家打造的辅助工具。它不是科学的技术评分，而是一种有条理地查看统计数据与进度的方式。如果你喜欢研究数字，或和朋友、Clan 成员比较数据，这里就是你的好帮手。';
+    if(blocks[1]) blocks[1].innerHTML='<strong>如何使用 FishMetrics</strong><br><span class="instr-text">1) 前往 <span class="tab-ref">记录</span> 输入鱼的重量。<br>2) <span class="tab-ref">仪表板</span> 显示整体进度和关键指标。<br>3) 使用 <span class="tab-ref">仪表板</span> 上的筛选控件探索统计数据。<br>4) 通过 <span class="tab-ref">分数表</span> 和 <span class="tab-ref">鱼类分析</span> 查看不同地点和鱼类的表现。<br>5) <span class="tab-ref">生涯目标</span> 和 <span class="tab-ref">专注模式</span> 可帮助你决定优先提升哪些鱼。<br>6) 使用右上角的分享按钮下载并分享成绩卡。</span>';
+  }
+  // Chinese Instructions: translate only authored instructional UI, preserving inputs, IDs and handlers.
+  if(iv){
+    const wrappers=iv.querySelectorAll('.ack-wrapper');
+    const titleMap={'Preferences':'偏好设置','Data & Backups':'数据与备份','Season Archiving':'赛季归档'};
+    iv.querySelectorAll('.ack-wrapper > strong').forEach(el=>{const key=el.textContent.trim();if(titleMap[key])el.textContent=titleMap[key];});
+    const pref=iv.querySelector('.pb-policy-panel > .pref-note');
+    if(pref)pref.textContent='当赛季渔获超过你的历史最佳纪录时，选择 FishMetrics 如何更新个人最佳纪录（PB）。';
+    const opts=iv.querySelectorAll('.pb-policy-options .pref-option');
+    ['每次询问','始终更新个人最佳纪录','从不更新个人最佳纪录'].forEach((label,i)=>{const el=opts[i];if(!el)return;const input=el.querySelector('input');if(!input)return;[...el.childNodes].forEach(n=>{if(n!==input)n.remove();});el.append(document.createTextNode(' '+label));});
+    const review=iv.querySelector('#reviewSeasonPbUpdatesBtn');if(review)review.textContent='检查赛季个人最佳纪录更新';
+    const action=iv.querySelector('.pref-action-note');if(action)action.textContent='扫描赛季记录，找出可能刷新历史最佳纪录的渔获。';
+    const backupIntro=[...iv.querySelectorAll('.ack-wrapper .instr-text')].find(el=>el.textContent.includes('Want to move FishMetrics'));
+    if(backupIntro)backupIntro.textContent='想在另一台设备上使用 FishMetrics，或保留一份安全备份？';
+    const exp=iv.querySelector('#backupExportBtn');if(exp)exp.textContent='导出鱼缸数据（JSON）';
+    const restoreLabel=iv.querySelector('.restore-label');if(restoreLabel)restoreLabel.textContent='恢复鱼缸数据';
+    const drop=iv.querySelector('#restoreDrop');if(drop){drop.textContent='将 FishMetrics 备份拖放到这里，或点击选择文件';drop.setAttribute('aria-label','拖放 FishMetrics JSON 备份文件，或点击浏览');}
+    const archive=[...iv.querySelectorAll('.ack-wrapper .instr-text')].find(el=>el.textContent.includes('Seasons archive automatically'));
+    if(archive)archive.innerHTML='赛季会在 CotD 全球重置时间自动归档，而不是按你所在地的午夜时间。<br>上一个赛季的数据会保留，供日后查阅。';
+    const ack=iv.querySelector('.ack-heading strong');if(ack)ack.textContent='鸣谢';
+    const ackText=iv.querySelector('.ack-text');if(ackText){
+      const link=ackText.querySelector('a.ack-discord');
+      if(link){ackText.replaceChildren(document.createTextNode('衷心感谢我的 Carp Diem 战队伙伴们，他们给了这个项目灵感，并参与了无数次讨论与测试；也感谢 CotD 社区各地的朋友提供想法与反馈，以及那些虽然不玩 CotD，却总愿意帮忙排查问题的朋友们。没有大家的帮助，这个项目就不可能实现 💜 '),link);}
+    }
+    const foot=iv.querySelector('.fm-instructions-footer');if(foot)foot.innerHTML='© 2026 FishMetrics — 帮助 CotD 玩家记录和提升渔获的独立个人项目。<br>游戏相关名称与数据归各自权利人所有。FishMetrics 与任何同名企业或组织均无关联。';
+    iv.querySelectorAll('[aria-label]').forEach(el=>{const a=el.getAttribute('aria-label');if(a==='PB update preference')el.setAttribute('aria-label','个人最佳纪录更新偏好');if(a==='Data backup and restore')el.setAttribute('aria-label','数据备份与恢复');});
+  }
+  // Journal: translate chrome only. Table headers are generated safely by app.js.
+  const rv=document.getElementById('recordsView');
+  if(rv){
+    const q=(sel,text)=>{const el=rv.querySelector(sel); if(el) el.textContent=text;};
+    q('.unit-toggle-label','重量单位');
+    const search=rv.querySelector('#fishSearchInput'); if(search) search.placeholder='搜索鱼类…';
+    const clear=rv.querySelector('#fishSearchClearBtn'); if(clear) clear.setAttribute('aria-label','清除搜索');
+    const imp=rv.querySelector('#seasonImportBtn'); if(imp){imp.textContent='导入赛季截图'; imp.setAttribute('aria-label','导入赛季截图');}
+    q('.table-title','记录');
+    const loc=rv.querySelector('.location-select'); if(loc && loc.firstChild && loc.firstChild.nodeType===3) loc.firstChild.nodeValue='地点：';
+    const totals=rv.querySelectorAll('.total-fish');
+    if(totals[0] && totals[0].firstChild) totals[0].firstChild.nodeValue='鱼类总数：';
+    if(totals[1] && totals[1].firstChild) totals[1].firstChild.nodeValue='所有地点：';
+  }
+  // Scoped dynamic localization for the two All-time planning tabs only.
+  // Never traverse Log Records or alter fish names, maps, numeric values, or data attributes.
+  const targetRoots=['careerTargetsView','focusView'].map(id=>document.getElementById(id)).filter(Boolean);
+  const dynamicStrings=new Map(Object.entries({
+    'All-time best stars':'历史最佳星级',
+    'All-time best stars • In-season this month':'历史最佳星级 · 本月当季鱼类',
+    'In season now • OOS next month':'目前当季 · 下月非当季',
+    'In season now • OOS within 3 months':'目前当季 · 未来三个月内非当季',
+    'closest to target':'最接近目标','biggest climb':'提升空间最大',
+    'Pick a location to begin.':'先选择一个地点。',
+    'No focus fish yet. Add one above.':'尚未添加专注鱼类，请在上方添加。',
+    'Remove':'移除','Add':'添加','Next star':'下一星级',
+    'Current':'当前','Target':'目标','Gap':'差距','Points':'分数',
+    'No data yet':'暂无数据','No fish selected':'尚未选择鱼类',
+    'Common':'常见','Rare':'稀有','Epic':'史诗','Legendary':'传奇'
+  }));
+  function localizeTargetText(root){
+    const w=document.createTreeWalker(root,NodeFilter.SHOW_TEXT); let n;
+    while((n=w.nextNode())){
+      if(n.parentElement?.closest('option') && n.parentElement?.value) continue;
+      const raw=n.nodeValue, key=raw.trim();
+      if(dynamicStrings.has(key)) n.nodeValue=raw.replace(key,dynamicStrings.get(key));
+    }
+  }
+  const targetObserver=new MutationObserver(()=>targetRoots.forEach(localizeTargetText));
+  targetRoots.forEach(r=>{localizeTargetText(r);targetObserver.observe(r,{subtree:true,childList:true,characterData:true});});
+  translateTree(document.body);
+  const obs=new MutationObserver(ms=>ms.forEach(m=>m.addedNodes.forEach(n=>{if(n.nodeType===Node.TEXT_NODE)translateNode(n); else if(n.nodeType===Node.ELEMENT_NODE)translateTree(n);}))); obs.observe(document.body,{childList:true,subtree:true});
+  setTimeout(()=>translateTree(document.body),100); setTimeout(()=>translateTree(document.body),500);
+})();
+</script>
+
+<script>if(new URLSearchParams(location.search).get('lang')==='fr'){const el=document.getElementById('avgStarsSeasonNote');if(el)el.textContent='Poissons de la saison uniquement';}</script>
 <footer class="app-footer">
   <div class="footer-left">
     <button class="privacy-btn footer-meta-btn" onclick="openPrivacyNotice()" aria-label="Privacy Notice">
@@ -1373,5 +1501,36 @@ Not affiliated with any company or organization of a similar name.</div>
 })();
 </script>
 
+<script>
+(function(){
+ if(new URLSearchParams(location.search).get('lang')!=='zh-CN')return;
+ const set=(id,value)=>{const e=document.getElementById(id);if(e)e.textContent=value;};
+ function run(){
+  const cl=document.getElementById('captainsLogDrawer');
+  set('captainsLogTitle','船长日志');
+  const toggle=document.getElementById('captainsLogToggle');if(toggle){toggle.setAttribute('aria-label','船长日志');toggle.setAttribute('data-tooltip','船长日志');}
+  if(cl){const sub=cl.querySelector('.captains-log-subtitle');if(sub)sub.textContent='随时在 FishMetrics 中查看你的笔记';
+   const close=cl.querySelector('#captainsLogClose');if(close)close.setAttribute('aria-label','关闭船长日志');
+   cl.querySelectorAll('.captains-log-tab').forEach((e,i)=>e.textContent=['常规','地点','规划','战斗'][i]);
+   const area=cl.querySelector('#captainsLogText');if(area)area.placeholder='写下想记住的内容…';
+  }
+  const share=document.getElementById('shareDropdown');if(share){
+   const labels={overall:'总览成绩卡','all-time-poster':'历史总成绩海报','current-season-poster':'本赛季海报','last-season-poster':'上赛季海报',backup:'导出备份 (JSON)'};
+   Object.entries(labels).forEach(([k,v])=>{const e=share.querySelector('[data-share="'+k+'"]');if(e)e.textContent=v;});
+   const section=share.querySelector('.menu-section');if(section)section.textContent='按地点';
+  }
+  const rn=document.getElementById('releaseNotesModal');if(rn){
+   const notes=['新增船长日志','改进鱼饵管理','更新鱼类出现时间','支持批量导入赛季渔获','新增历史总成绩与赛季海报','新增鱼价追踪器','更新经验值追踪器界面','新增 VIP 百慕大三角地图','新增 VIP 石化工厂地图','新增规划工具','新增 VIP 地图','新增星级分布图','赛季视图新增非当季开关','赛季记录按游戏内鱼类顺序排列','界面优化及错误修复','旧版本备份导入后，因计算方法改进，分数可能略有变化','新增 Marina 鱼类','新增赛季视图','新增生涯目标','新增专注模式','界面小幅调整'];
+   rn.querySelectorAll('.release-notes li').forEach((e,i)=>{if(notes[i])e.textContent=notes[i];});
+   const x=rn.querySelector('.release-notes-x');if(x)x.setAttribute('aria-label','关闭版本说明');
+  }
+  const welcome=document.querySelector('#companionWelcome .welcome-title');if(welcome)welcome.textContent='祝你今天钓鱼愉快！';
+  const sub=document.querySelector('#companionWelcome .welcome-sub');if(sub)sub.textContent='记录几条渔获后即可解锁：';
+  document.querySelectorAll('#companionWelcome .welcome-list li').forEach((e,i)=>{const names=['高分目标','接近升级的鱼类','赛季机会','隐藏提升机会'];if(names[i])e.textContent=names[i];});
+  set('fishingGuideTitle','钓鱼指南');
+ }
+ run();document.addEventListener('DOMContentLoaded',run,{once:true});
+})();
+</script>
 </body>
 </html>

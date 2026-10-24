@@ -561,9 +561,10 @@ body.fm-splash-active > .card{
 
     html[lang="fr"] .name .sub{max-width:none;overflow:visible;text-overflow:clip;font-size:9px;letter-spacing:.25px;}
 
-    .fm-lang-mini{position:absolute;right:18px;bottom:14px;display:flex;gap:4px;z-index:5;font:800 10px/1 system-ui,sans-serif;letter-spacing:.05em}
+    .fm-lang-mini{position:absolute;right:18px;bottom:14px;display:flex;flex-direction:column;align-items:center;gap:5px;z-index:5;font:800 10px/1 system-ui,sans-serif;letter-spacing:.05em}
     .fm-lang-mini button{border:1px solid rgba(255,255,255,.22);background:rgba(5,23,46,.52);color:rgba(255,255,255,.68);border-radius:6px;padding:5px 7px;cursor:pointer}
-    .fm-lang-mini button.active{color:#ffd84d;border-color:rgba(255,216,77,.55);background:rgba(255,216,77,.10)}
+    .fm-lang-mini select{max-width:148px;border:1px solid rgba(255,216,77,.32);background:#0b2745;color:#ffd84d;border-radius:7px;padding:6px 9px;font:700 11px system-ui,sans-serif;cursor:pointer}
+    .fm-lang-mini select:focus-visible{outline:2px solid #ffd84d;outline-offset:2px}
     .card{position:relative}
 </style>
 </head>
@@ -600,7 +601,7 @@ body.fm-splash-active > .card{
         <a class="btn btnPlanner" id="landingPlanner" href="app.html?planner=1" aria-label="Open Planner">Planner</a>
         <a class="btn btnClan" id="landingClan" href="app.html?clan=1" aria-label="Clans coming soon">Clan <span class="landing-soon-badge" id="landingSoon">Soon</span></a>
       </div>
-      <div class="fm-lang-mini" aria-label="Language"><button type="button" id="langEN" class="active">EN</button><button type="button" id="langFR">FR</button></div>
+      <div class="fm-lang-mini"><label for="fmLanguageSelect" style="font:600 11px system-ui,sans-serif;color:#b8c7dd;letter-spacing:.025em">Language</label><select id="fmLanguageSelect" aria-label="Language"><option value="en">🌐 English</option><option value="fr">🌐 Français</option><option value="zh-CN">🌐 简体中文</option></select></div>
 
       </div>
     </div>
@@ -653,23 +654,23 @@ body.fm-splash-active > .card{
 <script>
 (function(){
   const q=new URLSearchParams(location.search);
-  let lang=q.get('lang')==='fr'?'fr':'en';
+  let lang=['fr','zh-CN'].includes(q.get('lang'))?q.get('lang'):'en';
   const en={sub:'Companion analytics for Creatures of the Deep',main:'Main Metrics',vip:'VIP Metrics',planner:'Planner',clan:'Clan',soon:'Soon'};
   const fr={sub:'Analyses complémentaires pour Creatures of the Deep',main:'Statistiques principales',vip:'Statistiques VIP',planner:'Planificateur',clan:'Clan',soon:'Bientôt'};
+  const zh={sub:'Creatures of the Deep 数据分析助手',main:'Main 数据',vip:'VIP 数据',planner:'规划工具',clan:'Clan',soon:'即将推出'};
   function apply(next){
-    lang=next==='fr'?'fr':'en'; const t=lang==='fr'?fr:en; document.documentElement.lang=lang;
+    lang=['fr','zh-CN'].includes(next)?next:'en'; const t=lang==='fr'?fr:(lang==='zh-CN'?zh:en); document.documentElement.lang=lang;
     document.getElementById('landingSub').textContent=t.sub; document.getElementById('landingMain').textContent=t.main;
     document.getElementById('enterVipBtn').textContent=t.vip; document.getElementById('landingPlanner').textContent=t.planner;
     document.getElementById('landingClan').childNodes[0].nodeValue=t.clan+' '; document.getElementById('landingSoon').textContent=t.soon;
-    document.getElementById('langEN').classList.toggle('active',lang==='en'); document.getElementById('langFR').classList.toggle('active',lang==='fr');
-    const suffix=lang==='fr'?'lang=fr':'';
-    document.getElementById('landingMain').href=lang==='fr'?'app.html?lang=fr':'app.html';
-    document.getElementById('enterVipBtn').href=lang==='fr'?'app.html?lang=fr#vip':'app.html#vip';
-    document.getElementById('landingPlanner').href=lang==='fr'?'app.html?planner=1&lang=fr':'app.html?planner=1';
-    document.getElementById('landingClan').href=lang==='fr'?'app.html?clan=1&lang=fr':'app.html?clan=1';
+    document.getElementById('fmLanguageSelect').value=lang;
+    const lp=lang==='fr'?'lang=fr':(lang==='zh-CN'?'lang=zh-CN':'');
+    document.getElementById('landingMain').href=lp?'app.html?'+lp:'app.html';
+    document.getElementById('enterVipBtn').href=lp?'app.html?'+lp+'#vip':'app.html#vip';
+    document.getElementById('landingPlanner').href=lp?'app.html?planner=1&'+lp:'app.html?planner=1';
+    document.getElementById('landingClan').href=lp?'app.html?clan=1&'+lp:'app.html?clan=1';
   }
-  document.getElementById('langEN').addEventListener('click',()=>apply('en'));
-  document.getElementById('langFR').addEventListener('click',()=>apply('fr'));
+  document.getElementById('fmLanguageSelect').addEventListener('change',e=>apply(e.target.value));
   apply(lang);
 })();
 </script>
