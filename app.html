@@ -735,8 +735,8 @@ Not affiliated with any company or organization of a similar name.</div>
 <label class="location-select">
             Location:
             <select id="locationSelect"></select>
-<span class="total-fish">Total Fish: <strong id="totalFishCount"></span>
-<span class="total-fish total-fish-all">All Locations: <strong id="totalFishCountAll"></span>
+<span class="total-fish"><span id="fmTotalFishLabel">Total Fish:</span> <strong id="totalFishCount"></strong></span>
+<span class="total-fish total-fish-all"><span id="fmAllLocationsLabel">All Locations:</span> <strong id="totalFishCountAll"></strong></span>
 </label>
 </div>
 <div class="table-scroll" aria-label="Records table scroll region">
@@ -757,7 +757,7 @@ Not affiliated with any company or organization of a similar name.</div>
 </div>
 </section>
 </main>
-<script src="app.js?v=182-fr-safe-test7"></script>
+<script src="app.js?v=182-ptbr-test46-restore-modal"></script>
 <script>
 (function(){
   const isFR=new URLSearchParams(location.search).get('lang')==='fr';
@@ -1530,6 +1530,82 @@ Not affiliated with any company or organization of a similar name.</div>
   set('fishingGuideTitle','钓鱼指南');
  }
  run();document.addEventListener('DOMContentLoaded',run,{once:true});
+})();
+</script>
+<script>
+/* Brazilian Portuguese — initial safe Metrics chrome pass. Never rewrite generated record rows. */
+(function(){
+ if(new URLSearchParams(location.search).get('lang')!=='pt-BR') return;
+ document.documentElement.lang='pt-BR';
+ const labels={
+  tabOverview:'Painel',tabRecords:'Registros de capturas',tabMap:'Faixas de pontuação',tabFish:'Análise dos peixes',
+  tabCareerTargets:'Metas de carreira',tabFocus:'Modo Foco',tabInstructions:'Instruções',
+  modeCareerBtn:'Geral',modeSeasonBtn:'Temporada',plannerToggleBtn:'Planejador',
+  locationsTitle:'Locais',rarityTitle:'Raridade',bestiaryTitle:'Progresso do bestiário',
+  fishingGuideTitle:'Guia de pesca',includeOOSLabel:'Incluir fora de temporada',
+  includeLegendaryLabel:'Incluir lendários',avgStarRatingLabel:'Média de estrelas',
+  totalPointsLabel:'Total de pontos',fourStarCatchesLabel:'Capturas 4★',fiveStarCatchesLabel:'Capturas 5★',
+  bestMapLabel:'Melhor local',bestMapSubLabel:'Todas as raridades',starDistributionTitle:'Distribuição de estrelas',
+  high4Label:'4★ alto',pointsRarityTitle:'Pontos por raridade',starsRarityTitle:'Estrelas por raridade',
+  pointsMapTitle:'Pontos por local',starCatchesTitle:'Capturas por estrelas',
+  commonRangeTitle:'Faixas de pontuação — Common',rareRangeTitle:'Faixas de pontuação — Rare',
+  epicRangeTitle:'Faixas de pontuação — Epic',typeRangeTitle:'Pontuação por tipo',
+  legendaryTitle:'Peixes lendários',fearsomeTitle:'Os Quatro Temíveis',eliteEpicsTitle:'Epic de elite',
+  shortLivedTitle:'Especiais por tempo limitado',invisiblesTitle:'Invisíveis',
+  personalBestsTitle:'👑 Recordes pessoais',focusTitle:'Modo Foco',
+  focusLocationLabel:'Local',focusCategoryLabel:'Categoria',focusFishLabel:'Peixe',
+  focusAddBtn:'Adicionar',focusHint:'Selecione um local primeiro.',
+  avgStarsSeasonNote:'Apenas peixes da temporada',careerTargetsSubLabel:'Recordes históricos · Peixes da temporada',
+  careerTargetsSortLabel:'Mais perto da meta'
+ };
+ function apply(){for(const [id,value] of Object.entries(labels)){const el=document.getElementById(id);if(el)el.textContent=value;}
+  const soon=document.querySelector('#clanToggleBtn .coming-soon-mini');if(soon)soon.textContent='EM BREVE';
+ }
+ apply(); document.addEventListener('DOMContentLoaded',apply,{once:true});
+})();
+</script>
+<script>
+/* pt-BR Metrics and shared interface: targeted static UI only; no fish rows or stored notes. */
+(function(){
+ if(new URLSearchParams(location.search).get('lang')!=='pt-BR')return;
+ const set=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
+ function apply(){
+  const labels={focusDesc:'O Modo Foco permite escolher até dez peixes e acompanhar o progresso até a próxima meta. Encontre as melhores oportunidades para melhorar seus resultados.',focusListEmpty:'Nenhum peixe selecionado. Adicione um peixe acima.',focusHint:'Escolha um local para começar.',careerTargetsSortedBy:'Ordenar por:',careerTargetsSortLabel:'Mais perto da meta',seasonImportBtn:'Importar capturas da temporada',seasonImportTitle:'Importar capturas da temporada',seasonImportCancel:'Cancelar',seasonImportPreview:'Pré-visualizar importação',seasonImportConfirm:'Confirmar importação',seasonImportCompleteTitle:'Importação da temporada concluída',seasonImportCompleteOk:'OK',seasonImportFileList:'Nenhuma captura de tela selecionada.',seasonImportPreviewStatus:'Pré-visualização OCR ainda não iniciada',captainsLogTitle:'Diário do Capitão',captainsLogSectionTitle:'Notas gerais',captainsLogSaved:'Salvo localmente'};
+  Object.entries(labels).forEach(([id,v])=>set(id,v));
+  const share=document.getElementById('shareDropdown');if(share){const names={overall:'Cartão de resultados geral','all-time-poster':'Pôster de todos os tempos','current-season-poster':'Pôster da temporada atual','last-season-poster':'Pôster da temporada anterior',backup:'Exportar backup (JSON)'};for(const [k,v] of Object.entries(names)){const e=share.querySelector('[data-share="'+k+'"]');if(e)e.textContent=v;}const sec=share.querySelector('.menu-section');if(sec)sec.textContent='Por local';share.setAttribute('aria-label','Compartilhar resultados');}
+  const menu=document.getElementById('menuBtn');if(menu){menu.title='Compartilhar';menu.setAttribute('aria-label','Compartilhar');}
+  const cl=document.getElementById('captainsLogDrawer');if(cl){const sub=cl.querySelector('.captains-log-subtitle');if(sub)sub.textContent='Suas anotações, disponíveis em todo o FishMetrics';cl.querySelectorAll('.captains-log-tab').forEach((e,i)=>e.textContent=['Geral','Mapas','Planejador','Batalhas'][i]);const area=cl.querySelector('#captainsLogText');if(area)area.placeholder='Escreva algo que queira lembrar...';const close=cl.querySelector('#captainsLogClose');if(close)close.setAttribute('aria-label','Fechar Diário do Capitão');}
+  const toggle=document.getElementById('captainsLogToggle');if(toggle){toggle.setAttribute('aria-label','Diário do Capitão');toggle.setAttribute('data-tooltip','Diário do Capitão');}
+  const guide=document.getElementById('companionWelcome');if(guide){const title=guide.querySelector('.welcome-title');if(title)title.textContent='Boa pescaria!';const sub=guide.querySelector('.welcome-sub');if(sub)sub.textContent='Registre algumas capturas para descobrir:';const names=['Melhores oportunidades de pontos','Melhorias próximas da próxima estrela','Oportunidades da temporada','Ganhos que você ainda não percebeu'];guide.querySelectorAll('.welcome-list li').forEach((e,i)=>{if(names[i])e.textContent=names[i];});}
+  const guideReset=document.getElementById('companionReset');if(guideReset)guideReset.setAttribute('aria-label','Redefinir posição');const guideClose=document.getElementById('companionDismiss');if(guideClose)guideClose.setAttribute('aria-label','Fechar');
+  const priv=document.querySelector('#privacyModal .privacy-content');if(priv){const title=priv.querySelector('h3');if(title)title.textContent='Aviso de privacidade';const paragraphs=priv.querySelectorAll('p');if(paragraphs[0])paragraphs[0].textContent='O FishMetrics não usa cookies de rastreamento nem rastreadores de publicidade.';if(paragraphs[1])paragraphs[1].textContent='Você pode apagar todos os dados armazenados localmente a qualquer momento usando o botão abaixo.';const clear=priv.querySelector('button[onclick="clearFishMetricsData()"]');if(clear)clear.textContent='Apagar todos os dados locais';const foot=priv.querySelector('.privacy-footnote');if(foot)foot.textContent='Conformidade com o GDPR: FishMetrics v1.8.2 — armazenamento de dados apenas no dispositivo.';const close=priv.querySelector('.close-btn');if(close)close.textContent='Fechar';}
+  const privacyButton=document.querySelector('.app-footer .privacy-btn');if(privacyButton){const label=privacyButton.querySelector('.footer-label');if(label)label.textContent='Aviso de privacidade';privacyButton.setAttribute('aria-label','Aviso de privacidade');}
+  const contact=document.querySelector('.app-footer .contact-btn');if(contact){const label=contact.querySelector('.footer-label');if(label)label.textContent='Contato';contact.setAttribute('aria-label','Contato');}
+  const version=document.querySelector('.app-footer .version-btn');if(version)version.setAttribute('aria-label','Versão e notas de atualização');
+  for(const id of ['commonRangeOos','rareRangeOos','epicRangeOos','typeRangeOos']){const e=document.getElementById(id);if(e)e.textContent='(capturas fora da temporada não incluídas)';}
+  const fish=document.getElementById('fishView');if(fish){fish.querySelectorAll('[aria-label]').forEach(e=>{if(e.getAttribute('aria-label')==='Personal bests')e.setAttribute('aria-label','Recordes pessoais');});}
+  const targets=document.getElementById('careerTargetsView');if(targets){targets.querySelectorAll('[aria-label]').forEach(e=>{const dict={'Career target selector':'Seleção de metas de carreira','Career target sort':'Ordenação das metas','Toggle sort mode (closest to target / biggest climb)':'Alternar ordenação (mais perto da meta / maior potencial de melhoria)','Secondary sort':'Ordenação secundária'};const a=e.getAttribute('aria-label');if(dict[a])e.setAttribute('aria-label',dict[a]);});const toggle=targets.querySelector('.ct-switch');if(toggle)toggle.title='Alternar ordenação';}
+  const notes=document.getElementById('releaseNotesModal');if(notes){const list=['Adicionado o Diário do Capitão para anotações','Gerenciamento de iscas aprimorado','Atualizados os horários de aparecimento dos peixes','Adicionada a importação em lote de capturas da temporada','Adicionados pôsteres de todos os tempos e da temporada','Adicionado o Rastreador de Preços dos Peixes','Interface do Rastreador de XP atualizada','Adicionado o mapa VIP Bermuda Triangle','Adicionado o mapa VIP Petrochemical','Adicionado o Planejador','Adicionados os mapas VIP','Adicionada a distribuição de estrelas','Novo controle para incluir peixes fora de temporada','Registros da temporada organizados na ordem do jogo','Melhorias de interface e correções de erros','A importação de backups antigos pode gerar pequenas diferenças nos pontos devido a melhorias nos cálculos','Adicionados os peixes de Marina','Adicionada a visão Temporada','Adicionadas as Metas de Carreira','Adicionado o Modo Foco','Pequenos ajustes de interface'];notes.querySelectorAll('.release-notes li').forEach((e,i)=>{if(list[i])e.textContent=list[i];});const x=notes.querySelector('.release-notes-x');if(x)x.setAttribute('aria-label','Fechar notas de versão');}
+  const ct=document.getElementById('careerTargetsView');if(ct){const title=ct.querySelector('.career-targets-title > span');if(title)title.textContent='Metas de carreira';const a=ct.querySelector('[data-ct-target="oos1"]');if(a)a.textContent='Fora de temporada no próximo mês';const b=ct.querySelector('[data-ct-target="oos3"]');if(b)b.textContent='Fora de temporada em até 3 meses';const closest=ct.querySelector('.ct-sort-label[data-mode="closest"]');if(closest)closest.textContent='Mais perto da meta';const climb=ct.querySelector('.ct-sort-label[data-mode="climb"]');if(climb)climb.textContent='Maior potencial de melhoria';const secondary=ct.querySelector('.ct-secondary-sort-label');if(secondary)secondary.textContent='Ordenar:';const sel=ct.querySelector('#ctSecondarySortSelect');if(sel){if(sel.options[0])sel.options[0].textContent='Estrelas';if(sel.options[1])sel.options[1].textContent='Priorizar fora de temporada';}}
+  const ins=document.getElementById('instructionsView');if(ins){const title=ins.querySelector('.panel-title');if(title)title.textContent='Instruções';const blocks=ins.querySelectorAll('.ack-wrapper');if(blocks[0]){const intro=blocks[0].querySelector('.instr-text');if(intro)intro.innerHTML='<b>FishMetrics</b> — um aplicativo complementar para quem gosta de registrar, planejar e analisar sua jornada de pesca no CotD. Não é uma avaliação científica de habilidade, mas uma maneira organizada de acompanhar estatísticas e progresso. Se você gosta de números ou de comparar resultados com amigos e colegas de clã, este é o lugar certo.';}if(blocks[1]){const heading=blocks[1].querySelector('strong');if(heading)heading.textContent='Como usar o FishMetrics';const text=blocks[1].querySelector('.instr-text');if(text)text.innerHTML='1) Acesse <span class="tab-ref">Registros de capturas</span> para inserir os pesos dos peixes.<br>2) O <span class="tab-ref">Painel</span> mostra seu progresso geral e os principais indicadores.<br>3) Use os filtros do <span class="tab-ref">Painel</span> para explorar as estatísticas.<br>4) Consulte <span class="tab-ref">Faixas de pontuação</span> e <span class="tab-ref">Análise dos peixes</span> para comparar resultados.<br>5) <span class="tab-ref">Metas de carreira</span> e <span class="tab-ref">Modo Foco</span> ajudam a escolher os próximos objetivos.<br>6) Use o ícone de compartilhar no canto superior direito para baixar os cartões de resultados.';}
+   const headings={'Preferences':'Preferências','Data & Backups':'Dados e backups','Season Archiving':'Arquivamento das temporadas'};ins.querySelectorAll('.ack-wrapper > strong').forEach(e=>{const k=e.textContent.trim();if(headings[k])e.textContent=headings[k];});const pref=ins.querySelector('.pb-policy-panel > .pref-note');if(pref)pref.textContent='Escolha como o FishMetrics atualiza seus recordes pessoais (PB) quando uma captura da temporada supera seu melhor resultado.';ins.querySelectorAll('.pb-policy-options .pref-option').forEach((e,i)=>{const input=e.querySelector('input');if(!input)return;const names=['Perguntar sempre','Sempre atualizar o recorde pessoal','Nunca atualizar o recorde pessoal'];[...e.childNodes].forEach(n=>{if(n!==input)n.remove();});e.append(document.createTextNode(' '+names[i]));});const review=ins.querySelector('#reviewSeasonPbUpdatesBtn');if(review)review.textContent='Revisar recordes pessoais da temporada';const note=ins.querySelector('.pref-action-note');if(note)note.textContent='Verifique as capturas da temporada que podem melhorar seus recordes gerais.';const intro=[...ins.querySelectorAll('.ack-wrapper .instr-text')].find(e=>e.textContent.includes('Want to move FishMetrics'));if(intro)intro.textContent='Quer usar o FishMetrics em outro dispositivo ou guardar uma cópia de segurança?';const exp=ins.querySelector('#backupExportBtn');if(exp)exp.textContent='Exportar dados (JSON)';const restore=ins.querySelector('.restore-label');if(restore)restore.textContent='Restaurar dados';const drop=ins.querySelector('#restoreDrop');if(drop){drop.textContent='Arraste um backup do FishMetrics para cá ou clique para escolher um arquivo';drop.setAttribute('aria-label','Selecionar arquivo de backup JSON do FishMetrics');}const archive=[...ins.querySelectorAll('.ack-wrapper .instr-text')].find(e=>e.textContent.includes('Seasons archive automatically'));if(archive)archive.innerHTML='As temporadas são arquivadas automaticamente no horário global de reinício do CotD, não à meia-noite do seu fuso horário.<br>Os dados da temporada anterior ficam disponíveis para consulta.';const ack=ins.querySelector('.ack-heading strong');if(ack)ack.textContent='Agradecimentos';const footer=ins.querySelector('.fm-instructions-footer');if(footer)footer.innerHTML='© 2026 FishMetrics — projeto pessoal independente para ajudar jogadores de CotD a acompanhar suas capturas.<br>Os nomes e dados do jogo pertencem aos respectivos titulares. O FishMetrics não tem vínculo com outras empresas ou organizações de nome semelhante.';
+  }
+ }
+ apply();document.addEventListener('DOMContentLoaded',apply,{once:true});
+})();
+</script>
+<script>
+/* PT-BR acknowledgement: preserve the existing community link and logo. */
+(function(){
+ if(new URLSearchParams(location.search).get('lang')!=='pt-BR')return;
+ function apply(){
+  const ins=document.getElementById('instructionsView');if(!ins)return;
+  const ack=ins.querySelector('.ack-text');if(!ack)return;
+  const link=ack.querySelector('a');const linkHTML=link?link.outerHTML:'<strong>Carp Diem</strong>';
+  ack.innerHTML='Um enorme agradecimento a todos — aos meus incríveis companheiros de clã do '+linkHTML+', que inspiraram este projeto e ajudaram em muitas horas de ideias e testes; aos amigos de toda a comunidade CotD pelas sugestões e opiniões; e especialmente aos amigos que nem jogam, não faziam ideia do que era CotD, mas nunca recusaram um pedido de socorro para depurar erros — obrigado pelo tempo de vocês! Este projeto não seria possível sem vocês 💜';
+  const heading=ins.querySelector('.ack-heading strong');if(heading)heading.textContent='Agradecimentos';
+ }
+ apply();document.addEventListener('DOMContentLoaded',apply,{once:true});
 })();
 </script>
 </body>

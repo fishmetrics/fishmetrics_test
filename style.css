@@ -8025,3 +8025,100 @@ html[lang="fr"] #companionPanel #companionRows{
   max-height:none !important;
   overflow:visible !important;
 }
+
+/* Test 38: keep localized long fish names within their own Log Records cells.
+   Do not modify English/French layout or the input widths. */
+html[lang="zh-CN"] #recordsView .records-table td .fish-name,
+html[lang="pt-BR"] #recordsView .records-table td .fish-name {
+  display: inline-block;
+  max-width: 100%;
+  min-width: 0;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: normal;
+  vertical-align: middle;
+}
+html[lang="zh-CN"] #recordsView .records-table td,
+html[lang="pt-BR"] #recordsView .records-table td {
+  min-width: 0;
+}
+
+/* Test 39: Log Records has Fish in column TWO (not column three).
+   The original nowrap !important fish-name rule prevented Test 38 wrapping. */
+html[lang="zh-CN"] #recordsTable th:nth-child(2),
+html[lang="pt-BR"] #recordsTable th:nth-child(2),
+html[lang="zh-CN"] #recordsTable td:nth-child(2),
+html[lang="pt-BR"] #recordsTable td:nth-child(2) {
+  white-space: normal !important;
+  overflow-wrap: anywhere;
+}
+html[lang="zh-CN"] #recordsTable td:nth-child(2) .fish-name:not(.is-editing),
+html[lang="pt-BR"] #recordsTable td:nth-child(2) .fish-name:not(.is-editing) {
+  display: inline !important;
+  white-space: normal !important;
+  overflow: visible !important;
+  overflow-wrap: anywhere !important;
+  word-break: normal !important;
+  text-overflow: clip !important;
+}
+
+/* PT/ZH: reuse tested French Fishing Guide wrapping and flexible height */
+/* FR Safe Test 18: long French Fishing Guide recommendations must stay inside the panel.
+   Scope to French only so the established English HUD layout is unchanged. */
+:is(html[lang="pt-BR"], html[lang="zh-CN"]) #companionRows .companion-row{
+  white-space: normal !important;
+  align-items:flex-start;
+  gap:16px;
+}
+:is(html[lang="pt-BR"], html[lang="zh-CN"]) #companionRows .companion-row .label{
+  flex:0 0 38%;
+  min-width:0;
+  white-space:normal !important;
+}
+:is(html[lang="pt-BR"], html[lang="zh-CN"]) #companionRows .companion-row .value{
+  flex:1 1 0;
+  min-width:0;
+  white-space:normal !important;
+  overflow-wrap:anywhere;
+  text-align:right;
+}
+
+/* FR Safe Test 20: keep the original Fishing Guide width, but let French rows
+   grow naturally when labels/recommendations wrap. English layout is unchanged. */
+:is(html[lang="pt-BR"], html[lang="zh-CN"]) #companionRows .companion-row{
+  display:grid !important;
+  grid-template-columns:minmax(0, 38%) minmax(0, 62%);
+  column-gap:14px !important;
+  align-items:start !important;
+  white-space:normal !important;
+  padding:6px 0 !important;
+  line-height:1.3 !important;
+  height:auto !important;
+  min-height:0 !important;
+}
+:is(html[lang="pt-BR"], html[lang="zh-CN"]) #companionRows .companion-row .label,
+:is(html[lang="pt-BR"], html[lang="zh-CN"]) #companionRows .companion-row .value{
+  min-width:0 !important;
+  width:auto !important;
+  white-space:normal !important;
+  line-height:inherit !important;
+}
+:is(html[lang="pt-BR"], html[lang="zh-CN"]) #companionRows .companion-row .label{
+  display:block;
+}
+:is(html[lang="pt-BR"], html[lang="zh-CN"]) #companionRows .companion-row .value{
+  display:block;
+  overflow:visible !important;
+  text-overflow:clip !important;
+  overflow-wrap:break-word !important;
+  word-break:normal !important;
+  text-align:right !important;
+}
+:is(html[lang="pt-BR"], html[lang="zh-CN"]) #companionPanel .companion-body,
+:is(html[lang="pt-BR"], html[lang="zh-CN"]) #companionPanel #companionRows{
+  height:auto !important;
+  max-height:none !important;
+  overflow:visible !important;
+}
+
+
